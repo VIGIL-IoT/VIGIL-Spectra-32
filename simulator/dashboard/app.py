@@ -152,9 +152,10 @@ def make_board_svg(led_state: object) -> str:
             f'fill="{text_color}" class="pin">{right_label}</text></g></g>'
         )
 
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 600"
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="920" height="600"
+        viewBox="0 0 920 600"
         role="img" aria-label="ESP32 DevKit-style virtual board with GPIO4 LED state {led_label}"
-        style="display:block;width:100%;height:auto;font-family:system-ui,sans-serif">
+        style="font-family:system-ui,sans-serif">
         <defs>
             <linearGradient id="pcb" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0" stop-color="#1a4743"/><stop offset="1" stop-color="#12302f"/>
@@ -312,7 +313,10 @@ def render_dashboard() -> None:
     with board_column:
         st.markdown('<div class="panel-heading">Virtual board view</div>', unsafe_allow_html=True)
         with st.container(border=True):
-            st.html(make_board_svg(state.get("led") if state else None))
+            st.image(
+                make_board_svg(state.get("led") if state else None),
+                width="stretch",
+            )
         st.caption(
             "DevKit-style illustration. GPIO4 follows the model output; pin placement is "
             "representative and varies by board revision."
