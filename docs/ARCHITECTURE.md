@@ -6,16 +6,17 @@ SPECTRA-32 is the experimental attack-and-defense testbed of **VIGIL-IoT — Vul
 
 | Link | Data flow |
 |---|---|
-| Browser ↔ simulator | Loopback HTTP page, REST control, and virtual LED state |
+| Browser ↔ Streamlit console | Loopback dashboard polling the model API and sending REST controls |
+| Browser ↔ simulator fallback | Loopback HTTP page, REST control, and virtual LED state |
 | Simulator ↔ Mosquitto broker | MQTT LED commands and status, both on loopback |
 | Virtual output | A process state variable displayed as an LED; no GPIO is accessed |
 | ESP32 hardware | Future port under firmware/vulnerable/basic-node |
 
-The simulator runs on the experimenter's computer and binds to 127.0.0.1. The example broker also binds to 127.0.0.1. No Wi-Fi access point, internet connection, physical ESP32, or external host is needed for v0.1.
+The simulator, Streamlit console, and example broker run on the experimenter's computer and bind to 127.0.0.1. No Wi-Fi access point, internet connection, physical ESP32, or external host is needed for v0.1.
 
 The modeled node includes:
 
-- A branded local page and REST endpoints for LED state and control.
+- A branded Streamlit dashboard plus a minimal local page, with REST endpoints for LED state and control.
 - An MQTT command topic, spectra/device01/cmd, accepting plain ON and OFF payloads.
 - An MQTT status topic, spectra/device01/status, publishing the current virtual LED state.
 - A count of valid commands applied, including duplicates, to make behavior observable.

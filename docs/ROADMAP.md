@@ -11,7 +11,7 @@ SPECTRA-32 grows through small, measurable modules. The first node is simulated 
 ## v0.1 — Computer-run basic node
 
 - [ ] Run the local Python model with the loopback-only Mosquitto broker.
-- [ ] Verify web/REST control and state reporting.
+- [ ] Verify the Streamlit dashboard, web/REST control, and state reporting.
 - [ ] Verify MQTT ON/OFF commands and status publication.
 - [ ] Record the environment, commands, and observed functional behavior.
 

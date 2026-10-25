@@ -4,7 +4,7 @@ SPECTRA-32 is an embedded-security research platform. All testing is limited to 
 
 ## Computer-run simulator
 
-1. The v0.1 model and Mosquitto example bind to 127.0.0.1. Keep the simulator bound to loopback.
+1. The v0.1 model, Streamlit dashboard, and Mosquitto example bind to 127.0.0.1. Run Streamlit from the repository root so `.streamlit/config.toml` is applied; keep all three services loopback-only.
 2. The broker has anonymous access and no TLS by design. Do not change it to listen on a LAN interface for the software-only milestone.
 3. The model changes only a virtual LED state. It does not send traffic to other hosts or control a physical output.
 4. Command replay in the simulator is limited to the documented local MQTT topics. No scanning, flooding, brute force, or interaction with unrelated devices is part of v0.1.
