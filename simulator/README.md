@@ -1,38 +1,30 @@
 # SPECTRA-32 Virtual Node Console
 
-**A VIGIL-IoT Project** · a local, computer-run model of an ESP32-style IoT node.
+**A VIGIL-IoT Project** · an interactive, session-local security console for the SPECTRA-32 sample node.
 
-The Streamlit console provides an interactive DevKit-style board illustration, a pin and component inspector, virtual GPIO4 LED controls, device status, security metrics, attack-path highlights, and an event log. Vulnerable and Hardened profiles drive bounded, in-app security scenarios.
+The Streamlit app presents a clickable ESP32 DevKit-style board, 32-pin/component inspection, vulnerable and hardened profiles, bounded security scenarios, telemetry, an affected-path view, and a searchable event log. The interface uses the dark, mint-accented visual system documented in [`docs/BRAND.md`](../docs/BRAND.md).
 
-## What this is
+## Simulation boundary
 
-This is a software behavior model. It does not emulate ESP32 CPU instructions, run ESP-IDF firmware, model Wi-Fi radio behavior, or provide physical GPIO, RAM, flash, timing, or power measurements. The board drawing is illustrative; it is not a wiring diagram and pin placement varies by board revision.
+The console updates only the current Streamlit session's sample state. Replay, authentication, plaintext MQTT, high request-rate, unsigned OTA, and debug-exposure scenarios do not publish MQTT messages, call the REST API, send packets, write firmware, or touch hardware. The GPIO23 relay is simulated. Vulnerable and Hardened profiles are comparison scenarios; they do not alter the separate Python node model or provide evidence of ESP32 protection.
 
-The event selector changes only the current Streamlit session's in-memory state. Replay, authentication, plaintext MQTT, high request-rate, unsigned OTA, and debug-exposure scenarios do not publish MQTT messages, send packets, write firmware, or touch hardware. Only the GPIO4 ON/OFF controls call the separate loopback node-model API. The relay on GPIO23 is simulated.
+The Python node model in `simulator/vulnerable/` remains a separate software-in-the-loop service. It exposes a loopback web page and REST API and can use the MQTT broker; the Streamlit dashboard does not connect to that API. The board illustration is not a wiring diagram. This project does not emulate ESP32 CPU, radio, GPIO timing, memory, flash, or power.
 
-The dashboard's Hardened profile is a comparison model; it does not harden the separate Python node or broker. A Hardened event outcome is not evidence of protection on ESP32 hardware.
+## Run the console
 
-## Run locally
+Use Python 3.10 or newer. From the repository root:
 
-Use Python 3.10 or newer and the pinned dependencies in `requirements.txt`. From the repository root, open separate PowerShell terminals:
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r simulator/requirements.txt
+streamlit run simulator/dashboard/app.py
+```
 
-1. Start the optional local MQTT broker: `mosquitto -c lab/simulation/mosquitto.conf`
-2. Create a virtual environment, activate it, and install dependencies:
+Open `http://127.0.0.1:8501`. No MQTT broker or node-model process is required for the console.
 
-   ```powershell
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
-   python -m pip install -r simulator/requirements.txt
-   ```
+## Run the optional local node model
 
-3. Start the local behavior model: `python simulator/vulnerable/basic_node.py`
-4. Start the console: `streamlit run simulator/dashboard/app.py`
-5. Open `http://127.0.0.1:8501`.
+For the separate behavior model, start a loopback-only Mosquitto broker with `mosquitto -c lab/simulation/mosquitto.conf`, then run `python simulator/vulnerable/basic_node.py` in another terminal. Its HTTP endpoints are `GET /api/state` and `POST /api/led` on `127.0.0.1:8080`; the minimal model page is also served there. MQTT topics are `spectra/device01/cmd` and `spectra/device01/status`.
 
-The MQTT broker is optional for the dashboard and HTTP model API. If it is not running, MQTT is shown as disconnected. The behavior model serves `GET /api/state` and `POST /api/led` on `127.0.0.1:8080`. The model's minimal built-in page also remains available at `http://127.0.0.1:8080`.
-
-The MQTT command topic is `spectra/device01/cmd`; the status topic is `spectra/device01/status`. The intentionally vulnerable command model accepts repeated valid ON/OFF commands without authentication or freshness checks. Its accepted-command counter observes commands; it does not prevent replay.
-
-## Deployment boundary
-
-The repository has no Vercel deployment. The Streamlit dashboard expects a model API at the user's own `127.0.0.1:8080`, which is only reachable from that same machine. Putting this dashboard on Vercel would require a separate browser frontend and a hosted, authenticated API; this local dashboard and its model should not be exposed publicly as configured.
+The vulnerable node model accepts repeated valid ON/OFF commands without authentication or freshness checks. Its accepted-command counter observes commands; it does not prevent replay. Keep the model and broker on loopback or an isolated lab network.

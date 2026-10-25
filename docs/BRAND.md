@@ -8,25 +8,26 @@
 - **Required project marker:** “A VIGIL-IoT Project”.
 - **Research loop:** Build → Attack → Observe → Defend → Measure.
 
-Use this language consistently in the README, firmware UI, experiment reports, and future dashboards. Keep claims specific to implemented and measured behavior.
+Keep claims specific to implemented and measured behavior. The Streamlit console is a session-local visualization; its Hardened profile is not firmware or hardware evidence.
 
 ## Visual direction
 
-Use a restrained embedded-systems research aesthetic: precise spacing, clear data hierarchy, quiet technical detail, and readable contrast. Avoid skulls, weapon imagery, Matrix code, neon-green-on-black, glitch styling, and generic “hacker terminal” visuals.
+Use the existing SPECTRA-32 console direction: a restrained dark data terminal, crisp outlined panels, quiet dividers, a branded top bar, compact navigation, an interactive board schematic, and readable telemetry. Avoid skulls, weapon imagery, Matrix code, neon-green-on-black, glitch styling, and generic “hacker terminal” visuals.
 
 ### UI color tokens
 
 | Token | Hex | Use |
 |---|---|---|
-| Deep ink | #0D1B2A | Page background |
-| Panel blue | #14283A | Cards and device surfaces |
-| Slate border | #2A4052 | Dividers and outlines |
-| Mist text | #EEF3F4 | Primary text |
-| Muted blue-gray | #A8BAC4 | Supporting text |
-| Signal teal | #55C2BD | Active state and primary action |
-| Caution amber | #E4AE58 | Lab-only notices and warnings |
+| Ground | #0D1111 | Page background |
+| Surface | #151A1A | Panels and device surfaces |
+| Border | #2B3531 | Dividers and outlines |
+| Primary text | #F2F4F1 | Main text and strong controls |
+| Muted text | #A0AAA5 | Supporting text |
+| Signal mint | #74DFC3 | Active state and positive status |
+| Caution amber | #E8BD85 | Warnings and medium risk |
+| Alert rose | #E98488 | High-risk state |
 
-Use system sans-serif typography and simple shapes. Color must not be the only way status is communicated; label active/offline states in text as well.
+Use DM Sans for interface text, Manrope for titles, and DM Mono for compact telemetry. Status values must include text labels so color is never the only indicator.
 
 ## Voice
 
