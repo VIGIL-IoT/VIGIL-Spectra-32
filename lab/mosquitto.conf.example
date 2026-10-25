@@ -1,0 +1,7 @@
+# Baseline-only broker for the isolated SPECTRA-32 lab network.
+# Assign/reserve 192.168.10.2 to the broker host, or change this bind address.
+# Do not use this unauthenticated listener on a home, office, campus, or public network.
+
+listener 1883 192.168.10.2
+allow_anonymous true
+persistence false

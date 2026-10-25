@@ -1,74 +1,48 @@
 # Experiment Protocol
 
-**Status:** planned protocol; no experiments have been run.  
-**Primary comparison:** no T800 filter versus T800 Decision Tree (DT-12), followed by the remaining upstream models if the first subset is stable.
+Every SPECTRA-32 experiment follows **Build → Attack → Observe → Defend → Measure** inside an owned or explicitly authorized lab. The planned replay experiment is described in EXP-01-replay. No security experiment has been run yet.
 
-## Hypotheses
+## Before a run
 
-- **H1, security behavior:** with the scan workload enabled, the T800 filter drops a greater fraction of scan packets than the unfiltered baseline.
-- **H2, legitimate traffic:** with benign traffic only, the filter preserves legitimate packet delivery within the tolerance fixed before the run.
-- **H3, resource trade-off:** T800 changes CPU, throughput, memory, and power measurements relative to the baseline; the direction and size are measured rather than assumed.
+1. State the research question, threat model, attacker capability, target, and out-of-scope behavior.
+2. Identify the vulnerable baseline and the hardened variant. Freeze code commits, board, firmware settings, network, broker, and command format.
+3. Define the primary outcome, repeat count, failure conditions, and analysis before collecting confirmatory data.
+4. Confirm the access point has no upstream bridge and only owned lab devices are connected.
+5. Record toolchain/library versions, device revision, GPIO wiring, broker configuration, and time synchronization.
+6. Keep secrets in local ignored configuration and store raw traces locally until checked for sensitive identifiers and license constraints.
 
-These are testable hypotheses, not findings. Define numerical acceptance tolerances after checking the pinned paper version and upstream code, then freeze them in the run manifest before collecting confirmatory data.
+## Run record
 
-## Conditions
+Create one record per independent run. Keep failed and interrupted runs; mark them with a reason instead of silently dropping them.
 
-| Factor | Levels |
+| Field | Value |
 |---|---|
-| Benign TCP traffic intensity | 8 Mbps, 16 Mbps |
-| Port-scan traffic | Absent, present |
-| Filter policy | None, DT-12, Logistic Regression, linear SVM, MLP |
-| Duration/repeats for full replication | 360 seconds per run, 30 replications per cell as reported by the paper |
+| Run ID and UTC timestamp | — |
+| Experiment and hypothesis | — |
+| SPECTRA-32 commit | — |
+| Vulnerable/hardened variant and firmware hash | — |
+| Board/chip revision and GPIO | — |
+| ESP-IDF, component, broker, host OS versions | — |
+| Network topology and sanitized configuration ID | — |
+| Test command, duration, repetitions, seed | — |
+| Metrics and measurement method | — |
+| Output paths and hashes | — |
+| Status, deviations, failures, exclusions | — |
 
-This is 4 workload cells × 5 filter settings = 20 condition cells (about 60 measurement hours at the paper's duration/repeat count). A first engineering pilot should use only a few short runs and be clearly labeled as a pilot. A feasible first scientific subset is no filter vs DT-12 over the four workload cells; report it as partial until all selected conditions and repeats are complete.
+## Measurement and analysis
 
-## Procedure
+- Report per-run outcomes before aggregating. Samples inside one continuous run are not independent runs.
+- Use a credible baseline and preserve the same hardware and traffic conditions across variants.
+- Include effect sizes and confidence intervals where the design supports them; distinguish statistical evidence from practical engineering impact.
+- Keep resource metrics separate: CPU, free/minimum heap, stack high-water mark, flash size, bandwidth, latency, reset/recovery time, and power have different meanings.
+- Record all deviations, missing data, and negative results. Paper-reported values are reference values, never SPECTRA measurements.
+- Save sanitized summaries and the generating command with every figure. Keep raw PCAPs, serial logs, and machine identifiers local until reviewed.
 
-1. Confirm the AP has no upstream connection and the ESP32 is the only configured target.
-2. Record repository commits, software versions, board ID/revision, AP/channel, target IP, and all runtime configuration. Do not commit credentials.
-3. Flash the no-filter baseline and confirm benign TCP traffic and measurement logging.
-4. Flash the chosen T800 model, verify the ingress hook, and confirm that the host and board logs align.
-5. For each frozen condition, start logging, run the authorized workload for the specified duration, stop traffic, and validate that the output is complete.
-6. Randomize or block the order of conditions to reduce time/RF confounding. Record this order. If following the upstream script requires a fixed sequence, record that as a deviation.
-7. Repeat until the declared number of independent runs is reached. Retain failed runs with failure status; do not silently discard them.
-8. Compute metrics using a version-controlled analysis script. Store figures with their source data and generating command.
+## Reproduction labels
 
-Before running any scanner command, audit the pinned upstream script and replace implicit/wildcard targets with a single configured lab target. Keep the scan rate and exact command in the run manifest.
-
-## Metrics
-
-### Detection and availability
-
-- Confusion matrix, precision, recall, F1, and false-positive rate.
-- Fraction of scan packets dropped and benign packets delivered.
-- TCP goodput, retransmissions, and loss where the harness can measure them reliably.
-- Crashes, resets, watchdog events, and time to recover.
-
-### Resource cost
-
-- CPU utilization, per-core if available.
-- Stack high-water mark and heap separately.
-- Network throughput/goodput.
-- Current and power only if the INA219 measurement chain is available and calibrated.
-
-### Validity and provenance
-
-- Every run has a unique ID and includes source commits, board, software versions, condition, seed if applicable, timestamps, output hashes, exclusions, and deviations.
-- Label paper-reported numbers as reference values; never place them in SPECTRA-32 results tables as measured values.
-- Record the exact dataset files, transformations, split policy, and license used for any model training.
-
-## Analysis plan
-
-- Treat each complete run as the experimental unit. One-second samples within one run are repeated observations and are not independent replicates.
-- First reproduce the authors' analysis. Separately report run-level summaries with median, IQR, effect size, and confidence intervals.
-- Compare the same conditions between the unfiltered and filtered setup. Keep the held-out dataset split unchanged and do not tune on test data.
-- Report all conditions and failed runs. If the observed data violate assumptions of a planned test, document and justify a robust alternative before interpreting results.
-- Distinguish statistical evidence from practical importance. A small p-value alone is not evidence that a filter is useful.
-
-## Run log template
-
-Copy one row per run into the eventual run ledger; use one row per run rather than one row per second-level sample.
-
-| Run ID | Timestamp | SPECTRA commit | T800 commit | ESP-IDF commit | Board | Filter/model | Mbps | Scan | Duration | Seed | Output hash | Status/deviation |
-|---|---|---|---|---|---|---|---:|---|---:|---|---|---|
-| — | — | — | — | — | — | — | — | — | — | — | — | No runs yet |
+- **Artifact reproduced:** the original data/code analysis runs with pinned versions and explained differences.
+- **Firmware reproduced:** the paper's implementation builds and its behavior is verified on the documented hardware.
+- **Experiment reproduced:** the declared paper conditions, repeats, and measurements are completed and compared.
+- **Partial reproduction:** an explicitly declared subset ran, with deviations and failed runs recorded.
+- **Adaptation/extension:** the paper's method or idea is changed for SPECTRA-32; do not call it an exact reproduction.
+- **Not run:** no run-level evidence exists. This is the current status for all experiments.

@@ -1,56 +1,73 @@
-# SPECTRA-32 Roadmap
+# VIGIL-IoT / SPECTRA-32 Roadmap
 
-The roadmap separates reproducing one paper from later extensions. A phase is complete only when its deliverables are recorded; planned items are not results.
+SPECTRA-32 grows through small, measurable modules. The first node is simulated on a computer so the command and state model can be exercised before a physical board is required. A roadmap item is complete only when its code, setup, and evidence are present; planned work is not a result.
 
-## Phase 0 — Research and artifact freeze
+## v0.0 — Repository foundation
 
-- [x] Select T800 as the initial paper based on direct ESP32 fit and public author artifacts.
-- [x] Document the claim, boundaries, and first experiment design.
-- [ ] Record the exact upstream T800 commit SHA and license state.
-- [ ] Resolve the ESP32 board variant and access to an isolated access point.
-- [ ] Audit the upstream installer, firmware components, traffic scripts, models, datasets, and analysis split.
+- [x] Establish VIGIL-IoT and SPECTRA-32 naming and purpose.
+- [x] Document architecture, safety boundaries, brand direction, and research tracks.
+- [x] Create separate paths for the virtual model, vulnerable firmware, and future hardened variants.
 
-**Exit:** pinned source, understood toolchain changes, safe target configuration, and documented unresolved details.
+## v0.1 — Computer-run basic node
 
-## Phase 1 — Reproduction environment
+- [ ] Run the local Python model with the loopback-only Mosquitto broker.
+- [ ] Verify web/REST control and state reporting.
+- [ ] Verify MQTT ON/OFF commands and status publication.
+- [ ] Record the environment, commands, and observed functional behavior.
 
-- [ ] Create a dedicated ESP-IDF checkout/container/VM for T800.
-- [ ] Record host OS and exact Python, ESP-IDF, iperf, Nmap, compiler, and component versions.
-- [ ] Generate an environment manifest and patch diff; keep the default ESP-IDF checkout untouched.
-- [ ] Re-run the stored-data analysis and compare it with the paper.
+**Boundary:** application authentication, HTTPS, MQTT authentication/TLS, anti-replay defense, and sensor telemetry are absent. The model is loopback-only and has a virtual LED. It does not provide Wi-Fi, GPIO, memory, timing, or power measurements for an ESP32.
 
-**Exit:** a clean environment can rebuild the artifact and regenerate analysis outputs, or a failure is documented with logs.
+## v0.2 — Replay attack lab
 
-## Phase 2 — Board smoke check
+- [ ] Freeze the threat model and application-level command replay procedure.
+- [ ] Re-submit a previously valid MQTT command to the software model and record its state effect.
+- [ ] Keep the unprotected model and hardened model in separate paths.
+- [ ] Add authenticated commands and a freshness mechanism after selecting and documenting the command envelope and reset behavior.
+- [ ] Measure legitimate-command acceptance, stale replay acceptance/rejection, end-to-end latency, payload overhead, and model memory/resource costs only where those costs are clearly labeled as host-side.
+- [ ] Compare the method with REPLIOT and label the ESP32/MQTT model as an adaptation.
 
-- [ ] Build and flash the no-filter baseline.
-- [ ] Build and flash T800 with the selected model.
-- [ ] Verify hook invocation, allow/drop behavior, benign traffic, logging, and recovery after reboot.
-- [ ] Use a short, authorized pilot and label it as engineering-only.
+**Exit:** repeatable run records show the vulnerable model accepts the defined stale command and the hardened model rejects it while continuing to accept fresh commands. These are software-model results, not ESP32 hardware results.
 
-**Exit:** stable end-to-end operation on the documented board; no pilot results presented as paper reproduction.
+Host process CPU and memory are properties of this computer-run simulator and must not be presented as ESP32 costs. Device RAM, flash, radio/network timing, GPIO timing, and power measurements belong to the hardware milestone and require suitable instrumentation.
 
-## Phase 3 — Faithful reproduction
+## v0.3 — ESP32 hardware port
 
-- [ ] Freeze conditions, run count, metrics, split, and analysis command.
-- [ ] Run baseline vs DT-12 across the four workload cells.
-- [ ] If feasible, complete the LR, SVM, and MLP conditions.
-- [ ] Measure power only with the documented measurement chain; otherwise report partial coverage.
-- [ ] Publish sanitized data, run manifest, analysis code, figures, deviations, and failures.
+- [ ] Build and flash the ESP-IDF baseline on the selected classic ESP32 board.
+- [ ] Connect to a dedicated isolated WPA2 Wi-Fi network and local broker.
+- [ ] Replace the virtual output with a board-verified low-voltage LED GPIO.
+- [ ] Repeat the baseline command sequences and compare state behavior with the software model.
+- [ ] Record board revision, wiring, toolchain versions, firmware hash, and deviations.
 
-**Exit:** completed run records and a reproduction status of reproduced, partial, or failed, supported by evidence.
+No relay, motor, mains circuit, or hazardous actuator belongs in this milestone.
 
-## Phase 4 — SPECTRA-32 research extension
+## v0.4 — MQTT and REST/API security
 
-Choose one extension after the reproduction, for example:
+- Compare plain and authenticated/encrypted communication. Document broker/client identity, key provisioning, and failure behavior. Keep replay protection separate from transport encryption.
 
-- A held-out scanner implementation to test generalization beyond the training workload.
-- A simple explicit allowlist baseline to compare machine-learning filtering with a transparent rule.
-- A second ESP32 variant to measure portability and resource trade-offs.
-- An MQTT replay-defense experiment with a separate protocol, threat model, and baseline.
+## v0.5 — BLE security
 
-Do not bundle several extensions into one claim. Freeze baseline results before selecting and tuning an extension.
+- Add one BLE experiment only after selecting hardware, pairing behavior, authorized scope, and a measurable baseline.
 
-## Phase 5 — Expanded cyber-physical testbed
+## v0.6 — Firmware and OTA security
 
-Only after the first study is stable, consider adding a sensor, safe LED output, MQTT dashboard, BLE, signed OTA, or TinyML monitoring. Each module needs its own experiment specification, authorized lab scope, baseline, and metrics. Do not describe these future modules as covered by the T800 reproduction.
+- Add signed-update verification and controlled cases for unsigned, altered, and stale packages.
+
+## v0.7 — Monitoring and attack detection
+
+- Record device, broker, and host events with synchronized timestamps and a run manifest. Evaluate detection only after defining a dataset split and error metrics.
+
+## v0.8 — Cyber-physical extension
+
+- Add a sensor and safe actuator only when the experiment requires them. Record electrical limits, reset behavior, and recovery. The earlier LED baseline remains the first output.
+
+## v0.9 — TinyML, if supported by evidence
+
+- Consider anomaly detection only after the project has enough labeled, repeatable traces to justify it. Compare against simple rules and report resource costs and detection errors.
+
+## v1.0 — Research platform
+
+- Package stable vulnerable/hardened experiments, simulator and hardware setup, run manifests, reproducible analysis, sanitized data, license provenance, and paper-ready evidence.
+
+## Independent paper reproduction
+
+T800 remains a separate candidate because it has public ESP32 code and a reproduction manual. It evaluates TCP port-scan filtering, which is outside the replay experiment. Pin and audit its upstream source and dedicated ESP-IDF environment before attempting a faithful run; do not mix T800 results with simulator or replay results.

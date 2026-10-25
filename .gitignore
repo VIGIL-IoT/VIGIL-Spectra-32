@@ -1,0 +1,17 @@
+# ESP-IDF generated files and local configuration
+**/build/
+**/sdkconfig
+**/sdkconfig.old
+**/managed_components/
+
+# Local credentials and experiment data
+.env
+.env.*
+/data/raw/
+/results/raw/
+/local/
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+/.venv/

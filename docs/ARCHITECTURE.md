@@ -1,45 +1,44 @@
-# SPECTRA-32 Testbed Architecture
+# SPECTRA-32 Architecture
 
-**Planned first configuration:** reproduce the T800 inbound packet-filter experiment. This diagram describes a future setup; it is not an existing or tested system.
+SPECTRA-32 is the experimental attack-and-defense testbed of **VIGIL-IoT — Vulnerability Intelligence & Guarding for IoT Layers**. Development starts with a local software model, then moves the same behavior to an ESP32 board.
 
-```mermaid
-flowchart LR
-    H[Linux experiment host<br/>controller, iperf, Nmap, logger]
-    AP[Dedicated lab access point<br/>no upstream bridge]
-    ESP[ESP32-WROOM-32 target]
-    L[ESP-IDF + lwIP ingress hook]
-    T[T800 classifier<br/>baseline or selected model]
-    APP[Target TCP workload]
-    PM[Optional power monitor<br/>INA219 + reader board]
+## v0.1 computer-run node model
 
-    H -->|benign iperf TCP| AP
-    H -->|bounded scan to fixed target IP| AP
-    AP -->|Wi-Fi| ESP
-    ESP --> L --> T
-    T -->|allow| APP
-    T -->|drop| X[Discard packet]
-    ESP -->|metrics/logs| H
-    PM -->|current and voltage samples| H
-```
+| Link | Data flow |
+|---|---|
+| Browser ↔ simulator | Loopback HTTP page, REST control, and virtual LED state |
+| Simulator ↔ Mosquitto broker | MQTT LED commands and status, both on loopback |
+| Virtual output | A process state variable displayed as an LED; no GPIO is accessed |
+| ESP32 hardware | Future port under firmware/vulnerable/basic-node |
 
-## Components
+The simulator runs on the experimenter's computer and binds to 127.0.0.1. The example broker also binds to 127.0.0.1. No Wi-Fi access point, internet connection, physical ESP32, or external host is needed for v0.1.
 
-| Component | Role | First-stage boundary |
-|---|---|---|
-| Linux experiment host | Runs the experiment controller, benign iperf server, authorized scanner, serial/UDP log collection, and analysis | Configured to target one ESP32 address on the lab subnet only |
-| Dedicated access point | Carries only experiment traffic | No internet, campus, office, or household uplink during experiments |
-| ESP32-WROOM-32 / DevKit V1 | Target running the T800 filter and a small TCP workload | Use the board class from the paper before testing other ESP32 variants |
-| T800 in ESP-IDF/lwIP | Examines incoming IP/TCP header data and makes the configured allow/drop decision | Keep upstream component separate and pin the modified ESP-IDF checkout |
-| Optional INA219 reader | Measures power/current alongside device workload | Omit power conclusions if this measurement chain is unavailable |
+The modeled node includes:
 
-## Traffic and measurement path
+- A branded local page and REST endpoints for LED state and control.
+- An MQTT command topic, spectra/device01/cmd, accepting plain ON and OFF payloads.
+- An MQTT status topic, spectra/device01/status, publishing the current virtual LED state.
+- A count of valid commands applied, including duplicates, to make behavior observable.
 
-The host generates a benign TCP workload and a bounded port-scan workload, separately according to the experiment condition. The access point forwards that traffic to the ESP32. At the lwIP ingress path, T800 runs its selected classifier before the packet proceeds through the stack. The ESP32 and host collect performance data; the optional power monitor records current and voltage.
+No sensor is selected yet, so the model does not generate synthetic temperature telemetry.
 
-The original manual describes Python, ESP-IDF, iperf v2, and Nmap on the host, and a CSV output from the benchmark. Its power setup uses an INA219 and a second board. Match the upstream workflow where possible, but preserve exact local versions and deviations in each run record.
+## Simulation boundary
 
-## What this architecture can and cannot test
+The Python process models application behavior; it does not execute ESP-IDF firmware and is not cycle-accurate. It does not model Wi-Fi radio behavior, lwIP, GPIO timing, processor performance, memory limits, flash usage, or power. Use the simulator to develop and repeat functional command scenarios. Do not use its results as hardware performance or security measurements.
 
-The first architecture can test the selected **network-layer TCP port-scan** filtering behavior and its resource trade-offs. It does not inspect 802.11 radio frames before the ESP32 receives them, and the paper does not evaluate application-level MQTT replay, BLE, OTA updates, or web login behavior. Those need separate components and experiments later.
+## Trust boundary and v0.1 limitations
 
-An LED or sensor can be added for a future cyber-physical demonstration, but it is not required to reproduce T800 and should not complicate the first benchmark.
+The model deliberately lacks application-level authentication, per-command freshness, HTTPS, and MQTT authentication/TLS. It accepts repeated valid ON/OFF commands. Its HTTP and MQTT services are loopback-only, so the current simulator does not expose a remote network attack surface.
+
+## Separate implementation paths
+
+- simulator/: computer-run behavioral model and local web UI.
+- firmware/vulnerable/basic-node/: unprotected ESP-IDF port for later hardware comparison.
+- firmware/hardened/<experiment>/: future defense implementation, kept separate from the vulnerable baseline.
+- experiments/EXP-01-replay/: controlled replay methods and run records.
+
+The ESP-IDF port is not built or hardware-verified. A later parity check should compare the same command sequences and state changes in the software model and on the selected ESP32 board.
+
+## Research paper track
+
+The replay experiment is the first security module. REPLIOT is the closest methodological reference for controlled command replay. T800 remains a separate paper-reproduction candidate for ESP32 TCP port-scan filtering; it does not validate the replay experiment.

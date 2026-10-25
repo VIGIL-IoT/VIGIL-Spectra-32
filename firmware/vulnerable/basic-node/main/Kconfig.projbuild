@@ -1,0 +1,31 @@
+menu "SPECTRA-32 future ESP32 port"
+
+    config SPECTRA32_WIFI_SSID
+        string "Isolated lab Wi-Fi SSID"
+        default ""
+        help
+            SSID for the dedicated lab access point. Keep this network isolated.
+
+    config SPECTRA32_WIFI_PASSWORD
+        string "Isolated lab Wi-Fi password"
+        default ""
+        help
+            WPA2-Personal password for the dedicated lab access point.
+            This value is stored in the local, gitignored sdkconfig file.
+
+    config SPECTRA32_MQTT_BROKER_URI
+        string "Local MQTT broker URI"
+        default "mqtt://192.168.10.2:1883"
+        help
+            Address of a Mosquitto broker on the isolated lab network.
+            Do not point this baseline firmware at a public broker.
+
+    config SPECTRA32_LED_GPIO
+        int "LED GPIO"
+        range 0 39
+        default 4
+        help
+            Output GPIO for a low-voltage LED connected through a resistor.
+            Confirm the pin against the exact ESP32 board before wiring.
+
+endmenu

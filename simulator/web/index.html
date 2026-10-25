@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPECTRA-32 | VIGIL-IoT</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #0d1b2a;
+      --panel: #14283a;
+      --line: #2a4052;
+      --text: #eef3f4;
+      --muted: #a8bac4;
+      --teal: #55c2bd;
+      --amber: #e4ae58;
+    }
+    * { box-sizing: border-box; }
+    body {
+      display: grid;
+      min-height: 100vh;
+      place-items: center;
+      margin: 0;
+      padding: 24px;
+      background: var(--ink);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .card {
+      width: min(100%, 580px);
+      padding: clamp(24px, 6vw, 42px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 20px 60px #07111b88;
+    }
+    .eyebrow {
+      color: var(--teal);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 12px 0 8px; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; }
+    p { margin: 0; color: var(--muted); }
+    .state {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 30px 0 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .lamp {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 10px;
+      border-radius: 50%;
+      background: #71818b;
+    }
+    .lamp.on { background: var(--teal); box-shadow: 0 0 16px #55c2bd88; }
+    button {
+      width: 100%;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--teal);
+      color: #07191d;
+      font: 700 1rem system-ui, sans-serif;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .55; cursor: wait; }
+    .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+    .meta div { padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
+    .label { display: block; margin-bottom: 4px; color: var(--muted); font-size: .8rem; }
+    .notice {
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font-size: .84rem;
+    }
+    .notice strong { color: var(--amber); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="eyebrow">A VIGIL-IoT Project</div>
+    <h1>SPECTRA-32</h1>
+    <p>Virtual ESP32 node · software simulation v0.1</p>
+
+    <section class="state" aria-live="polite">
+      <span><i id="lamp" class="lamp"></i>Virtual LED output</span>
+      <strong id="led">Loading</strong>
+    </section>
+    <button id="toggle" type="button" disabled>Loading…</button>
+
+    <section class="meta">
+      <div><span class="label">MQTT connection</span><strong id="mqtt">Checking</strong></div>
+      <div><span class="label">Commands applied</span><strong id="commands">0</strong></div>
+    </section>
+
+    <p class="notice"><strong>Behavioral model.</strong> This software models the node's web, MQTT, and output-state behavior. It does not run ESP32 firmware or emulate Wi-Fi radio, GPIO timing, CPU, RAM, flash, or power. The service binds to this computer only.</p>
+  </main>
+  <script>
+    const led = document.querySelector("#led");
+    const lamp = document.querySelector("#lamp");
+    const mqtt = document.querySelector("#mqtt");
+    const commands = document.querySelector("#commands");
+    const button = document.querySelector("#toggle");
+
+    async function refresh() {
+      try {
+        const response = await fetch("/api/state", { cache: "no-store" });
+        if (!response.ok) throw new Error("state unavailable");
+        const state = await response.json();
+        led.textContent = state.led;
+        lamp.classList.toggle("on", state.led === "ON");
+        mqtt.textContent = state.mqtt_connected ? "Connected" : "Offline";
+        commands.textContent = String(state.commands_applied);
+        button.textContent = state.led === "ON" ? "Turn virtual LED off" : "Turn virtual LED on";
+        button.disabled = false;
+      } catch {
+        mqtt.textContent = "Unavailable";
+        button.disabled = true;
+      }
+    }
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      const next = led.textContent === "ON" ? "off" : "on";
+      try {
+        const body = new URLSearchParams({ state: next });
+        const response = await fetch("/api/led", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body,
+        });
+        if (!response.ok) throw new Error("command failed");
+        await refresh();
+      } catch {
+        button.textContent = "Command failed";
+        button.disabled = false;
+      }
+    });
+
+    refresh();
+    setInterval(refresh, 1500);
+  </script>
+</body>
+</html>
