@@ -117,12 +117,125 @@ def inject_theme() -> None:
     )
 
 
+def make_board_svg(led_state: object) -> str:
+    """Draw a schematic DevKit-style board with the modeled GPIO4 output."""
+    left_pins = (
+        "3V3", "EN", "VP / 36", "VN / 39", "GPIO34", "GPIO35", "GPIO32",
+        "GPIO33", "GPIO25", "GPIO26", "GPIO27", "GPIO14", "GPIO12", "GND", "GPIO13",
+    )
+    right_pins = (
+        "VIN / 5V", "GND", "GPIO23", "GPIO22", "TX0 / 1", "RX0 / 3", "GPIO21",
+        "GND", "GPIO19", "GPIO18", "GPIO5", "GPIO17", "GPIO16", "GPIO4", "GPIO2",
+    )
+    led_on = led_state == "ON"
+    led_unknown = led_state != "ON" and led_state != "OFF"
+    led_color = "#55c2bd" if led_on else "#e4ae58" if led_unknown else "#53616b"
+    led_halo = (
+        '<circle cx="574" cy="390" r="18" fill="#55c2bd" opacity=".18"/>'
+        '<circle cx="574" cy="390" r="11" fill="#55c2bd" opacity=".3"/>'
+        if led_on
+        else ""
+    )
+    led_label = "ON" if led_on else "NO LINK" if led_unknown else "OFF"
+    pin_markup: list[str] = []
+
+    for index, (left_label, right_label) in enumerate(zip(left_pins, right_pins)):
+        y = 110 + index * 24
+        gpio4 = right_label == "GPIO4"
+        pad_color = "#55c2bd" if gpio4 else "#c28d45"
+        text_color = "#75d8d0" if gpio4 else "#a8bac4"
+        pin_markup.append(
+            f'<g><text x="244" y="{y + 4}" text-anchor="end" class="pin">{left_label}</text>'
+            f'<rect x="266" y="{y - 4}" width="22" height="8" rx="2" class="pad"/>'
+            f'<g><rect x="652" y="{y - 4}" width="22" height="8" rx="2" '
+            f'fill="{pad_color}" class="pad"/><text x="697" y="{y + 4}" '
+            f'fill="{text_color}" class="pin">{right_label}</text></g></g>'
+        )
+
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 600"
+        role="img" aria-label="ESP32 DevKit-style virtual board with GPIO4 LED state {led_label}"
+        style="display:block;width:100%;height:auto;font-family:system-ui,sans-serif">
+        <defs>
+            <linearGradient id="pcb" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#1a4743"/><stop offset="1" stop-color="#12302f"/>
+            </linearGradient>
+            <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#48555d"/><stop offset="1" stop-color="#29343b"/>
+            </linearGradient>
+            <style>
+                .pin {{ fill:#a8bac4;font-size:10px;font-weight:600;letter-spacing:.2px }}
+                .pad {{ stroke:#e0b46c;stroke-width:1 }}
+                .board-label {{ fill:#d5e0e2;font-size:10px;font-weight:700;letter-spacing:1.3px }}
+                .micro {{ fill:#91a5ad;font-size:8px;font-weight:600;letter-spacing:.7px }}
+            </style>
+        </defs>
+        <rect x="281" y="31" width="378" height="482" rx="24" fill="#06121b" opacity=".56"/>
+        <rect x="274" y="24" width="378" height="482" rx="24" fill="url(#pcb)"
+            stroke="#39716a" stroke-width="2"/>
+        <rect x="285" y="35" width="356" height="460" rx="17" fill="none"
+            stroke="#68a198" stroke-opacity=".25"/>
+        {''.join(pin_markup)}
+
+        <text x="463" y="68" text-anchor="middle" class="micro">2.4 GHz ANTENNA</text>
+        <path d="M420 77h86m-79 8h72m-65 8h58" stroke="#7ba89f" stroke-width="2" opacity=".8"/>
+        <rect x="348" y="103" width="230" height="167" rx="13" fill="#101b22"
+            stroke="#61717a" stroke-width="2"/>
+        <rect x="362" y="127" width="202" height="125" rx="7" fill="url(#shield)"
+            stroke="#7d898e" stroke-width="1.5"/>
+        <path d="M375 139h176M375 244h176" stroke="#92a0a4" stroke-opacity=".55"/>
+        <text x="463" y="185" text-anchor="middle" fill="#edf1ef" font-size="19"
+            font-weight="750" letter-spacing="1">ESP32</text>
+        <text x="463" y="207" text-anchor="middle" fill="#c0c9c8" font-size="11"
+            font-weight="650" letter-spacing="1.1">WROOM-32</text>
+        <text x="463" y="232" text-anchor="middle" fill="#91a5ad" font-size="8"
+            letter-spacing="1.6">DUAL-CORE · WI-FI · BLE</text>
+
+        <rect x="344" y="296" width="90" height="44" rx="5" fill="#253138" stroke="#60727a"/>
+        <text x="389" y="315" text-anchor="middle" class="micro">USB</text>
+        <text x="389" y="328" text-anchor="middle" fill="#b8c4c7" font-size="8">UART BRIDGE</text>
+        <rect x="453" y="296" width="66" height="44" rx="5" fill="#26333a" stroke="#60727a"/>
+        <text x="486" y="316" text-anchor="middle" class="micro">3V3</text>
+        <text x="486" y="329" text-anchor="middle" fill="#b8c4c7" font-size="8">REGULATOR</text>
+        <rect x="535" y="296" width="66" height="44" rx="5" fill="#26333a" stroke="#60727a"/>
+        <text x="568" y="316" text-anchor="middle" class="micro">FLASH</text>
+        <text x="568" y="329" text-anchor="middle" fill="#b8c4c7" font-size="8">MEMORY</text>
+
+        <rect x="354" y="363" width="54" height="30" rx="6" fill="#152229" stroke="#62727a"/>
+        <rect x="367" y="371" width="28" height="14" rx="3" fill="#46545b"/>
+        <text x="381" y="408" text-anchor="middle" class="micro">EN</text>
+        <rect x="421" y="363" width="54" height="30" rx="6" fill="#152229" stroke="#62727a"/>
+        <rect x="434" y="371" width="28" height="14" rx="3" fill="#46545b"/>
+        <text x="448" y="408" text-anchor="middle" class="micro">BOOT</text>
+
+        <path d="M652 422h-42v-29h-25" fill="none" stroke="#55c2bd" stroke-width="2"
+            stroke-opacity=".8"/>
+        <circle cx="574" cy="390" r="8" fill="{led_color}" stroke="#b7d6cf" stroke-width="1.5"/>
+        {led_halo}
+        <text x="574" y="420" text-anchor="middle" fill="#d5e0e2" font-size="8"
+            font-weight="700" letter-spacing=".6">GPIO4 · {led_label}</text>
+        <text x="463" y="469" text-anchor="middle" class="board-label">SPECTRA-32 · NODE 01</text>
+        <text x="463" y="485" text-anchor="middle" class="micro">VIGIL-IoT RESEARCH MODEL</text>
+
+        <rect x="390" y="493" width="146" height="57" rx="13" fill="#16232a"
+            stroke="#87969a" stroke-width="2"/>
+        <rect x="423" y="507" width="80" height="29" rx="9" fill="#080f13"
+            stroke="#43525a"/>
+        <path d="M438 514h50v15h-50z" fill="#18252b"/>
+        <text x="463" y="562" text-anchor="middle" class="micro">USB POWER / DATA</text>
+
+        <text x="460" y="20" text-anchor="middle" class="board-label">ESP32 DEVKIT-STYLE VIRTUAL BOARD</text>
+        <text x="460" y="586" text-anchor="middle" fill="#8ea2aa" font-size="8">
+            Illustrative drawing · pin layout varies by board revision
+        </text>
+    </svg>"""
+
+
 def render_output(state: dict[str, object] | None) -> None:
-    if state is None:
+    led_state = state.get("led") if state else None
+    if led_state != "ON" and led_state != "OFF":
         label, class_name = "NO DATA", "unknown"
     else:
-        led_on = state.get("led") == "ON"
-        label, class_name = ("ON", "on") if led_on else ("OFF", "off")
+        label, class_name = ("ON", "on") if led_state == "ON" else ("OFF", "off")
 
     st.markdown(
         f"""
@@ -146,9 +259,9 @@ def render_dashboard() -> None:
     connection_label = "Connected" if mqtt_connected else "Disconnected"
     connection_class = "connected" if mqtt_connected else ""
 
-    output_column, links_column = st.columns([1.35, 1], gap="large")
-    with output_column:
-        st.markdown('<div class="panel-heading">Device output</div>', unsafe_allow_html=True)
+    board_column, control_column = st.columns([1.55, 1], gap="large")
+    with control_column:
+        st.markdown('<div class="panel-heading">Device controls</div>', unsafe_allow_html=True)
         with st.container(border=True):
             output_slot = st.empty()
             button_on, button_off = st.columns(2)
@@ -178,7 +291,6 @@ def render_dashboard() -> None:
             with output_slot.container():
                 render_output(state)
 
-    with links_column:
         st.markdown('<div class="panel-heading">Local links</div>', unsafe_allow_html=True)
         with st.container(border=True):
             st.markdown(
@@ -196,6 +308,15 @@ def render_dashboard() -> None:
                 """,
                 unsafe_allow_html=True,
             )
+
+    with board_column:
+        st.markdown('<div class="panel-heading">Virtual board view</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.html(make_board_svg(state.get("led") if state else None))
+        st.caption(
+            "DevKit-style illustration. GPIO4 follows the model output; pin placement is "
+            "representative and varies by board revision."
+        )
 
     if error:
         st.warning(

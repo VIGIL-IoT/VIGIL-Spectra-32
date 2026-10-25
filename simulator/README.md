@@ -25,4 +25,6 @@ The baseline intentionally accepts repeated ON/OFF commands without authenticati
 
 The Streamlit console polls the local model API every two seconds and sends its ON/OFF controls through that API. Its default project config binds the dashboard to loopback. It is not a public Streamlit deployment: the model has no authentication, and the dashboard expects the behavior service at 127.0.0.1:8080.
 
+The console includes an illustrative ESP32 DevKit-style board view. Its GPIO4 LED indicator follows the model's virtual output state. The drawing is a UI aid, not a wiring diagram or hardware emulator; pin placement varies across ESP32 development-board revisions.
+
 The dashboard uses the documented [`st.fragment` periodic rerun API](https://docs.streamlit.io/develop/api-reference/execution-flow/st.fragment). Project configuration follows Streamlit's [configuration options](https://docs.streamlit.io/develop/concepts/configuration/options).
