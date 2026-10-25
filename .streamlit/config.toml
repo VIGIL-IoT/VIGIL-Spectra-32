@@ -8,10 +8,10 @@ gatherUsageStats = false
 
 [theme]
 base = "dark"
-primaryColor = "#55C2BD"
-backgroundColor = "#0D1B2A"
-secondaryBackgroundColor = "#14283A"
-textColor = "#EEF3F4"
-font = "sans-serif"
-baseRadius = "medium"
-borderColor = "#2A4052"
+primaryColor = "#74DFC3"
+backgroundColor = "#0D1111"
+secondaryBackgroundColor = "#151A1A"
+textColor = "#F2F4F1"
+font = "sans serif"
+baseRadius = "small"
+borderColor = "#2B3531"

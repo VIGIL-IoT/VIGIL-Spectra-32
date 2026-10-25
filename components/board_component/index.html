@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --board-ink: #e2e9e4;
+        --board-muted: #82918a;
+        --board-accent: #74dfc3;
+        --board-edge: #33443c;
+        --board-ground: #111716;
+        --board-copper: #69756e;
+        font-family: "DM Mono", ui-monospace, SFMono-Regular, Consolas, monospace; /* taste-skill-ignore: schematic labels are pin identifiers and board callouts */
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 100%; min-height: 0; overflow: hidden; background: transparent; }
+      #stage { width: 100%; line-height: 0; }
+      svg { display: block; width: 100%; height: auto; overflow: visible; }
+      .board-shell { fill: #15201c; stroke: #60736a; stroke-width: 1.4; }
+      .board-inset { fill: none; stroke: #2d4038; stroke-width: 1; }
+      .board-mark { fill: #91a198; font-size: 9px; letter-spacing: 1.15px; }
+      .board-code { fill: #85958c; font-size: 8px; }
+      .via { fill: #283a32; stroke: #587066; stroke-width: 1; }
+      .module { fill: #111516; stroke: #829088; stroke-width: 1.4; }
+      .module-shield { fill: #19201e; stroke: #414e48; stroke-width: 1; }
+      .antenna-line { stroke: #697770; stroke-width: 1.1; }
+      .chip { fill: #171b1a; stroke: #86928a; stroke-width: 1.2; }
+      .chip-pin { stroke: #87948c; stroke-width: 1; }
+      .component-label { fill: #dce5de; font-size: 9px; text-anchor: middle; letter-spacing: .5px; }
+      .component-note { fill: #89968e; font-size: 7px; text-anchor: middle; }
+      .button-pad { fill: #1e2622; stroke: #8d9a91; stroke-width: 1.2; }
+      .button-inner { fill: #0d1111; stroke: #56645c; stroke-width: 1; }
+      .usb-frame { fill: #9ba6a0; stroke: #d3dad5; stroke-width: 1; }
+      .usb-hole { fill: #202725; stroke: #59635d; stroke-width: 1; }
+      .led-body { fill: #17241f; stroke: #5c7468; stroke-width: 1; }
+      .led-light { fill: #526b60; }
+      .trace { fill: none; stroke: #2e5144; stroke-width: 1; opacity: .72; }
+      .pin-lead { stroke: #78867e; stroke-width: 1.15; }
+      .pin-hitbox { fill: transparent; pointer-events: all; }
+      .pin-dot { fill: #89958d; stroke: #111716; stroke-width: 1.6; }
+      .pin-label { fill: #aebbb2; font-size: 10px; dominant-baseline: middle; }
+      .pin.high .pin-dot { fill: #74dfc3; }
+      .pin:hover .pin-label, .pin:focus-visible .pin-label { fill: #f1faf4; }
+      .pin:hover .pin-dot, .pin:focus-visible .pin-dot { fill: #b8f4df; stroke: #effff8; }
+      .pin.selected .pin-dot, .component.selected .button-inner,
+      .component.selected .module-shield, .component.selected .chip { fill: #20453a; stroke: var(--board-accent); }
+      .pin.selected .pin-label, .component.selected .component-label { fill: #eafff5; }
+      .pin.hot .pin-dot, .component.hot .button-inner, .component.hot .chip { fill: #784a31; stroke: #e8bd85; }
+      .pin.hot .pin-label, .component.hot .component-label { fill: #ffe7c8; }
+      .clickable { cursor: pointer; outline: none; }
+      .component:focus-visible .component-label { fill: #f4fff8; }
+      .component:focus-visible .module-shield, .component:focus-visible .chip,
+      .component:focus-visible .button-inner, .component:focus-visible .led-body { stroke: var(--board-accent); stroke-width: 2; }
+      .callout-line { stroke: #3b594d; stroke-width: 1; stroke-dasharray: 2 4; }
+      @media (max-width: 540px) {
+        html, body { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+        #stage { width: max-content; }
+        svg { min-width: 500px; }
+        .board-mark { font-size: 14px; }
+        .board-code { font-size: 11px; }
+        .pin-label { font-size: 18px; }
+        .component-label { font-size: 14px; }
+        .component-note { font-size: 11px; }
+        body::-webkit-scrollbar { height: 5px; }
+        body::-webkit-scrollbar-thumb { background: #4c6257; border-radius: 3px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage" aria-label="Interactive ESP32 development board"></div>
+    <script>
+      const sendToStreamlit = (type, payload = {}) => {
+        window.parent.postMessage(
+          { isStreamlitMessage: true, type, ...payload },
+          "*"
+        );
+      };
+
+      const Streamlit = {
+        setComponentReady: () => sendToStreamlit("streamlit:componentReady", { apiVersion: 1 }),
+        setComponentValue: (value) => sendToStreamlit("streamlit:setComponentValue", { value, dataType: "json" }),
+        setFrameHeight: (height) => sendToStreamlit("streamlit:setFrameHeight", { height }),
+      };
+
+      const escapeText = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      })[char]);
+
+      function pinMarkup(pin, index, count, side, selected, path, pinStates) {
+        const y = 62 + index * (286 / Math.max(1, count - 1));
+        const isLeft = side === "left";
+        const circleX = isLeft ? 229 : 571;
+        const boardX = isLeft ? 270 : 530;
+        const labelX = isLeft ? 190 : 610;
+        const textAnchor = isLeft ? "end" : "start";
+        const classes = ["pin", "clickable"];
+        const live = pinStates[pin.id] || {};
+        const signalState = live.state || pin.state;
+        if (pin.id === selected) classes.push("selected");
+        if (signalState === "HIGH") classes.push("high");
+        if (path.includes(pin.id)) classes.push("hot");
+        const label = escapeText(pin.label);
+        const detail = escapeText(`${pin.label}; ${pin.kind}; ${live.mode || pin.mode}; ${signalState}`);
+        const hitboxX = isLeft ? 162 : 565;
+        const hitboxWidth = isLeft ? 92 : 104;
+        return `
+          <g class="${classes.join(" ")}" data-id="${escapeText(pin.id)}" role="button" tabindex="0" aria-pressed="${pin.id === selected}" aria-label="Select ${detail}">
+            <rect class="pin-hitbox" x="${hitboxX}" y="${y - 8}" width="${hitboxWidth}" height="16" />
+            <line class="pin-lead" x1="${isLeft ? circleX + 4 : boardX}" y1="${y}" x2="${isLeft ? boardX : circleX - 4}" y2="${y}" />
+            <circle class="pin-dot" cx="${circleX}" cy="${y}" r="4.2" />
+            <text class="pin-label" x="${labelX}" y="${y}" text-anchor="${textAnchor}">${label}</text>
+          </g>`;
+      }
+
+      function componentMarkup(id, content, selected, path) {
+        const classes = ["component", "clickable"];
+        const pathAliases = {
+          ESP32_MODULE: ["ESP32", "MQTT"],
+          FLASH: ["Firmware / Flash"],
+          LED: ["GPIO2"],
+          TX: ["UART"],
+          RX: ["UART"],
+        };
+        if (id === selected) classes.push("selected");
+        if (path.includes(id) || (pathAliases[id] || []).some((label) => path.includes(label))) classes.push("hot");
+        return `<g class="${classes.join(" ")}" data-id="${id}" role="button" tabindex="0" aria-pressed="${id === selected}" aria-label="Select ${id.replaceAll("_", " ")}">${content}</g>`;
+      }
+
+      function renderBoard(args) {
+        const pins = Array.isArray(args.pins) ? args.pins : [];
+        const selected = args.selected || "GPIO23";
+        const path = Array.isArray(args.active_path) ? args.active_path : [];
+        const pinStates = args.pin_states || {};
+        const left = pins.filter((pin) => pin.side === "left").sort((a, b) => a.position - b.position);
+        const right = pins.filter((pin) => pin.side === "right").sort((a, b) => a.position - b.position);
+
+        const leftMarkup = left.map((pin, i) => pinMarkup(pin, i, left.length, "left", selected, path, pinStates)).join("");
+        const rightMarkup = right.map((pin, i) => pinMarkup(pin, i, right.length, "right", selected, path, pinStates)).join("");
+        const module = componentMarkup("ESP32_MODULE", `
+          <rect class="module" x="305" y="92" width="190" height="116" rx="5" />
+          <rect class="module-shield" x="320" y="112" width="160" height="82" rx="3" />
+          <text class="component-label" x="400" y="142">ESP32-WROOM-32</text>
+          <text class="component-note" x="400" y="159">Wi-Fi · Bluetooth · MCU</text>
+          <text class="component-note" x="400" y="179">MODULE / RF SHIELD</text>
+          <path class="antenna-line" d="M340 101h120m-112 5h104m-96 5h88" />
+          <line class="chip-pin" x1="313" y1="119" x2="320" y2="119" /><line class="chip-pin" x1="313" y1="133" x2="320" y2="133" />
+          <line class="chip-pin" x1="313" y1="147" x2="320" y2="147" /><line class="chip-pin" x1="313" y1="161" x2="320" y2="161" />
+          <line class="chip-pin" x1="313" y1="175" x2="320" y2="175" /><line class="chip-pin" x1="480" y1="119" x2="487" y2="119" />
+          <line class="chip-pin" x1="480" y1="133" x2="487" y2="133" /><line class="chip-pin" x1="480" y1="147" x2="487" y2="147" />
+          <line class="chip-pin" x1="480" y1="161" x2="487" y2="161" /><line class="chip-pin" x1="480" y1="175" x2="487" y2="175" />`, selected, path);
+        const flash = componentMarkup("FLASH", `
+          <rect class="chip" x="355" y="227" width="90" height="37" rx="3" />
+          <text class="component-label" x="400" y="243">SPI FLASH</text>
+          <text class="component-note" x="400" y="255">FIRMWARE STORAGE</text>
+          <line class="chip-pin" x1="361" y1="223" x2="361" y2="227" /><line class="chip-pin" x1="373" y1="223" x2="373" y2="227" />
+          <line class="chip-pin" x1="385" y1="223" x2="385" y2="227" /><line class="chip-pin" x1="397" y1="223" x2="397" y2="227" />
+          <line class="chip-pin" x1="409" y1="223" x2="409" y2="227" /><line class="chip-pin" x1="421" y1="223" x2="421" y2="227" />
+          <line class="chip-pin" x1="433" y1="223" x2="433" y2="227" />`, selected, path);
+        const en = componentMarkup("EN", `
+          <rect class="button-pad" x="322" y="286" width="44" height="32" rx="4" />
+          <rect class="button-inner" x="331" y="292" width="26" height="19" rx="3" />
+          <text class="component-label" x="344" y="332">EN / RESET</text>`, selected, path);
+        const boot = componentMarkup("BOOT", `
+          <rect class="button-pad" x="379" y="286" width="44" height="32" rx="4" />
+          <rect class="button-inner" x="388" y="292" width="26" height="19" rx="3" />
+          <text class="component-label" x="401" y="332">BOOT</text>`, selected, path);
+        const led = componentMarkup("LED", `
+          <circle class="led-body" cx="466" cy="301" r="9" />
+          <circle class="led-light" cx="466" cy="301" r="4" />
+          <text class="component-note" x="466" y="326">GPIO2 LED</text>`, selected, path);
+        const usb = componentMarkup("USB", `
+          <path class="usb-frame" d="M365 351h70a7 7 0 0 1 7 7v15h-84v-15a7 7 0 0 1 7-7Z" />
+          <rect class="usb-hole" x="378" y="357" width="44" height="10" rx="4" />
+          <text class="component-label" x="400" y="386">USB-C / UART</text>`, selected, path);
+
+        document.getElementById("stage").innerHTML = `
+          <svg viewBox="0 0 800 410" role="group" aria-label="Interactive ESP32 DevKit-style board with selectable pins and components">
+            <text class="board-mark" x="400" y="14" text-anchor="middle">SPECTRA-32 · ESP32 DEVKIT BOARD MAP</text>
+            <path class="board-shell" d="M279 24h242a10 10 0 0 1 10 10v350a10 10 0 0 1-10 10H279a10 10 0 0 1-10-10V34a10 10 0 0 1 10-10Z" />
+            <path class="board-inset" d="M286 31h228v336H286z" />
+            <circle class="via" cx="286" cy="39" r="3" /><circle class="via" cx="514" cy="39" r="3" />
+            <circle class="via" cx="286" cy="381" r="3" /><circle class="via" cx="514" cy="381" r="3" />
+            <path class="trace" d="M291 55h13v25h17m-30 253h26v-29h14m153-196h19v52h-16m17 143h-18v-35h-17" />
+            <text class="board-code" x="400" y="49" text-anchor="middle">ESP32 DEVKIT · GPIO / NETWORK / FLASH</text>
+            ${leftMarkup}${rightMarkup}
+            ${module}${flash}${en}${boot}${led}${usb}
+          </svg>`;
+
+        document.querySelectorAll(".clickable").forEach((element) => {
+          const select = () => Streamlit.setComponentValue(element.dataset.id);
+          element.addEventListener("click", select);
+          element.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              select();
+            }
+          });
+        });
+        Streamlit.setFrameHeight(Number(args.height) || 424);
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "streamlit:render") renderBoard(event.data.args || {});
+      });
+      Streamlit.setComponentReady();
+    </script>
+  </body>
+</html>
