@@ -11,11 +11,11 @@ SPECTRA-32 grows through small, measurable modules. The first node is simulated 
 ## v0.1 — Computer-run basic node
 
 - [ ] Run the local Python model with the loopback-only Mosquitto broker.
-- [ ] Verify the Streamlit dashboard, web/REST control, and state reporting.
+- [x] Verify the Streamlit dashboard, loopback REST control, and state reporting.
 - [ ] Verify MQTT ON/OFF commands and status publication.
 - [ ] Record the environment, commands, and observed functional behavior.
 
-**Boundary:** application authentication, HTTPS, MQTT authentication/TLS, anti-replay defense, and sensor telemetry are absent. The model is loopback-only and has a virtual LED. It does not provide Wi-Fi, GPIO, memory, timing, or power measurements for an ESP32.
+**Boundary:** application authentication, HTTPS, MQTT authentication/TLS, anti-replay defense, and sensor telemetry are absent. The model is loopback-only and has a virtual LED. It does not provide Wi-Fi, GPIO, memory, timing, or power measurements for an ESP32. The dashboard's selectable security events are in-memory UI scenarios; they do not implement the v0.2 replay experiment or defenses.
 
 ## v0.2 — Replay attack lab
 

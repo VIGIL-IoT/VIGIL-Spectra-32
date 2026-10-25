@@ -15,3 +15,6 @@
 __pycache__/
 *.py[cod]
 /.venv/
+
+# Local UI design and browser-inspection artifacts
+.taste-skill/

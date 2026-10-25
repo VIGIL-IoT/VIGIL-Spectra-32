@@ -1,22 +1,41 @@
-"""Streamlit console for the loopback-only SPECTRA-32 behavior model."""
+"""VIGIL-IoT / SPECTRA-32 Streamlit node and security console."""
 
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from html import escape
+from pathlib import Path
+import sys
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from typing import Any
 
 import streamlit as st
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from simulator.dashboard.board import render_board_component  # noqa: E402
+from simulator.dashboard.security_model import (  # noqa: E402
+    HARDENED_MODE,
+    SIMULATION_EVENTS,
+    VULNERABLE_MODE,
+    apply_profile,
+    apply_simulated_event,
+    create_device_state,
+    sync_backend,
+)
 
 
 API_BASE = "http://127.0.0.1:8080"
 API_TIMEOUT_SECONDS = 1.5
 
 
-def read_state() -> tuple[dict[str, object] | None, str | None]:
-    """Read state from the local behavioral-model HTTP API."""
+def read_state() -> tuple[dict[str, Any] | None, str | None]:
+    """Read the loopback-only node model's current state."""
     request = Request(f"{API_BASE}/api/state", headers={"Accept": "application/json"})
     try:
         with urlopen(request, timeout=API_TIMEOUT_SECONDS) as response:
@@ -33,9 +52,9 @@ def read_state() -> tuple[dict[str, object] | None, str | None]:
     return payload, None
 
 
-def set_led(state: str) -> tuple[dict[str, object] | None, str | None]:
-    """Send one UI command to the local REST API."""
-    body = urlencode({"state": state}).encode("ascii")
+def set_led(output_state: str) -> tuple[dict[str, Any] | None, str | None]:
+    """Send the selected virtual LED command to the loopback node model."""
+    body = urlencode({"state": output_state}).encode("ascii")
     request = Request(
         f"{API_BASE}/api/led",
         data=body,
@@ -61,318 +80,303 @@ def inject_theme() -> None:
     st.markdown(
         """
         <style>
-        [data-testid="stAppViewContainer"] {
-            background:
-                radial-gradient(ellipse at 78% 0%, #163449 0%, transparent 38%),
-                #0d1b2a;
-        }
+        [data-testid="stAppViewContainer"] { background: #0d1b2a; }
         [data-testid="stHeader"] { background: transparent; }
-        .block-container { max-width: 1320px; padding-top: 2.3rem; padding-bottom: 3rem; }
-        .brand-line { color: #55c2bd; font-size: .73rem; font-weight: 750;
-            letter-spacing: .17em; text-transform: uppercase; }
-        .hero-row { display: flex; align-items: flex-end; justify-content: space-between;
-            gap: 1.5rem; margin: .55rem 0 1.25rem; }
-        .hero-title { margin: 0; color: #eef3f4; font-size: clamp(2.3rem, 6vw, 4rem);
-            font-weight: 760; letter-spacing: -.055em; line-height: 1; }
-        .hero-subtitle { margin: .65rem 0 0; color: #a8bac4; font-size: 1rem; }
-        .mode-tag { border: 1px solid #456071; border-radius: 999px; color: #c8d6dc;
-            display: inline-flex; align-items: center; gap: .55rem; padding: .55rem .8rem;
-            font-size: .76rem; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
-        .mode-dot { width: .48rem; height: .48rem; border-radius: 50%; background: #e4ae58;
-            box-shadow: 0 0 12px #e4ae5877; }
-        .scope-band { border: 1px solid #705d3a; border-left: 3px solid #e4ae58;
-            border-radius: 10px; background: #1d2931; color: #c7d0d3; padding: .9rem 1rem;
-            margin: .4rem 0 1.2rem; font-size: .88rem; }
-        .scope-band strong { color: #f0c875; }
-        .panel-heading { color: #a8bac4; font-size: .7rem; font-weight: 750;
-            letter-spacing: .13em; text-transform: uppercase; margin-bottom: .45rem; }
-        .led-state { display: flex; align-items: center; gap: 1rem; min-height: 112px; }
-        .led-orb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: 50%;
-            border: 1px solid #516776; background: #52616a; }
-        .led-orb.on { border-color: #72d7cf; background: #55c2bd;
-            box-shadow: 0 0 14px #55c2bd99, 0 0 42px #55c2bd55; }
-        .led-orb.unknown { border-color: #e4ae58; background: #4f493e; }
-        .led-kicker { display: block; color: #a8bac4; font-size: .73rem;
-            letter-spacing: .12em; text-transform: uppercase; }
-        .led-value { display: block; color: #eef3f4; font-size: 2.1rem;
-            font-weight: 750; letter-spacing: -.04em; line-height: 1.2; }
-        .link-state { display: inline-flex; align-items: center; gap: .55rem;
-            color: #eef3f4; font-weight: 650; }
-        .link-dot { width: .56rem; height: .56rem; border-radius: 50%; background: #788791; }
-        .link-dot.connected { background: #55c2bd; box-shadow: 0 0 10px #55c2bd88; }
-        .detail-label { color: #a8bac4; font-size: .76rem; margin-bottom: .3rem; }
-        .detail-value { color: #eef3f4; font-size: .92rem; font-weight: 600; }
-        .stButton button { min-height: 2.85rem; border-radius: 9px; font-weight: 650; }
-        [data-testid="stMetric"] { background: #14283a; border: 1px solid #2a4052;
-            border-radius: 12px; padding: .9rem 1rem; }
-        [data-testid="stMetricLabel"] { color: #a8bac4; }
-        hr { border-color: #2a4052; }
-        @media (max-width: 680px) {
-            .hero-row { align-items: flex-start; flex-direction: column; }
-            .block-container { padding-left: 1rem; padding-right: 1rem; }
-        }
+        .block-container { max-width: 1580px; padding-top: 1.25rem; padding-bottom: 2.5rem; }
+        section[data-testid="stSidebar"] { background: #102333; border-right: 1px solid #2a4052; }
+        section[data-testid="stSidebar"] .block-container { padding-top: 1.1rem; }
+        .brand { color: #55c2bd; font-size: .78rem; font-weight: 700; letter-spacing: .07em; }
+        .brand strong { color: #eef3f4; font-size: 1.15rem; letter-spacing: -.025em; margin-right: .55rem; }
+        .app-title { color: #eef3f4; font-size: 1.9rem; font-weight: 740; letter-spacing: -.045em; margin: .25rem 0 .1rem; }
+        .app-subtitle { color: #a8bac4; font-size: .95rem; margin: 0 0 .9rem; }
+        .status-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .65rem; margin: .7rem 0 1rem; }
+        .status-card { min-height: 82px; background: #14283a; border: 1px solid #2a4052; border-radius: 12px; padding: .7rem .8rem; }
+        .status-label { color: #9eb2bc; display: block; font-size: .72rem; margin-bottom: .28rem; }
+        .status-value { color: #eef3f4; display: block; font-size: .95rem; font-weight: 700; overflow-wrap: anywhere; }
+        .status-detail { color: #91a5ad; display: block; font-size: .7rem; margin-top: .2rem; }
+        .status-online { color: #70d1c8; } .status-offline { color: #e4ae58; }
+        .panel-title { color: #55c2bd; font-size: .82rem; font-weight: 700; letter-spacing: .04em; margin: .15rem 0 .55rem; }
+        .surface { background: #14283a; border: 1px solid #2a4052; border-radius: 14px; padding: 1rem; }
+        .surface + .surface { margin-top: .8rem; }
+        .posture-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; }
+        .posture-item { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .55rem .65rem; border: 1px solid #2a4052; border-radius: 9px; background: #102333; }
+        .posture-name { color: #c5d2d6; font-size: .8rem; }
+        .posture-state { font-size: .73rem; font-weight: 700; }
+        .posture-state.enabled { color: #70d1c8; } .posture-state.disabled { color: #e4ae58; }
+        .path-row { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+        .path-node { color: #bdcbd0; border: 1px solid #304854; border-radius: 999px; background: #102333; padding: .35rem .55rem; font-size: .76rem; }
+        .path-node.active-normal, .path-node.active-defended { color: #a8f0e8; border-color: #438981; background: #133633; }
+        .path-node.active-warning { color: #ffdb9b; border-color: #a77934; background: #382d1d; }
+        .path-arrow { color: #718792; font-size: .82rem; }
+        .event-log { max-height: 350px; overflow-y: auto; padding-right: .2rem; }
+        .event-row { display: grid; grid-template-columns: 70px 78px minmax(0, 1fr); gap: .55rem; padding: .65rem 0; border-top: 1px solid #2a4052; }
+        .event-time { color: #95aab4; font-size: .75rem; font-variant-numeric: tabular-nums; }
+        .event-severity { font-size: .7rem; font-weight: 750; letter-spacing: .025em; }
+        .severity-info { color: #70d1c8; } .severity-medium { color: #e4ae58; }
+        .severity-high, .severity-critical { color: #ff8b7a; }
+        .event-name { color: #eef3f4; font-size: .82rem; font-weight: 700; }
+        .event-detail { color: #a8bac4; font-size: .75rem; line-height: 1.45; margin-top: .15rem; }
+        .simulation-note { color: #cbd7dc; background: #1d2931; border-left: 3px solid #e4ae58; border-radius: 0 8px 8px 0; padding: .7rem .8rem; font-size: .8rem; line-height: 1.5; }
+        [data-testid="stMetric"] { background: #14283a; border: 1px solid #2a4052; border-radius: 12px; padding: .7rem .8rem; }
+        [data-testid="stMetricLabel"] { color: #a8bac4; font-size: .73rem; }
+        [data-testid="stMetricValue"] { color: #eef3f4; font-size: 1.2rem !important; font-variant-numeric: tabular-nums; }
+        .stButton button { min-height: 2.55rem; border-radius: 9px; font-weight: 650; }
+        button[data-testid="stBaseButton-primary"], button[data-testid="stBaseButton-primary"] p { color: #082129 !important; }
+        @media(max-width: 1000px) { .status-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media(max-width: 640px) { .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .posture-list { grid-template-columns: 1fr; } .event-row { grid-template-columns: 62px 68px minmax(0,1fr); gap: .35rem; } .app-title { font-size: 1.55rem; } }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
 
-def make_board_svg(led_state: object) -> str:
-    """Draw a schematic DevKit-style board with the modeled GPIO4 output."""
-    left_pins = (
-        "3V3", "EN", "VP / 36", "VN / 39", "GPIO34", "GPIO35", "GPIO32",
-        "GPIO33", "GPIO25", "GPIO26", "GPIO27", "GPIO14", "GPIO12", "GND", "GPIO13",
-    )
-    right_pins = (
-        "VIN / 5V", "GND", "GPIO23", "GPIO22", "TX0 / 1", "RX0 / 3", "GPIO21",
-        "GND", "GPIO19", "GPIO18", "GPIO5", "GPIO17", "GPIO16", "GPIO4", "GPIO2",
-    )
-    led_on = led_state == "ON"
-    led_unknown = led_state != "ON" and led_state != "OFF"
-    led_color = "#55c2bd" if led_on else "#e4ae58" if led_unknown else "#53616b"
-    led_halo = (
-        '<circle cx="574" cy="390" r="18" fill="#55c2bd" opacity=".18"/>'
-        '<circle cx="574" cy="390" r="11" fill="#55c2bd" opacity=".3"/>'
-        if led_on
-        else ""
-    )
-    led_label = "ON" if led_on else "NO LINK" if led_unknown else "OFF"
-    pin_markup: list[str] = []
+def initialize_session() -> None:
+    if "device_state" not in st.session_state:
+        st.session_state.device_state = create_device_state()
+    if "security_mode" not in st.session_state:
+        st.session_state.security_mode = VULNERABLE_MODE
+    if "simulation_enabled" not in st.session_state:
+        st.session_state.simulation_enabled = True
 
-    for index, (left_label, right_label) in enumerate(zip(left_pins, right_pins)):
-        y = 110 + index * 24
-        gpio4 = right_label == "GPIO4"
-        pad_color = "#55c2bd" if gpio4 else "#c28d45"
-        text_color = "#75d8d0" if gpio4 else "#a8bac4"
-        pin_markup.append(
-            f'<g><text x="244" y="{y + 4}" text-anchor="end" class="pin">{left_label}</text>'
-            f'<rect x="266" y="{y - 4}" width="22" height="8" rx="2" class="pad"/>'
-            f'<g><rect x="652" y="{y - 4}" width="22" height="8" rx="2" '
-            f'fill="{pad_color}" class="pad"/><text x="697" y="{y + 4}" '
-            f'fill="{text_color}" class="pin">{right_label}</text></g></g>'
+
+def render_sidebar(state: dict[str, Any]) -> tuple[str, bool, str, bool, str | None]:
+    with st.sidebar:
+        st.markdown(
+            '<div class="brand"><strong>◈ SPECTRA-32</strong><br>A VIGIL-IoT Project</div>',
+            unsafe_allow_html=True,
         )
+        st.divider()
+        mode = st.radio(
+            "Security profile",
+            (VULNERABLE_MODE, HARDENED_MODE),
+            key="security_mode",
+            help="This selector changes the dashboard's simulated security profile only.",
+        )
+        simulation_enabled = st.toggle(
+            "Simulation mode",
+            key="simulation_enabled",
+            help="Events update in-app state only. They do not send packets or issue MQTT attacks.",
+        )
+        with st.form("security_event_form", clear_on_submit=False):
+            event_type = st.selectbox("Simulated event", SIMULATION_EVENTS)
+            event_submitted = st.form_submit_button(
+                "Run in-app simulation",
+                type="primary",
+                width="stretch",
+                disabled=not simulation_enabled,
+            )
+        st.caption("Local state simulation only · no attack traffic is generated.")
+        st.divider()
+        st.markdown('<div class="panel-title">Virtual GPIO4 LED</div>', unsafe_allow_html=True)
+        led_on, led_off = st.columns(2, gap="small")
+        with led_on:
+            on_clicked = st.button(
+                "Set ON",
+                type="primary",
+                width="stretch",
+                disabled=not state["online"],
+                key="set_led_on",
+            )
+        with led_off:
+            off_clicked = st.button(
+                "Set OFF",
+                width="stretch",
+                disabled=not state["online"],
+                key="set_led_off",
+            )
+        if not state["online"]:
+            st.caption("Start the loopback Python node model to enable physical-model API controls.")
+        st.divider()
+        st.caption("This is a host-side model. It does not run ESP32 firmware or control physical hardware.")
 
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="920" height="600"
-        viewBox="0 0 920 600"
-        role="img" aria-label="ESP32 DevKit-style virtual board with GPIO4 LED state {led_label}"
-        style="font-family:system-ui,sans-serif">
-        <defs>
-            <linearGradient id="pcb" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#1a4743"/><stop offset="1" stop-color="#12302f"/>
-            </linearGradient>
-            <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#48555d"/><stop offset="1" stop-color="#29343b"/>
-            </linearGradient>
-            <style>
-                .pin {{ fill:#a8bac4;font-size:10px;font-weight:600;letter-spacing:.2px }}
-                .pad {{ stroke:#e0b46c;stroke-width:1 }}
-                .board-label {{ fill:#d5e0e2;font-size:10px;font-weight:700;letter-spacing:1.3px }}
-                .micro {{ fill:#91a5ad;font-size:8px;font-weight:600;letter-spacing:.7px }}
-            </style>
-        </defs>
-        <rect x="281" y="31" width="378" height="482" rx="24" fill="#06121b" opacity=".56"/>
-        <rect x="274" y="24" width="378" height="482" rx="24" fill="url(#pcb)"
-            stroke="#39716a" stroke-width="2"/>
-        <rect x="285" y="35" width="356" height="460" rx="17" fill="none"
-            stroke="#68a198" stroke-opacity=".25"/>
-        {''.join(pin_markup)}
-
-        <text x="463" y="68" text-anchor="middle" class="micro">2.4 GHz ANTENNA</text>
-        <path d="M420 77h86m-79 8h72m-65 8h58" stroke="#7ba89f" stroke-width="2" opacity=".8"/>
-        <rect x="348" y="103" width="230" height="167" rx="13" fill="#101b22"
-            stroke="#61717a" stroke-width="2"/>
-        <rect x="362" y="127" width="202" height="125" rx="7" fill="url(#shield)"
-            stroke="#7d898e" stroke-width="1.5"/>
-        <path d="M375 139h176M375 244h176" stroke="#92a0a4" stroke-opacity=".55"/>
-        <text x="463" y="185" text-anchor="middle" fill="#edf1ef" font-size="19"
-            font-weight="750" letter-spacing="1">ESP32</text>
-        <text x="463" y="207" text-anchor="middle" fill="#c0c9c8" font-size="11"
-            font-weight="650" letter-spacing="1.1">WROOM-32</text>
-        <text x="463" y="232" text-anchor="middle" fill="#91a5ad" font-size="8"
-            letter-spacing="1.6">DUAL-CORE · WI-FI · BLE</text>
-
-        <rect x="344" y="296" width="90" height="44" rx="5" fill="#253138" stroke="#60727a"/>
-        <text x="389" y="315" text-anchor="middle" class="micro">USB</text>
-        <text x="389" y="328" text-anchor="middle" fill="#b8c4c7" font-size="8">UART BRIDGE</text>
-        <rect x="453" y="296" width="66" height="44" rx="5" fill="#26333a" stroke="#60727a"/>
-        <text x="486" y="316" text-anchor="middle" class="micro">3V3</text>
-        <text x="486" y="329" text-anchor="middle" fill="#b8c4c7" font-size="8">REGULATOR</text>
-        <rect x="535" y="296" width="66" height="44" rx="5" fill="#26333a" stroke="#60727a"/>
-        <text x="568" y="316" text-anchor="middle" class="micro">FLASH</text>
-        <text x="568" y="329" text-anchor="middle" fill="#b8c4c7" font-size="8">MEMORY</text>
-
-        <rect x="354" y="363" width="54" height="30" rx="6" fill="#152229" stroke="#62727a"/>
-        <rect x="367" y="371" width="28" height="14" rx="3" fill="#46545b"/>
-        <text x="381" y="408" text-anchor="middle" class="micro">EN</text>
-        <rect x="421" y="363" width="54" height="30" rx="6" fill="#152229" stroke="#62727a"/>
-        <rect x="434" y="371" width="28" height="14" rx="3" fill="#46545b"/>
-        <text x="448" y="408" text-anchor="middle" class="micro">BOOT</text>
-
-        <path d="M652 422h-42v-29h-25" fill="none" stroke="#55c2bd" stroke-width="2"
-            stroke-opacity=".8"/>
-        <circle cx="574" cy="390" r="8" fill="{led_color}" stroke="#b7d6cf" stroke-width="1.5"/>
-        {led_halo}
-        <text x="574" y="420" text-anchor="middle" fill="#d5e0e2" font-size="8"
-            font-weight="700" letter-spacing=".6">GPIO4 · {led_label}</text>
-        <text x="463" y="469" text-anchor="middle" class="board-label">SPECTRA-32 · NODE 01</text>
-        <text x="463" y="485" text-anchor="middle" class="micro">VIGIL-IoT RESEARCH MODEL</text>
-
-        <rect x="390" y="493" width="146" height="57" rx="13" fill="#16232a"
-            stroke="#87969a" stroke-width="2"/>
-        <rect x="423" y="507" width="80" height="29" rx="9" fill="#080f13"
-            stroke="#43525a"/>
-        <path d="M438 514h50v15h-50z" fill="#18252b"/>
-        <text x="463" y="562" text-anchor="middle" class="micro">USB POWER / DATA</text>
-
-        <text x="460" y="20" text-anchor="middle" class="board-label">ESP32 DEVKIT-STYLE VIRTUAL BOARD</text>
-        <text x="460" y="586" text-anchor="middle" fill="#8ea2aa" font-size="8">
-            Illustrative drawing · pin layout varies by board revision
-        </text>
-    </svg>"""
+    led_action = "on" if on_clicked else "off" if off_clicked else None
+    return mode, simulation_enabled, event_type, event_submitted, led_action
 
 
-def render_output(state: dict[str, object] | None) -> None:
-    led_state = state.get("led") if state else None
-    if led_state != "ON" and led_state != "OFF":
-        label, class_name = "NO DATA", "unknown"
-    else:
-        label, class_name = ("ON", "on") if led_state == "ON" else ("OFF", "off")
+def status_card(label: str, value: object, detail: object = "", value_class: str = "") -> str:
+    return (
+        '<div class="status-card">'
+        f'<span class="status-label">{escape(label)}</span>'
+        f'<span class="status-value {escape(value_class)}">{escape(str(value))}</span>'
+        f'<span class="status-detail">{escape(str(detail))}</span>'
+        "</div>"
+    )
 
+
+def render_status_row(state: dict[str, Any], mode: str) -> None:
+    online = bool(state["online"])
+    wifi = state["wifi"]
+    mqtt = state["mqtt"]
+    security = state["security"]
+    status_cards = [
+        status_card("Node ID", state["node_id"], "Virtual SPECTRA-32 node"),
+        status_card("Node state", "ONLINE" if online else "OFFLINE", "Loopback model API", "status-online" if online else "status-offline"),
+        status_card("Firmware profile", state["firmware"], f"{mode} · simulated"),
+        status_card("Wi-Fi", "Connected" if wifi["connected"] else "Offline", f"{wifi['ssid']} · simulated"),
+        status_card(
+            "MQTT",
+            "Connected" if mqtt["connected"] else "Disconnected",
+            "TLS required in hardened profile (simulated)" if mqtt["tls_required_by_profile"] else "Local model uses plaintext MQTT",
+            "status-online" if mqtt["connected"] else "status-offline",
+        ),
+    ]
+    st.markdown('<div class="status-grid">' + "".join(status_cards) + "</div>", unsafe_allow_html=True)
     st.markdown(
-        f"""
-        <div class="led-state">
-            <span class="led-orb {class_name}" aria-hidden="true"></span>
-            <span>
-                <span class="led-kicker">Virtual LED output</span>
-                <strong class="led-value">{label}</strong>
-            </span>
-        </div>
-        """,
+        '<div class="simulation-note"><strong>Simulation boundary.</strong> The profile and security events below are in-memory scenarios. '
+        'Only the GPIO4 ON/OFF control talks to the loopback behavior model; no attack packets are sent and no physical output is controlled.</div>',
         unsafe_allow_html=True,
     )
 
 
-def render_dashboard() -> None:
-    state, error = read_state()
-    last_sync = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
+def render_metrics(state: dict[str, Any]) -> None:
+    security = state["security"]
+    accepted = state["api"]["commands_applied"] + security["simulated_accepted_commands"]
+    columns = st.columns(6, gap="small")
+    metrics = (
+        ("Replay attempts", security["replay_attempts"]),
+        ("Auth failures", security["auth_failures"]),
+        ("Blocked commands", security["blocked_commands"]),
+        ("Accepted commands", accepted),
+        ("Current request rate", f"{security['request_rate']} req/s"),
+        ("Threat level", security["threat_level"]),
+    )
+    for column, (label, value) in zip(columns, metrics):
+        with column:
+            st.metric(label, value)
 
-    mqtt_connected = bool(state and state.get("mqtt_connected"))
-    connection_label = "Connected" if mqtt_connected else "Disconnected"
-    connection_class = "connected" if mqtt_connected else ""
 
-    board_column, control_column = st.columns([1.55, 1], gap="large")
-    with control_column:
-        st.markdown('<div class="panel-heading">Device controls</div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            output_slot = st.empty()
-            button_on, button_off = st.columns(2)
-            with button_on:
-                on_clicked = st.button(
-                    "Set output ON",
-                    type="primary",
-                    width="stretch",
-                    disabled=state is None,
-                    key="virtual_led_on",
-                )
-            with button_off:
-                off_clicked = st.button(
-                    "Set output OFF",
-                    width="stretch",
-                    disabled=state is None,
-                    key="virtual_led_off",
-                )
+def render_attack_path(state: dict[str, Any]) -> None:
+    event = state["events"][0] if state["events"] else None
+    path = event["path"] if event else ["Wi-Fi", "ESP32 module", "MQTT", "GPIO23", "Relay"]
+    status = state["active_path_status"] if event else "neutral"
+    nodes: list[str] = []
+    for index, node in enumerate(path):
+        class_suffix = f" active-{status}" if status in {"normal", "warning", "defended"} else ""
+        nodes.append(f'<span class="path-node{class_suffix}">{escape(str(node))}</span>')
+        if index < len(path) - 1:
+            nodes.append('<span class="path-arrow" aria-hidden="true">→</span>')
+    if event:
+        explanation = f"{event['decision']} · {event['component']} · {event['explanation']}"
+    else:
+        explanation = "Default node-to-actuator route · waiting for a simulated event."
+    st.markdown(
+        '<div class="surface"><div class="panel-title">Attack path · cyber-physical route</div>'
+        f'<div class="path-row">{"".join(nodes)}</div>'
+        f'<p class="event-detail">{escape(explanation)}</p></div>',
+        unsafe_allow_html=True,
+    )
 
-            if on_clicked or off_clicked:
-                state, action_error = set_led("on" if on_clicked else "off")
-                if action_error:
-                    st.error(action_error)
-                else:
-                    st.toast(f"Virtual output set to {state.get('led', 'updated')}.")
 
-            with output_slot.container():
-                render_output(state)
-
-        st.markdown('<div class="panel-heading">Local links</div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            st.markdown(
-                f"""
-                <div class="link-state">
-                    <span class="link-dot {connection_class}" aria-hidden="true"></span>
-                    <span>MQTT {connection_label}</span>
-                </div>
-                <div style="height:1rem"></div>
-                <div class="detail-label">Broker</div>
-                <div class="detail-value">127.0.0.1:1883 · loopback</div>
-                <div style="height:.8rem"></div>
-                <div class="detail-label">Model API</div>
-                <div class="detail-value">127.0.0.1:8080 · HTTP</div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-    with board_column:
-        st.markdown('<div class="panel-heading">Virtual board view</div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            st.image(
-                make_board_svg(state.get("led") if state else None),
-                width="stretch",
-            )
-        st.caption(
-            "DevKit-style illustration. GPIO4 follows the model output; pin placement is "
-            "representative and varies by board revision."
+def render_posture(state: dict[str, Any]) -> None:
+    security = state["security"]
+    controls = (
+        ("Replay protection", security["replay_protection"]),
+        ("Secure Boot", security["secure_boot"]),
+        ("Flash encryption", security["flash_encryption"]),
+        ("OTA signing", security["ota_signing"]),
+        ("UART debug restricted", not security["debug_interface_enabled"]),
+        ("MQTT TLS profile", state["mqtt"]["tls_required_by_profile"]),
+    )
+    rows = []
+    for label, enabled in controls:
+        state_label = "Enabled" if enabled else "Disabled"
+        rows.append(
+            f'<div class="posture-item"><span class="posture-name">{escape(label)}</span>'
+            f'<span class="posture-state {"enabled" if enabled else "disabled"}">{state_label}</span></div>'
         )
+    st.markdown(
+        '<div class="surface"><div class="panel-title">Security posture · profile simulation</div>'
+        f'<div class="posture-list">{"".join(rows)}</div>'
+        '<p class="event-detail">Changing these values does not reconfigure the loopback MQTT broker or the separate node process.</p></div>',
+        unsafe_allow_html=True,
+    )
 
-    if error:
-        st.warning(
-            "Behavior model unavailable. Start Mosquitto and the Python node model "
-            "in separate terminals; this dashboard connects to 127.0.0.1:8080."
-        )
 
-    st.markdown("### Model telemetry")
-    metrics = st.columns(3)
-    with metrics[0]:
-        st.metric("Commands applied", state.get("commands_applied", "—") if state else "—")
-    with metrics[1]:
-        st.metric("Runtime", "Host model" if state else "Unavailable")
-    with metrics[2]:
-        st.metric("Last state poll", last_sync)
+def render_event_log(state: dict[str, Any]) -> None:
+    events = state["events"]
+    if not events:
+        body = '<div class="event-detail">No events yet. Enable Simulation mode and run a local scenario.</div>'
+    else:
+        rows = []
+        for event in events[:20]:
+            severity = str(event["severity"]).lower()
+            rows.append(
+                '<div class="event-row">'
+                f'<span class="event-time">{escape(str(event["time"]))}</span>'
+                f'<span class="event-severity severity-{escape(severity)}">{escape(str(event["severity"]))}</span>'
+                '<div>'
+                f'<div class="event-name">{escape(str(event["event_type"]))} · {escape(str(event["decision"]))}</div>'
+                f'<div class="event-detail">{escape(str(event["component"]))} — {escape(str(event["explanation"]))}</div>'
+                '</div></div>'
+            )
+        body = '<div class="event-log">' + "".join(rows) + "</div>"
+    st.markdown(
+        '<div class="surface"><div class="panel-title">Security event log</div>' + body + '</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def main() -> None:
     st.set_page_config(
-        page_title="SPECTRA-32 · VIGIL-IoT",
+        page_title="SPECTRA-32 Node Console · VIGIL-IoT",
         page_icon="◈",
         layout="wide",
-        initial_sidebar_state="collapsed",
+        initial_sidebar_state="expanded",
     )
     inject_theme()
+    initialize_session()
 
-    st.markdown('<div class="brand-line">A VIGIL-IoT Project · Embedded Security Research</div>', unsafe_allow_html=True)
+    state = st.session_state.device_state
+    backend_state, api_error = read_state()
+    state = sync_backend(state, backend_state, api_error)
+    mode, simulation_enabled, event_type, event_submitted, led_action = render_sidebar(state)
+    state = apply_profile(state, mode)
+
+    action_error = None
+    if event_submitted and simulation_enabled:
+        state = apply_simulated_event(state, event_type, mode)
+        st.toast(f"Simulated: {event_type}")
+
+    if led_action:
+        updated_state, action_error = set_led(led_action)
+        if updated_state is not None:
+            state = sync_backend(state, updated_state, None)
+            st.toast(f"Virtual GPIO4 LED set to {updated_state.get('led', led_action.upper())}.")
+
+    st.session_state.device_state = state
     st.markdown(
-        """
-        <div class="hero-row">
-            <div>
-                <h1 class="hero-title">SPECTRA-32</h1>
-                <p class="hero-subtitle">Virtual ESP32 device console</p>
-            </div>
-            <div class="mode-tag"><span class="mode-dot"></span>SOFTWARE MODEL · V0.1</div>
-        </div>
-        <div class="scope-band"><strong>Simulation boundary.</strong>
-            This dashboard controls a host-side behavior model. No ESP32 firmware,
-            Wi-Fi radio, GPIO, or physical output is running here.</div>
-        """,
+        '<div class="brand"><strong>VIGIL-IoT</strong> Vulnerability Intelligence &amp; Guarding for IoT Layers</div>'
+        '<h1 class="app-title">SPECTRA-32 Node Console</h1>'
+        '<p class="app-subtitle">Visual device console and security monitor · <strong>A VIGIL-IoT Project</strong></p>',
         unsafe_allow_html=True,
     )
 
-    @st.fragment(run_every=2.0, key="device_dashboard")
-    def live_device_panel() -> None:
-        render_dashboard()
+    render_status_row(state, mode)
+    if api_error:
+        st.warning("The local node API is unavailable. In-app security simulations still work; GPIO4 controls are disabled.")
+    if action_error:
+        st.error(action_error)
 
-    live_device_panel()
+    st.markdown('<div class="panel-title">Security telemetry</div>', unsafe_allow_html=True)
+    render_metrics(state)
+
+    st.markdown('<div class="panel-title">Interactive ESP32 board · select any pin or component</div>', unsafe_allow_html=True)
+    st.iframe(
+        render_board_component(state, mode),
+        height=790,
+    )
+
+    left, right = st.columns([1.05, .95], gap="medium")
+    with left:
+        render_attack_path(state)
+    with right:
+        render_posture(state)
+
+    render_event_log(state)
     st.divider()
     st.caption(
-        "Build → Attack → Observe → Defend → Measure  ·  Vulnerable baseline  ·  "
-        "Commands use the loopback API and update the virtual LED state."
+        "Vulnerable/Hardened profiles and security events are dashboard simulations. "
+        "Only the virtual GPIO4 command uses the loopback node API. No real attack traffic is generated."
     )
 
 
