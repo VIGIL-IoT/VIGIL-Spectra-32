@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import importlib
 import unittest
 
 from streamlit.testing.v1 import AppTest
@@ -56,6 +57,20 @@ class DashboardAppTests(unittest.TestCase):
         for severity in ("All", "HIGH", "MEDIUM", "INFO"):
             app.selectbox(key="event_severity_filter").set_value(severity).run()
             self.assert_app_has_no_exceptions(app)
+
+    def test_hot_deploy_refreshes_stale_module_apis(self) -> None:
+        import data.device_state as device_state_module
+        import data.scenarios as scenario_module
+
+        del device_state_module.STATE_SCHEMA_VERSION
+        del scenario_module.normalize_scenario
+        try:
+            app = AppTest.from_file(str(APP_PATH), default_timeout=30).run()
+            self.assert_app_has_no_exceptions(app)
+            self.assertEqual(app.session_state["device_state"]["schema_version"], STATE_SCHEMA_VERSION)
+        finally:
+            importlib.reload(device_state_module)
+            importlib.reload(scenario_module)
 
 
 if __name__ == "__main__":

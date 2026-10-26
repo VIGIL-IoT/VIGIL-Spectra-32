@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import importlib
 from pathlib import Path
 import sys
 from typing import Any
@@ -14,17 +15,61 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 CSS = (ROOT / "assets" / "app.css").read_text(encoding="utf-8")
 
-from components.board import render_board  # noqa: E402
-from data.board_definition import BOARD_COMPONENTS, PIN_DEFINITIONS, VIRTUAL_COMPONENTS  # noqa: E402
-from data.device_state import STATE_SCHEMA_VERSION, DeviceState, create_initial_state  # noqa: E402
-from data.scenarios import SCENARIO_GUIDANCE, SCENARIOS, normalize_scenario  # noqa: E402
-from services.simulator import (  # noqa: E402
-    log_profile_change,
-    set_security_mode,
-    set_simulation_mode,
-    simulate_event,
+
+def _current_module(name: str, required_symbols: tuple[str, ...]):
+    """Refresh a project module when a hot deployment left an older API cached."""
+    module = importlib.import_module(name)
+    if all(hasattr(module, symbol) for symbol in required_symbols):
+        return module, False
+    importlib.invalidate_caches()
+    return importlib.reload(module), True
+
+
+board_definition_module, _ = _current_module(
+    "data.board_definition",
+    ("BOARD_COMPONENTS", "PIN_DEFINITIONS", "VIRTUAL_COMPONENTS"),
 )
-from services.hardware import identify_esp_chip, list_serial_ports  # noqa: E402
+device_state_module, state_module_refreshed = _current_module(
+    "data.device_state",
+    ("STATE_SCHEMA_VERSION", "DeviceState", "create_initial_state"),
+)
+scenario_module, scenario_module_refreshed = _current_module(
+    "data.scenarios",
+    ("SCENARIO_GUIDANCE", "SCENARIOS", "normalize_scenario"),
+)
+simulator_module, simulator_module_refreshed = _current_module(
+    "services.simulator",
+    ("SCENARIOS", "log_profile_change", "set_security_mode", "set_simulation_mode", "simulate_event"),
+)
+if (
+    state_module_refreshed
+    or scenario_module_refreshed
+    or simulator_module_refreshed
+    or simulator_module.SCENARIOS != scenario_module.SCENARIOS
+):
+    simulator_module = importlib.reload(simulator_module)
+hardware_module, _ = _current_module(
+    "services.hardware",
+    ("identify_esp_chip", "list_serial_ports"),
+)
+board_module, _ = _current_module("components.board", ("render_board",))
+
+BOARD_COMPONENTS = board_definition_module.BOARD_COMPONENTS
+PIN_DEFINITIONS = board_definition_module.PIN_DEFINITIONS
+VIRTUAL_COMPONENTS = board_definition_module.VIRTUAL_COMPONENTS
+STATE_SCHEMA_VERSION = device_state_module.STATE_SCHEMA_VERSION
+DeviceState = device_state_module.DeviceState
+create_initial_state = device_state_module.create_initial_state
+SCENARIO_GUIDANCE = scenario_module.SCENARIO_GUIDANCE
+SCENARIOS = scenario_module.SCENARIOS
+normalize_scenario = scenario_module.normalize_scenario
+log_profile_change = simulator_module.log_profile_change
+set_security_mode = simulator_module.set_security_mode
+set_simulation_mode = simulator_module.set_simulation_mode
+simulate_event = simulator_module.simulate_event
+identify_esp_chip = hardware_module.identify_esp_chip
+list_serial_ports = hardware_module.list_serial_ports
+render_board = board_module.render_board
 
 
 st.set_page_config(
