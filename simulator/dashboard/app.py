@@ -477,7 +477,7 @@ def render_overview() -> None:
     with board_col:
         with st.container(border=True, key="board_panel"):
             st.markdown(
-                '<div class="panel-title"><h2>Interactive ESP32 DevKit</h2><span>Select a pin · swipe to pan</span></div>',
+                '<div class="panel-title"><h2>Interactive ESP32 DevKit</h2><span>Tap a pin or component</span></div>',
                 unsafe_allow_html=True,
             )
             render_board_selection()
@@ -549,7 +549,7 @@ def render_hardware_page() -> None:
     board_col, detail_col = st.columns([1.4, 1], gap="large", vertical_alignment="top")
     with board_col:
         with st.container(border=True, key="hardware_board_panel"):
-            st.markdown('<div class="panel-title"><h2>ESP32 DevKit-style board</h2><span>32 pins · swipe to pan</span></div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-title"><h2>ESP32 DevKit-style board</h2><span>Tap a pin or component</span></div>', unsafe_allow_html=True)
             render_board_selection()
     with detail_col:
         with st.container(border=True, key="hardware_posture_panel"):
