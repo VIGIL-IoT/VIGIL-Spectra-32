@@ -1,0 +1,64 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SPECTRA-32 Controlled Experiment Workflow",
+    "output": ".archify/workflow-spectra32-security-research-20261026-200334/spectra-32-research-workflow.html",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "protocol", "label": "EXPERIMENT SCOPE" },
+    { "id": "node", "label": "SPECTRA-32 NODE" },
+    { "id": "evidence", "label": "OBSERVATION + RESULTS" },
+    { "id": "safety", "label": "NO-GO PATH", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "scope_baseline", "label": "01 · DEFINE + BUILD BASELINE", "fromCol": 0, "toCol": 1, "variant": "emphasis" },
+    { "id": "controlled_run", "label": "02 · CONTROLLED RUN + OBSERVE", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "defend_measure", "label": "03 · DEFEND + MEASURE", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "stop_branch", "label": "STOP UNTIL SCOPE IS VALID", "lane": "safety", "fromCol": 1, "toCol": 2, "variant": "security" }
+  ],
+  "mainPath": ["scope", "baseline", "scenario", "observe", "defend", "measure"],
+  "nodes": [
+    { "id": "scope", "lane": "protocol", "col": 0, "type": "security", "label": "Scope + isolate", "sublabel": "Owned node · isolated lab", "tag": "required gate" },
+    { "id": "baseline", "lane": "node", "col": 1, "type": "backend", "label": "Build baseline", "sublabel": "Vulnerable / hardened pair", "tag": "BUILD" },
+    { "id": "scenario", "lane": "node", "col": 2, "type": "messagebus", "label": "Run scenario", "sublabel": "Bounded, repeatable test", "tag": "ATTACK" },
+    { "id": "observe", "lane": "evidence", "col": 3, "type": "database", "label": "Observe behavior", "sublabel": "State · events · logs", "tag": "OBSERVE" },
+    { "id": "defend", "lane": "node", "col": 4, "type": "security", "label": "Apply defense", "sublabel": "Change one control", "tag": "DEFEND" },
+    { "id": "measure", "lane": "evidence", "col": 5, "type": "database", "label": "Measure + report", "sublabel": "Success · latency · overhead", "tag": "MEASURE" },
+    { "id": "stop", "lane": "safety", "col": 1, "type": "security", "label": "Stop · no run", "sublabel": "Scope missing or unclear" },
+    { "id": "rescope", "lane": "safety", "col": 2, "type": "backend", "label": "Re-scope", "sublabel": "Document · review · restart" }
+  ],
+  "edges": [
+    { "id": "authorized-baseline", "from": "scope", "to": "baseline", "label": "authorized + isolated", "variant": "emphasis", "role": "main" },
+    { "id": "unauthorized-stop", "from": "scope", "to": "stop", "label": "scope not confirmed", "variant": "security", "role": "error" },
+    { "id": "rescope-after-stop", "from": "stop", "to": "rescope", "label": "record no-run", "variant": "dashed", "role": "branch" },
+    { "id": "baseline-scenario", "from": "baseline", "to": "scenario", "label": "fixed configuration", "variant": "default", "role": "main" },
+    { "id": "scenario-observe", "from": "scenario", "to": "observe", "label": "capture outcomes", "variant": "emphasis", "role": "main" },
+    { "id": "observe-defend", "from": "observe", "to": "defend", "label": "identify control gap", "variant": "default", "role": "main" },
+    { "id": "defend-measure", "from": "defend", "to": "measure", "label": "repeat same scenario", "variant": "emphasis", "role": "main" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Authorization boundary",
+      "items": [
+        "Test only devices, networks, and traffic the team owns or is explicitly authorized to assess.",
+        "Keep traffic inside a dedicated isolated lab; stop if scope or authorization changes.",
+        "Dashboard-only outcomes are illustrative, not firmware or physical-board evidence."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Measurement discipline",
+      "items": [
+        "Use identical scenarios and configuration across vulnerable and hardened variants.",
+        "Record success, latency, RAM / flash, bandwidth, recovery, and power where instrumented.",
+        "Capture model or firmware revision, failures, and limits with each result."
+      ]
+    }
+  ]
+}

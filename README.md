@@ -9,6 +9,10 @@ SPECTRA-32 is the experimental attack-and-defense testbed of **VIGIL-IoT — Vul
 
 The research loop is **Build → Attack → Observe → Defend → Measure**. Experiments stay inside owned or explicitly authorized lab systems and networks.
 
+[![Interactive experiment workflow](https://img.shields.io/github/actions/workflow/status/VIGIL-IoT/VIGIL-Spectra-32/deploy-workflow-page.yml?branch=main&label=Experiment%20workflow&logo=githubpages)](https://vigil-iot.github.io/VIGIL-Spectra-32/)
+
+[Open the interactive experiment workflow →](https://vigil-iot.github.io/VIGIL-Spectra-32/)
+
 ## What exists now
 
 The repository contains the project identity and architecture, an incremental roadmap, research and safety notes, a local Python behavior model, the VIGIL-IoT Streamlit console, and an ESP-IDF reference port for later hardware validation.
