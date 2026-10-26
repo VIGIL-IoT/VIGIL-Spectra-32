@@ -9,16 +9,22 @@ from typing import Any
 
 import streamlit as st
 
-from components.board import render_board
-from data.board_definition import BOARD_COMPONENTS, PIN_DEFINITIONS, VIRTUAL_COMPONENTS
-from data.device_state import DeviceState, create_initial_state
-from services.simulator import SCENARIOS, log_profile_change, set_security_mode, set_simulation_mode, simulate_event
-
-
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 CSS = (ROOT / "assets" / "app.css").read_text(encoding="utf-8")
+
+from components.board import render_board  # noqa: E402
+from data.board_definition import BOARD_COMPONENTS, PIN_DEFINITIONS, VIRTUAL_COMPONENTS  # noqa: E402
+from data.device_state import DeviceState, create_initial_state  # noqa: E402
+from services.simulator import (  # noqa: E402
+    SCENARIOS,
+    log_profile_change,
+    set_security_mode,
+    set_simulation_mode,
+    simulate_event,
+)
+
 
 st.set_page_config(
     page_title="SPECTRA-32 Node Console · VIGIL-IoT",
