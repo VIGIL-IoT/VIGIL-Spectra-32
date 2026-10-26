@@ -6,13 +6,13 @@
     <style>
       :root {
         color-scheme: dark;
-        --board-ink: #e2e9e4;
-        --board-muted: #82918a;
-        --board-accent: #74dfc3;
-        --board-edge: #33443c;
-        --board-ground: #111716;
+        --board-ink: #eaf2ed;
+        --board-muted: #a9bcb3;
+        --board-accent: #b8f36a;
+        --board-edge: #40544d;
+        --board-ground: #111917;
         --board-copper: #69756e;
-        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-family: Inter, "Segoe UI", sans-serif;
       }
       * { box-sizing: border-box; }
       html, body { margin: 0; width: 100%; min-height: 0; overflow: hidden; background: transparent; }
@@ -31,7 +31,7 @@
       .component-label { fill: #dce5de; font-size: 11px; text-anchor: middle; letter-spacing: .5px; }
       .component-note { fill: #a0aaa5; font-size: 11px; text-anchor: middle; }
       .button-pad { fill: #1e2622; stroke: #8d9a91; stroke-width: 1.2; }
-      .button-inner { fill: #0d1111; stroke: #56645c; stroke-width: 1; }
+      .button-inner { fill: #0b100e; stroke: #56645c; stroke-width: 1; }
       .usb-frame { fill: #9ba6a0; stroke: #d3dad5; stroke-width: 1; }
       .usb-hole { fill: #202725; stroke: #59635d; stroke-width: 1; }
       .led-body { fill: #17241f; stroke: #5c7468; stroke-width: 1; }
@@ -41,16 +41,16 @@
       .pin-hitbox { fill: transparent; pointer-events: all; }
       .pin-dot { fill: #89958d; stroke: #111716; stroke-width: 1.6; }
       .pin-label { fill: #aebbb2; font-size: 11px; dominant-baseline: middle; }
-      .pin.high .pin-dot { fill: #74dfc3; }
+      .pin.high .pin-dot { fill: #56d7c4; }
       .pin:hover .pin-label, .pin:focus-visible .pin-label { fill: #f1faf4; }
       .pin:hover .pin-dot, .pin:focus-visible .pin-dot { fill: #b8f4df; stroke: #effff8; }
       .pin.selected .pin-dot, .component.selected .button-inner,
       .component.selected .module-shield, .component.selected .chip { fill: #20453a; stroke: var(--board-accent); }
       .pin.selected .pin-dot { r: 5.8px; }
       .pin.selected .pin-hitbox { fill: #20483b; }
-      .pin.selected .pin-label, .component.selected .component-label { fill: #74dfc3; font-weight: 700; }
-      .pin.hot .pin-dot, .component.hot .button-inner, .component.hot .chip { fill: #784a31; stroke: #e8bd85; }
-      .pin.hot .pin-label, .component.hot .component-label { fill: #ffe7c8; }
+      .pin.selected .pin-label, .component.selected .component-label { fill: var(--board-accent); font-weight: 700; }
+      .pin.hot .pin-dot, .component.hot .button-inner, .component.hot .chip { fill: #4a3022; stroke: #ff946b; }
+      .pin.hot .pin-label, .component.hot .component-label { fill: #ffd4c1; }
       .clickable { cursor: pointer; outline: none; }
       .component:focus-visible .component-label { fill: #f4fff8; }
       .component:focus-visible .module-shield, .component:focus-visible .chip,
