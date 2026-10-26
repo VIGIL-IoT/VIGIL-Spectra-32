@@ -127,6 +127,7 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .detail-description { margin: 9px 0 0; color: #abb6af; font: 12px/1.55 var(--font); }
 [data-testid="stMarkdownContainer"] p.data-boundary { margin: 6px 0 0; color: var(--muted); font: 12px/1.45 var(--font) !important; }
 .metrics-note { margin: 8px 0 0 !important; }
+.telemetry-note { margin: -2px 0 0 !important; color: var(--muted); font: 10px/1.4 var(--font); }
 
 .metrics-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 4px 1px 8px; }
 .metrics-head h2 { margin: 0; padding: 0; color: #d6dfd9; font: 500 15px/1.35 var(--font-display); }

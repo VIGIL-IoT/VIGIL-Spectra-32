@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import html
 import importlib
+from datetime import datetime
 from pathlib import Path
 import sys
 from typing import Any
+from zoneinfo import ZoneInfo
 
+import pandas as pd
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -472,6 +475,57 @@ def render_event_rows(events: list[dict[str, Any]]) -> None:
     st.markdown(f'<div class="event-list" role="list">{"".join(rows)}</div>', unsafe_allow_html=True)
 
 
+@st.fragment(run_every=2)
+def render_command_activity() -> None:
+    """Stream recent command counters from the local session model."""
+    session_state: DeviceState = st.session_state.device_state
+    security = session_state["security"]
+    accepted = int(security["accepted_commands"])
+    blocked = int(security["blocked_requests"])
+    now = datetime.now(ZoneInfo("Asia/Kolkata"))
+
+    history = st.session_state.get("command_activity_history", [])
+    if not isinstance(history, list):
+        history = []
+    last = history[-1] if history else None
+    if last is not None and (accepted < last["accepted"] or blocked < last["blocked"]):
+        history = []
+        last = None
+    changed = last is None or (last["accepted"], last["blocked"]) != (accepted, blocked)
+    elapsed = last is None or (now - last["time"]).total_seconds() >= 2
+    if changed or elapsed:
+        history.append({"time": now, "accepted": accepted, "blocked": blocked})
+        del history[:-60]
+        st.session_state.command_activity_history = history
+
+    chart_data = pd.DataFrame(
+        {
+            "Time": [sample["time"].replace(tzinfo=None) for sample in history],
+            "Accepted commands": [sample["accepted"] for sample in history],
+            "Blocked requests": [sample["blocked"] for sample in history],
+        }
+    )
+    with st.container(border=True, key="telemetry_panel"):
+        st.markdown(
+            '<div class="panel-title"><h2>Security counters</h2><span>SESSION MODEL · LIVE</span></div>',
+            unsafe_allow_html=True,
+        )
+        st.line_chart(
+            chart_data,
+            x="Time",
+            y=["Accepted commands", "Blocked requests"],
+            color=["#56d7c4", "#ff946b"],
+            width="stretch",
+            height=145,
+            y_label="Commands",
+            alt="Accepted commands and blocked requests over time in the local simulation model.",
+        )
+        st.markdown(
+            '<p class="telemetry-note">Sample baseline and simulated actions · no live hardware data.</p>',
+            unsafe_allow_html=True,
+        )
+
+
 def render_overview() -> None:
     board_col, detail_col = st.columns([1.2, 1], gap="medium", vertical_alignment="top")
     with board_col:
@@ -481,6 +535,7 @@ def render_overview() -> None:
                 unsafe_allow_html=True,
             )
             render_board_selection()
+        render_command_activity()
     with detail_col:
         with st.container(border=True, key="node_panel"):
             render_component_details()
