@@ -48,6 +48,7 @@ The local model counts every valid command it applies, including repeats. This i
 - [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
 - [Safety and data handling](docs/SAFETY_AND_DATA.md)
 - [Research and paper selection](docs/research/RESEARCH_ANALYSIS.md)
+- [Streamlit threat and scenario catalog](docs/research/STREAMLIT_SCENARIO_CATALOG.md)
 - [T800 reproduction plan](docs/research/T800_REPRODUCTION_PLAN.md)
 - [T800 experiment protocol](docs/research/T800_EXPERIMENT_PROTOCOL.md)
 - [Experiment 01: MQTT command replay](experiments/EXP-01-replay/README.md)
