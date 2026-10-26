@@ -424,7 +424,7 @@ def render_metrics() -> None:
         f"""
         <div class="metrics-head"><h2>Security metrics</h2><span>Sample session · local simulation</span></div>
         <div class="metric-strip" role="group" aria-label="SPECTRA-32 security metrics">{cells}</div>
-        <p class="data-boundary">Sample values are from the brief. Controls affect only this session; no device or broker receives traffic.</p>
+        <p class="data-boundary metrics-note">Sample values are from the brief. Controls affect only this session; no device or broker receives traffic.</p>
         """,
         unsafe_allow_html=True,
     )
@@ -490,7 +490,7 @@ def render_overview() -> None:
             st.markdown(f'<div class="security-list">{security_rows()}</div>', unsafe_allow_html=True)
 
     render_metrics()
-    path_col, event_col = st.columns([0.9, 1.6], gap="large", vertical_alignment="top")
+    path_col, event_col = st.columns([1, 1.45], gap="medium", vertical_alignment="top")
     with path_col:
         with st.container(border=True, key="path_panel"):
             render_attack_path()
