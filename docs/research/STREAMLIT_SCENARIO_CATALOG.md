@@ -9,6 +9,8 @@ This catalog maps common IoT security problem areas to experiments the SPECTRA-3
 
 The threat categories use the **OWASP IoT Top 10 2018** as a taxonomy, not as a claim about the most prevalent threats in 2026. NISTIR 8259A supplies a device-capability lens: device identification, configuration, data protection, logical access to interfaces, software update, cybersecurity state awareness, and device security. These references help select experiment questions; they do not certify this simulator or prove a vulnerability in a commercial product.
 
+The source review used Crawl4AI 0.9.5 on 2026-10-26 to fetch the OWASP IoT project page, the OWASP IoT Security Testing Guide project page, the NIST IoT capability catalog, and NIST's logical-access, software-update, and data-protection capability pages. OWASP's current IoT project page links to the 2018 Top 10 PDF and the testing-guide project; the Top 10 labels below are verified against that published PDF. The catalog is an experiment-selection aid, not a current prevalence ranking.
+
 The Streamlit model can demonstrate deterministic decisions and observable state changes: accepted or rejected commands, virtual GPIO state, counters, event records, selected security profile, and a highlighted device path. It cannot produce real latency, radio behavior, CPU/RAM/flash usage, packet confidentiality, broker ACL enforcement, or physical power measurements.
 
 ## Scenario candidates
@@ -47,7 +49,12 @@ For a later hardware experiment, freeze the board revision, firmware commit, bro
 
 ## References
 
-- [OWASP Internet of Things project — IoT Top 10 2018](https://owasp.org/projects/internet-of-things)
+- [OWASP Internet of Things project](https://owasp.org/projects/internet-of-things)
+- [OWASP IoT Top 10 2018 (PDF)](https://owasp.org/images/1/1c/OWASP-IoT-Top-10-2018-final.pdf)
+- [OWASP IoT Security Testing Guide project](https://owasp.org/www-project-iot-security-testing-guide/)
 - [NISTIR 8259A — IoT Device Cybersecurity Capability Core Baseline (PDF)](https://nvlpubs.nist.gov/nistpubs/ir/2020/NIST.IR.8259A.pdf)
 - [NIST IoT Cybersecurity Capabilities Catalog](https://pages.nist.gov/IoT-Device-Cybersecurity-Requirement-Catalogs/)
+- [NIST Logical Access to Interfaces](https://pages.nist.gov/IoT-Device-Cybersecurity-Requirement-Catalogs/technical/logical/)
+- [NIST Software Update](https://pages.nist.gov/IoT-Device-Cybersecurity-Requirement-Catalogs/technical/update/)
+- [NIST Data Protection](https://pages.nist.gov/IoT-Device-Cybersecurity-Requirement-Catalogs/technical/protection/)
 - [NISTIR 8259 Series, including the 2026 Revision 1 manufacturer guidance](https://www.nist.gov/itl/applied-cybersecurity/nist-cybersecurity-iot-program/nistir-8259-series)
