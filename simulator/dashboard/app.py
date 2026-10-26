@@ -16,15 +16,15 @@ CSS = (ROOT / "assets" / "app.css").read_text(encoding="utf-8")
 
 from components.board import render_board  # noqa: E402
 from data.board_definition import BOARD_COMPONENTS, PIN_DEFINITIONS, VIRTUAL_COMPONENTS  # noqa: E402
-from data.device_state import DeviceState, create_initial_state  # noqa: E402
-from data.scenarios import SCENARIO_GUIDANCE  # noqa: E402
+from data.device_state import STATE_SCHEMA_VERSION, DeviceState, create_initial_state  # noqa: E402
+from data.scenarios import SCENARIO_GUIDANCE, SCENARIOS, normalize_scenario  # noqa: E402
 from services.simulator import (  # noqa: E402
-    SCENARIOS,
     log_profile_change,
     set_security_mode,
     set_simulation_mode,
     simulate_event,
 )
+from services.hardware import identify_esp_chip, list_serial_ports  # noqa: E402
 
 
 st.set_page_config(
@@ -37,9 +37,10 @@ st.markdown(f"<style>{CSS}</style>", unsafe_allow_html=True)
 if (
     "device_state" not in st.session_state
     or not isinstance(st.session_state.device_state, dict)
-    or "mode" not in st.session_state.device_state
+    or st.session_state.device_state.get("schema_version") != STATE_SCHEMA_VERSION
 ):
-    # Reset legacy session data when Streamlit reloads from the earlier console schema.
+    # The session contains sample data only; reset it when a deployment changes
+    # the state shape instead of letting old nested keys crash the new UI.
     st.session_state.device_state = create_initial_state()
 if "active_view" not in st.session_state:
     st.session_state.active_view = "Console"
@@ -61,6 +62,12 @@ def status_class(value: str) -> str:
     return "good"
 
 
+def normalize_widget_choice(key: str, options: tuple[str, ...] | list[str], default: str) -> None:
+    """Replace stale persisted widget values before Streamlit builds the widget."""
+    if st.session_state.get(key, default) not in options:
+        st.session_state[key] = default
+
+
 def render_topbar() -> None:
     brand, nav, status = st.columns([1.25, 1.55, 1.2], vertical_alignment="center")
     with brand:
@@ -74,6 +81,7 @@ def render_topbar() -> None:
             unsafe_allow_html=True,
         )
     with nav:
+        normalize_widget_choice("active_view", ("Console", "Events", "Hardware"), "Console")
         st.radio(
             "Primary view",
             ("Console", "Events", "Hardware"),
@@ -88,7 +96,7 @@ def render_topbar() -> None:
             <div class="status-cluster">
               <span class="status-chip"><i class="status-dot"></i>SESSION MODEL</span>
               <span class="threat-chip {esc(threat.lower())}">THREAT {esc(threat)}</span>
-              <span class="sample-stamp">NO LIVE DEVICE</span>
+              <span class="sample-stamp">LIVE CONTROL OFF</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -110,8 +118,8 @@ def render_title(view: str) -> None:
         ),
         "Hardware": (
             "ESP32 DevKit board",
-            "Inspect the board map, pin metadata, and simulated component posture.",
-            "ESP32 · DevKit-style map",
+            "Inspect the board map, detect a locally attached chip, and review simulated posture.",
+            "ESP32 · local USB scan",
         ),
     }
     title, description, scope = titles[view]
@@ -130,7 +138,7 @@ def render_controls() -> None:
     mode_col, simulation_col, scenario_col, action_col = st.columns([1.22, 1.05, 1.7, 0.85], vertical_alignment="bottom")
     with mode_col:
         st.markdown('<div class="control-heading">Security profile</div>', unsafe_allow_html=True)
-        st.session_state.setdefault("security_profile", state["mode"])
+        normalize_widget_choice("security_profile", ("Vulnerable", "Hardened"), state["mode"])
         selected_mode = st.radio(
             "Security profile",
             ("Vulnerable", "Hardened"),
@@ -145,6 +153,8 @@ def render_controls() -> None:
 
     with simulation_col:
         st.markdown('<div class="control-heading">Simulation</div>', unsafe_allow_html=True)
+        if not isinstance(st.session_state.get("simulation_mode_toggle", state["simulation_mode"]), bool):
+            st.session_state["simulation_mode_toggle"] = bool(state["simulation_mode"])
         enabled = st.toggle(
             "Simulation Mode",
             key="simulation_mode_toggle",
@@ -154,6 +164,11 @@ def render_controls() -> None:
     set_simulation_mode(state, enabled)
 
     with scenario_col:
+        # A deployed session can outlive a release and still hold an old option
+        # label. Normalize it before constructing the keyed widget.
+        st.session_state["simulation_scenario"] = normalize_scenario(
+            st.session_state.get("simulation_scenario")
+        )
         scenario = st.selectbox(
             "Simulated event",
             SCENARIOS,
@@ -303,7 +318,9 @@ def component_details(component_id: str) -> tuple[str, str, list[tuple[str, str]
 
 def render_component_details() -> None:
     component_options = list(dict.fromkeys([*PIN_DEFINITIONS.keys(), *BOARD_COMPONENTS.keys(), *VIRTUAL_COMPONENTS.keys()]))
-    st.session_state.setdefault("component_picker", state["selected_component"])
+    default_component = state["selected_component"] if state["selected_component"] in component_options else "GPIO23"
+    state["selected_component"] = default_component
+    normalize_widget_choice("component_picker", component_options, default_component)
     selected = st.selectbox(
         "Selected pin or component",
         component_options,
@@ -437,6 +454,7 @@ def render_overview() -> None:
 def render_events_page() -> None:
     filter_col, search_col = st.columns([0.75, 1.25], vertical_alignment="bottom")
     with filter_col:
+        normalize_widget_choice("event_severity_filter", ("All", "HIGH", "MEDIUM", "INFO"), "All")
         severity_filter = st.selectbox("Severity", ("All", "HIGH", "MEDIUM", "INFO"), key="event_severity_filter")
     with search_col:
         query = st.text_input("Find an event or component", key="event_search", placeholder="Replay, MQTT, GPIO23…")
@@ -476,6 +494,7 @@ def render_pin_table() -> None:
 
 
 def render_hardware_page() -> None:
+    render_hardware_connection()
     board_col, detail_col = st.columns([1.4, 1], gap="large", vertical_alignment="top")
     with board_col:
         with st.container(border=True, key="hardware_board_panel"):
@@ -492,6 +511,67 @@ def render_hardware_page() -> None:
     with st.container(border=True, key="pin_table_panel"):
         st.markdown('<div class="panel-title"><h2>Pin definition</h2><span>ESP32 DevKit-style reference</span></div>', unsafe_allow_html=True)
         render_pin_table()
+
+
+@st.fragment(run_every=2)
+def render_hardware_connection() -> None:
+    """Poll serial ports on the Python host and identify a selected chip on demand."""
+    with st.container(border=True, key="physical_board_connection_panel"):
+        st.markdown(
+            '<div class="panel-title"><h2>Physical board connection</h2><span>Local USB scan · every 2 s</span></div>',
+            unsafe_allow_html=True,
+        )
+        ports, scan_error = list_serial_ports()
+        live_ports = {port["device"] for port in ports}
+        previous_identification = st.session_state.get("physical_board_identification")
+        if (
+            isinstance(previous_identification, dict)
+            and previous_identification.get("port") not in live_ports
+        ):
+            st.session_state.pop("physical_board_identification", None)
+
+        if scan_error:
+            st.warning(scan_error)
+        elif not ports:
+            st.markdown(
+                '<div class="empty-state">No USB serial ports detected on the machine running this app.</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            port_names = [port["device"] for port in ports]
+            descriptions = {port["device"]: port["description"] for port in ports}
+            default_port = port_names[0]
+            normalize_widget_choice("physical_serial_port", port_names, default_port)
+            selected_port = st.selectbox(
+                "USB serial port",
+                port_names,
+                format_func=lambda device: f"{device} · {descriptions[device]}",
+                key="physical_serial_port",
+            )
+            st.caption(
+                "A USB serial adapter alone does not prove the chip type. Identify chip uses esptool's ROM loader; the board may reset, but flash is never written or erased."
+            )
+            if st.button("Identify chip", key="identify_physical_chip", type="primary"):
+                with st.spinner("Reading the chip identity over USB serial…"):
+                    result = identify_esp_chip(selected_port)
+                st.session_state["physical_board_identification"] = {
+                    **result,
+                    "port": selected_port,
+                }
+
+            identification = st.session_state.get("physical_board_identification")
+            if isinstance(identification, dict) and identification.get("port") == selected_port:
+                status = identification.get("status")
+                if status == "supported":
+                    st.success(f"ESP32 · supported · {identification.get('chip', 'ESP32')}")
+                elif status == "other_esp":
+                    st.info(f"Other ESP · {identification.get('chip', 'unknown')} · unsupported in v0.1")
+                else:
+                    st.warning(identification.get("message", "Chip not identified."))
+
+        st.caption(
+            "This scan runs on the Python host. Streamlit Cloud cannot see USB devices plugged into your PC; run the app locally for hardware detection. Current attack scenarios still update only the session model and send no commands to the board."
+        )
 
 
 render_topbar()

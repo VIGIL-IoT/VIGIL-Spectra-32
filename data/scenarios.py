@@ -58,3 +58,17 @@ SCENARIO_GUIDANCE = {
 }
 
 SCENARIOS = tuple(SCENARIO_GUIDANCE)
+
+# Streamlit keeps widget values in the browser session across reruns and app
+# deployments. Keep legacy labels readable so a session created by an older
+# release cannot crash when the scenario catalog changes.
+LEGACY_SCENARIO_ALIASES = {
+    "MQTT plaintext warning": "MQTT without TLS",
+}
+
+
+def normalize_scenario(value: object) -> str:
+    """Return a current scenario label for a possibly stale widget value."""
+    label = str(value) if value is not None else ""
+    label = LEGACY_SCENARIO_ALIASES.get(label, label)
+    return label if label in SCENARIO_GUIDANCE else SCENARIOS[0]

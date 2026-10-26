@@ -8,6 +8,8 @@ from zoneinfo import ZoneInfo
 
 from data.board_definition import PIN_DEFINITIONS
 
+STATE_SCHEMA_VERSION = 1
+
 
 class PinState(TypedDict):
     mode: str
@@ -27,6 +29,7 @@ class EventRecord(TypedDict):
 
 
 class DeviceState(TypedDict):
+    schema_version: int
     node_id: str
     online: bool
     mode: str
@@ -58,6 +61,7 @@ def create_initial_state() -> DeviceState:
         if pin["kind"] not in {"Power", "Ground", "Control", "Boot control", "Flash bus"}
     }
     return {
+        "schema_version": STATE_SCHEMA_VERSION,
         "node_id": "SPECTRA-NODE-01",
         "online": True,
         "mode": "Vulnerable",
