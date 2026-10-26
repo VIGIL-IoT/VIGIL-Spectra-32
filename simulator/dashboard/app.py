@@ -17,6 +17,7 @@ CSS = (ROOT / "assets" / "app.css").read_text(encoding="utf-8")
 from components.board import render_board  # noqa: E402
 from data.board_definition import BOARD_COMPONENTS, PIN_DEFINITIONS, VIRTUAL_COMPONENTS  # noqa: E402
 from data.device_state import DeviceState, create_initial_state  # noqa: E402
+from data.scenarios import SCENARIO_GUIDANCE  # noqa: E402
 from services.simulator import (  # noqa: E402
     SCENARIOS,
     log_profile_change,
@@ -144,7 +145,12 @@ def render_controls() -> None:
 
     with simulation_col:
         st.markdown('<div class="control-heading">Simulation</div>', unsafe_allow_html=True)
-        enabled = st.toggle("Simulation Mode", key="simulation_mode_toggle", value=state["simulation_mode"])
+        enabled = st.toggle(
+            "Simulation Mode",
+            key="simulation_mode_toggle",
+            value=state["simulation_mode"],
+            help="Applies one bounded event to this session's model. No network traffic is generated.",
+        )
     set_simulation_mode(state, enabled)
 
     with scenario_col:
@@ -166,6 +172,26 @@ def render_controls() -> None:
         ):
             simulate_event(state, scenario)
             st.session_state["component_picker"] = state["selected_component"]
+
+    guidance = SCENARIO_GUIDANCE[scenario]
+    outcome = guidance["vulnerable" if selected_mode == "Vulnerable" else "hardened"]
+    st.markdown(
+        f"""
+        <div class="scenario-readout">
+          <div class="scenario-copy">
+            <span>Selected scenario</span>
+            <strong>{esc(scenario)}</strong>
+            <p>{esc(guidance['summary'])}</p>
+          </div>
+          <div class="scenario-result">
+            <span>{esc(selected_mode)} profile outcome</span>
+            <strong>{esc(outcome)}</strong>
+            <small>{esc(guidance['mapping'])}</small>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_network_status() -> None:
@@ -195,6 +221,8 @@ def render_network_status() -> None:
 def security_rows() -> str:
     security = state["security"]
     rows = [
+        ("MQTT authentication", bool(security["mqtt_auth_required"])),
+        ("MQTT topic ACL", bool(security["mqtt_topic_acl_enabled"])),
         ("Secure Boot", bool(security["secure_boot"])),
         ("Flash encryption", bool(security["flash_encryption"])),
         ("OTA signing", bool(security["ota_signing"])),
@@ -221,6 +249,8 @@ def component_details(component_id: str) -> tuple[str, str, list[tuple[str, str]
             [
                 ("Modelled link", "Sample connected" if mqtt["connected"] else "Sample offline"),
                 ("TLS policy", "Required by profile" if mqtt["tls"] else "Not required by profile"),
+                ("Authentication", "Required by profile" if security["mqtt_auth_required"] else "Not required by profile"),
+                ("Topic ACL", "Enabled by profile" if security["mqtt_topic_acl_enabled"] else "Open in profile"),
                 ("Live broker", "No connection"),
                 ("Authentication failures", str(security["auth_failures"])),
             ],

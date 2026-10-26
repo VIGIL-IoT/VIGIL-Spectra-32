@@ -3,17 +3,7 @@
 from __future__ import annotations
 
 from data.device_state import DeviceState, EventRecord, local_timestamp
-
-
-SCENARIOS = (
-    "Normal traffic",
-    "Replay attempt",
-    "Authentication failure",
-    "MQTT plaintext warning",
-    "Flood / high request-rate event",
-    "Unsigned OTA attempt",
-    "Debug interface exposure",
-)
+from data.scenarios import SCENARIOS
 
 
 def _record(
@@ -62,6 +52,8 @@ def set_security_mode(state: DeviceState, mode: str) -> None:
     state["mqtt"]["tls"] = hardened
     state["security"].update(
         {
+            "mqtt_auth_required": hardened,
+            "mqtt_topic_acl_enabled": hardened,
             "secure_boot": hardened,
             "flash_encryption": hardened,
             "ota_signing": hardened,
@@ -137,19 +129,69 @@ def simulate_event(state: DeviceState, scenario: str) -> EventRecord:
             reason="The simulated client credential did not match the lab profile.",
             target="MQTT",
         )
-    elif scenario == "MQTT plaintext warning":
+    elif scenario == "Default credential access":
+        security["weak_credential_attempts"] += 1
+        state["selected_component"] = "GPIO23"
+        state["active_path"] = ["Wi-Fi", "MQTT", "ESP32", "GPIO23", "Relay"]
+        if state["mode"] == "Vulnerable":
+            security["accepted_commands"] += 1
+            security["accepted_default_credentials"] += 1
+            state["gpio"]["GPIO23"]["state"] = "HIGH"
+            state["gpio"]["GPIO23"]["security_state"] = "Default credential accepted"
+            decision = "Accepted (default credential)"
+            reason = "The vulnerable profile accepts the one fixed sample credential."
+        else:
+            security["blocked_requests"] += 1
+            state["gpio"]["GPIO23"]["security_state"] = "Default credential rejected"
+            decision = "Rejected"
+            reason = "The hardened profile requires a non-default authenticated identity."
+        _record(
+            state,
+            event_type="Default credential access attempt",
+            component="MQTT authentication → GPIO23 / Relay",
+            severity="HIGH",
+            decision=decision,
+            reason=reason,
+            target="GPIO23",
+        )
+    elif scenario == "Unauthorized MQTT topic write":
+        security["unauthorized_topic_writes"] += 1
+        state["selected_component"] = "GPIO23"
+        state["active_path"] = ["Wi-Fi", "MQTT topic", "ESP32", "GPIO23", "Relay"]
+        if state["mode"] == "Vulnerable":
+            security["accepted_commands"] += 1
+            security["accepted_unauthorized_commands"] += 1
+            state["gpio"]["GPIO23"]["state"] = "HIGH"
+            state["gpio"]["GPIO23"]["security_state"] = "Unauthorized command accepted"
+            decision = "Accepted (open topic policy)"
+            reason = "The vulnerable profile has no topic ACL for this sample relay command."
+        else:
+            security["blocked_requests"] += 1
+            state["gpio"]["GPIO23"]["security_state"] = "Topic ACL denied"
+            decision = "Rejected (topic ACL)"
+            reason = "The hardened profile denies this command under its simulated topic ACL."
+        _record(
+            state,
+            event_type="Unauthorized MQTT topic write",
+            component="MQTT topic → GPIO23 / Relay",
+            severity="HIGH",
+            decision=decision,
+            reason=reason,
+            target="GPIO23",
+        )
+    elif scenario == "MQTT without TLS":
         state["selected_component"] = "MQTT"
         state["active_path"] = ["Wi-Fi", "MQTT", "ESP32"]
         if state["mode"] == "Hardened":
             security["blocked_requests"] += 1
             decision = "Rejected"
-            reason = "The hardened profile requires TLS before a broker session is accepted."
+            reason = "The profile requires TLS; the dashboard performs no broker handshake."
         else:
             decision = "Observed"
-            reason = "MQTT is connected without TLS; payload confidentiality is not protected."
+            reason = "The vulnerable profile has no TLS policy; this UI observes no payload or network traffic."
         _record(
             state,
-            event_type="MQTT plaintext warning",
+            event_type="MQTT transport policy check",
             component="Wi-Fi → MQTT",
             severity="MEDIUM",
             decision=decision,
