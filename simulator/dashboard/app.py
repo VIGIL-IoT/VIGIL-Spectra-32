@@ -473,7 +473,7 @@ def render_event_rows(events: list[dict[str, Any]]) -> None:
 
 
 def render_overview() -> None:
-    board_col, detail_col = st.columns([1.4, 1], gap="large", vertical_alignment="top")
+    board_col, detail_col = st.columns([1.2, 1], gap="medium", vertical_alignment="top")
     with board_col:
         with st.container(border=True, key="board_panel"):
             st.markdown(

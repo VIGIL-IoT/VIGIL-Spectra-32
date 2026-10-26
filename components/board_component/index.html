@@ -16,8 +16,8 @@
       }
       * { box-sizing: border-box; }
       html, body { margin: 0; width: 100%; min-height: 0; overflow: hidden; background: transparent; }
-      #stage { width: 100%; line-height: 0; }
-      svg { display: block; width: 100%; height: auto; overflow: visible; }
+      #stage { display: flex; justify-content: center; width: 100%; line-height: 0; overflow: hidden; }
+      svg { display: block; width: min(100%, 560px); max-width: 100%; height: auto; overflow: hidden; }
       .board-shell { fill: #15201c; stroke: #60736a; stroke-width: 1.4; }
       .board-inset { fill: none; stroke: #2d4038; stroke-width: 1; }
       .board-mark { fill: #aebbb2; font-size: 11px; letter-spacing: 1.15px; }
@@ -29,7 +29,7 @@
       .chip { fill: #171b1a; stroke: #86928a; stroke-width: 1.2; }
       .chip-pin { stroke: #87948c; stroke-width: 1; }
       .component-label { fill: #dce5de; font-size: 11px; text-anchor: middle; letter-spacing: .5px; }
-      .component-note { fill: #a0aaa5; font-size: 11px; text-anchor: middle; }
+      .component-note { fill: #a0aaa5; font-size: 10px; text-anchor: middle; }
       .button-pad { fill: #1e2622; stroke: #8d9a91; stroke-width: 1.2; }
       .button-inner { fill: #0b100e; stroke: #56645c; stroke-width: 1; }
       .usb-frame { fill: #9ba6a0; stroke: #d3dad5; stroke-width: 1; }
@@ -56,18 +56,6 @@
       .component:focus-visible .module-shield, .component:focus-visible .chip,
       .component:focus-visible .button-inner, .component:focus-visible .led-body { stroke: var(--board-accent); stroke-width: 2; }
       .callout-line { stroke: #3b594d; stroke-width: 1; stroke-dasharray: 2 4; }
-      @media (max-width: 540px) {
-        html, body { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
-        #stage { width: max-content; }
-        svg { min-width: 500px; }
-        .board-mark { font-size: 14px; }
-        .board-code { font-size: 11px; }
-        .pin-label { font-size: 18px; }
-        .component-label { font-size: 14px; }
-        .component-note { font-size: 11px; }
-        body::-webkit-scrollbar { height: 5px; }
-        body::-webkit-scrollbar-thumb { background: #4c6257; border-radius: 3px; }
-      }
     </style>
   </head>
   <body>
@@ -153,13 +141,13 @@
           <line class="chip-pin" x1="480" y1="133" x2="487" y2="133" /><line class="chip-pin" x1="480" y1="147" x2="487" y2="147" />
           <line class="chip-pin" x1="480" y1="161" x2="487" y2="161" /><line class="chip-pin" x1="480" y1="175" x2="487" y2="175" />`, selected, path);
         const flash = componentMarkup("FLASH", `
-          <rect class="chip" x="355" y="227" width="90" height="37" rx="3" />
+          <rect class="chip" x="344" y="227" width="112" height="37" rx="3" />
           <text class="component-label" x="400" y="243">SPI FLASH</text>
           <text class="component-note" x="400" y="255">FIRMWARE STORAGE</text>
-          <line class="chip-pin" x1="361" y1="223" x2="361" y2="227" /><line class="chip-pin" x1="373" y1="223" x2="373" y2="227" />
-          <line class="chip-pin" x1="385" y1="223" x2="385" y2="227" /><line class="chip-pin" x1="397" y1="223" x2="397" y2="227" />
-          <line class="chip-pin" x1="409" y1="223" x2="409" y2="227" /><line class="chip-pin" x1="421" y1="223" x2="421" y2="227" />
-          <line class="chip-pin" x1="433" y1="223" x2="433" y2="227" />`, selected, path);
+          <line class="chip-pin" x1="352" y1="223" x2="352" y2="227" /><line class="chip-pin" x1="366" y1="223" x2="366" y2="227" />
+          <line class="chip-pin" x1="380" y1="223" x2="380" y2="227" /><line class="chip-pin" x1="394" y1="223" x2="394" y2="227" />
+          <line class="chip-pin" x1="408" y1="223" x2="408" y2="227" /><line class="chip-pin" x1="422" y1="223" x2="422" y2="227" />
+          <line class="chip-pin" x1="436" y1="223" x2="436" y2="227" /><line class="chip-pin" x1="450" y1="223" x2="450" y2="227" />`, selected, path);
         const en = componentMarkup("EN", `
           <rect class="button-pad" x="322" y="286" width="44" height="32" rx="4" />
           <rect class="button-inner" x="331" y="292" width="26" height="19" rx="3" />
@@ -178,7 +166,7 @@
           <text class="component-label" x="400" y="386">USB-C / UART</text>`, selected, path);
 
         document.getElementById("stage").innerHTML = `
-          <svg viewBox="125 0 555 410" role="group" aria-label="Interactive ESP32 DevKit-style board with selectable pins and components">
+          <svg viewBox="110 0 590 410" role="group" aria-label="Interactive ESP32 DevKit-style board with selectable pins and components">
             <text class="board-mark" x="400" y="14" text-anchor="middle">SPECTRA-32 · ESP32 DEVKIT BOARD MAP</text>
             <path class="board-shell" d="M279 24h242a10 10 0 0 1 10 10v350a10 10 0 0 1-10 10H279a10 10 0 0 1-10-10V34a10 10 0 0 1 10-10Z" />
             <path class="board-inset" d="M286 31h228v336H286z" />
