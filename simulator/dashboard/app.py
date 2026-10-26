@@ -269,8 +269,14 @@ def render_network_status() -> None:
           <span class="threat-chip {threat.lower()}">THREAT {esc(threat)}</span>
         </div>
         <div class="network-grid">
-          <div class="network-cell"><span>Wi-Fi · {'Sample connected' if wifi['connected'] else 'Sample offline'}</span><strong>{esc(wifi_value)}</strong></div>
-          <div class="network-cell"><span>MQTT · {'Sample connected' if mqtt['connected'] else 'Sample offline'}</span><strong><span class="state-chip {mqtt_class}">{esc(mqtt_value)}</span></strong></div>
+          <div class="network-cell">
+            <span class="network-label">Wi-Fi · {'Sample connected' if wifi['connected'] else 'Sample offline'}</span>
+            <strong class="network-value network-value--telemetry">{esc(wifi_value)}</strong>
+          </div>
+          <div class="network-cell">
+            <span class="network-label">MQTT · {'Sample connected' if mqtt['connected'] else 'Sample offline'}</span>
+            <strong class="network-value"><span class="state-chip {mqtt_class}">{esc(mqtt_value)}</span></strong>
+          </div>
         </div>
         <p class="network-footnote">Illustrative link state only. This dashboard sends no Wi-Fi or MQTT traffic.</p>
         """,
@@ -418,7 +424,7 @@ def render_metrics() -> None:
         f"""
         <div class="metrics-head"><h2>Security metrics</h2><span>Sample session · local simulation</span></div>
         <div class="metric-strip" role="group" aria-label="SPECTRA-32 security metrics">{cells}</div>
-        <p class="data-boundary">Initial counters use the sample values in the brief. Controls update this session only; no traffic reaches a device or broker.</p>
+        <p class="data-boundary">Sample values are from the brief. Controls affect only this session; no device or broker receives traffic.</p>
         """,
         unsafe_allow_html=True,
     )
@@ -439,7 +445,7 @@ def render_attack_path() -> None:
         items.append(f'<span class="{cls}">{esc(label)}</span>')
         if index < len(labels) - 1:
             items.append('<span class="path-arrow" aria-hidden="true">→</span>')
-    caption = "Highlighted route from the latest simulated event." if active else "Example command route; run a scenario to highlight its affected path."
+    caption = "Highlighted by the latest simulated event." if active else "Example route · run a scenario to highlight the affected path."
     st.markdown(
         f"""
         <div class="panel-title"><h2>Attack path</h2><span>{'Active simulation' if active else 'Idle route'}</span></div>
