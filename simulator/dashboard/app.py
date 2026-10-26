@@ -85,9 +85,9 @@ def render_topbar() -> None:
         st.markdown(
             f"""
             <div class="status-cluster">
-              <span class="status-chip"><i class="status-dot"></i>{'ONLINE' if state['online'] else 'OFFLINE'}</span>
+              <span class="status-chip"><i class="status-dot"></i>SESSION MODEL</span>
               <span class="threat-chip {esc(threat.lower())}">THREAT {esc(threat)}</span>
-              <span class="sample-stamp">SIMULATED NODE</span>
+              <span class="sample-stamp">NO LIVE DEVICE</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -171,8 +171,8 @@ def render_controls() -> None:
 def render_network_status() -> None:
     wifi = state["wifi"]
     mqtt = state["mqtt"]
-    wifi_value = f"{wifi['ssid']} · {wifi['rssi']} dBm" if wifi["connected"] else "Disconnected"
-    mqtt_value = "TLS secured" if mqtt["tls"] else "Plaintext"
+    wifi_value = f"{wifi['ssid']} · {wifi['rssi']} dBm (sample)" if wifi["connected"] else "Sample offline"
+    mqtt_value = "TLS required · profile" if mqtt["tls"] else "No TLS · simulated"
     mqtt_class = "good" if mqtt["tls"] else "bad"
     threat = str(state["security"]["threat_level"])
     st.markdown(
@@ -183,9 +183,10 @@ def render_network_status() -> None:
           <span class="threat-chip {threat.lower()}">THREAT {esc(threat)}</span>
         </div>
         <div class="network-grid">
-          <div class="network-cell"><span>Wi-Fi · {'Connected' if wifi['connected'] else 'Offline'}</span><strong>{esc(wifi_value)}</strong></div>
-          <div class="network-cell"><span>MQTT · {'Connected' if mqtt['connected'] else 'Offline'}</span><strong><span class="state-chip {mqtt_class}">{esc(mqtt_value)}</span></strong></div>
+          <div class="network-cell"><span>Wi-Fi · {'Sample connected' if wifi['connected'] else 'Sample offline'}</span><strong>{esc(wifi_value)}</strong></div>
+          <div class="network-cell"><span>MQTT · {'Sample connected' if mqtt['connected'] else 'Sample offline'}</span><strong><span class="state-chip {mqtt_class}">{esc(mqtt_value)}</span></strong></div>
         </div>
+        <p class="network-footnote">Illustrative link state only. This dashboard sends no Wi-Fi or MQTT traffic.</p>
         """,
         unsafe_allow_html=True,
     )
@@ -218,8 +219,9 @@ def component_details(component_id: str) -> tuple[str, str, list[tuple[str, str]
             "MQTT broker",
             "Network service",
             [
-                ("Connection", "Connected" if mqtt["connected"] else "Offline"),
-                ("Transport", "TLS secured" if mqtt["tls"] else "Plaintext"),
+                ("Modelled link", "Sample connected" if mqtt["connected"] else "Sample offline"),
+                ("TLS policy", "Required by profile" if mqtt["tls"] else "Not required by profile"),
+                ("Live broker", "No connection"),
                 ("Authentication failures", str(security["auth_failures"])),
             ],
             VIRTUAL_COMPONENTS["MQTT"]["description"],
