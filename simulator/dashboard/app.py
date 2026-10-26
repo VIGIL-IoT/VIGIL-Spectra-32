@@ -27,7 +27,12 @@ st.set_page_config(
 )
 st.markdown(f"<style>{CSS}</style>", unsafe_allow_html=True)
 
-if "device_state" not in st.session_state:
+if (
+    "device_state" not in st.session_state
+    or not isinstance(st.session_state.device_state, dict)
+    or "mode" not in st.session_state.device_state
+):
+    # Reset legacy session data when Streamlit reloads from the earlier console schema.
     st.session_state.device_state = create_initial_state()
 if "active_view" not in st.session_state:
     st.session_state.active_view = "Console"
@@ -70,10 +75,12 @@ def render_topbar() -> None:
             key="active_view",
         )
     with status:
+        threat = str(state["security"]["threat_level"])
         st.markdown(
             f"""
             <div class="status-cluster">
               <span class="status-chip"><i class="status-dot"></i>{'ONLINE' if state['online'] else 'OFFLINE'}</span>
+              <span class="threat-chip {esc(threat.lower())}">THREAT {esc(threat)}</span>
               <span class="sample-stamp">SIMULATED NODE</span>
             </div>
             """,
