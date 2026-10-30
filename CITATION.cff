@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use SPECTRA-32 in research or teaching, please cite the project and include the exact commit used."
+title: "SPECTRA-32: Security Platform for Embedded Cyber Threat Research & Analysis"
+authors:
+  - name: "VIGIL-IoT"
+    affiliation: "VIGIL-IoT"
+type: software
+url: "https://github.com/VIGIL-IoT/VIGIL-Spectra-32"
+license: MIT

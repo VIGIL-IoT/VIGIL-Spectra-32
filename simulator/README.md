@@ -2,7 +2,7 @@
 
 **A VIGIL-IoT Project** · an interactive, session-local security console for the SPECTRA-32 sample node.
 
-The Streamlit app presents a clickable ESP32 DevKit-style board, 32-pin/component inspection, vulnerable and hardened profiles, bounded security scenarios, telemetry, an affected-path view, a searchable event log, and local USB serial discovery. The interface uses the dark, mint-accented visual system documented in [`docs/BRAND.md`](../docs/BRAND.md).
+The Streamlit app presents a clickable ESP32 DevKit-style board, 32-pin/component inspection, vulnerable and hardened profiles, bounded security scenarios, a session-counter chart, an affected-path view, a searchable event log, and local USB serial discovery. The interface uses the dark, mint-accented visual system documented in [`docs/BRAND.md`](../docs/BRAND.md).
 
 ## Simulation boundary
 
@@ -16,7 +16,7 @@ This detection is host-side. A Streamlit Community Cloud server cannot enumerate
 
 Chip detection is the only physical-device feature in this milestone. Current security scenarios still operate on the session model; they do not send attack traffic or commands to the board, and they do not show physical firmware logs. Real hardware telemetry will require a SPECTRA test firmware that emits structured serial events.
 
-The Python node model in `simulator/vulnerable/` remains a separate software-in-the-loop service. It exposes a loopback web page and REST API and can use the MQTT broker; the Streamlit dashboard does not connect to that API. The board illustration is not a wiring diagram. This project does not emulate ESP32 CPU, radio, GPIO timing, memory, flash, or power.
+The Python node model in `simulator/vulnerable/` remains a separate software-in-the-loop service. It exposes a loopback web page and REST API and can use the MQTT broker; the Streamlit dashboard does not connect to that API. The chart is not sensor telemetry, and the board illustration is not a wiring diagram. This project does not emulate ESP32 CPU, radio, GPIO timing, memory, flash, or power.
 
 ## Run the console
 

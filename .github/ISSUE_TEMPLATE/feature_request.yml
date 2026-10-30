@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a scoped engineering or research improvement.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or research need
+      description: Who needs this and what is currently difficult?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful change and how it would be observed.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Verification evidence
+      description: What test, run, or measurement would show this works?
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Scope and safety
+      options:
+        - label: The request is limited to software, hardware, and networks that are owned or explicitly authorized.
+          required: true
+        - label: Any simulated result will be labeled separately from physical-device evidence.
+          required: true

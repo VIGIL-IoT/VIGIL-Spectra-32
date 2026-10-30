@@ -7,14 +7,24 @@
 # Local credentials and experiment data
 .env
 .env.*
+!.env.example
 /data/raw/
 /results/raw/
 /local/
+*.pcap
+*.pcapng
+*.serial.log
 
 # Python-generated files
 __pycache__/
 *.py[cod]
 /.venv/
+.ruff_cache/
 
 # Local UI design and browser-inspection artifacts
 .taste-skill/
+
+# Archify QA receipts contain machine-specific paths and are regenerated locally.
+/.archify/**/*.browser-check.json
+/.archify/**/*.delivery.json
+/.archify/**/*.finalize*.json

@@ -1,79 +1,152 @@
 # SPECTRA-32
 
-**A VIGIL-IoT Project**  
-**Security Platform for Embedded Cyber Threat Research & Analysis**
+**A VIGIL-IoT Project** · **Security Platform for Embedded Cyber Threat Research & Analysis**
 
-SPECTRA-32 is the experimental attack-and-defense testbed of **VIGIL-IoT — Vulnerability Intelligence & Guarding for IoT Layers**.
+SPECTRA-32 is VIGIL-IoT's experimental attack-and-defense testbed for studying IoT vulnerabilities, secure communication, and cyber-physical resilience. Its research loop is **Build → Attack → Observe → Defend → Measure**. Experiments are limited to project-owned systems or explicitly authorized lab environments.
 
-> A low-cost ESP32 security testbed for evaluating IoT vulnerabilities, attack-defense mechanisms, secure communication, and cyber-physical resilience.
-
-The research loop is **Build → Attack → Observe → Defend → Measure**. Experiments stay inside owned or explicitly authorized lab systems and networks.
-
-[![Interactive experiment workflow](https://img.shields.io/github/actions/workflow/status/VIGIL-IoT/VIGIL-Spectra-32/deploy-workflow-page.yml?branch=main&label=Experiment%20workflow&logo=githubpages)](https://vigil-iot.github.io/VIGIL-Spectra-32/)
+[![Experiment workflow](https://img.shields.io/github/actions/workflow/status/VIGIL-IoT/VIGIL-Spectra-32/deploy-workflow-page.yml?branch=main&label=Experiment%20workflow&logo=githubpages)](https://vigil-iot.github.io/VIGIL-Spectra-32/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[Open the interactive experiment workflow →](https://vigil-iot.github.io/VIGIL-Spectra-32/)
+[Open the interactive research workflow →](https://vigil-iot.github.io/VIGIL-Spectra-32/) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-## What exists now
+## Status
 
-The repository contains the project identity and architecture, an incremental roadmap, research and safety notes, a local Python behavior model, the VIGIL-IoT Streamlit console, and an ESP-IDF reference port for later hardware validation.
+| Area | Status |
+|---|---|
+| Streamlit console | Implemented session-local behavior model with board illustration, deterministic scenarios, counters, and event log |
+| Python virtual node | HTTP/virtual LED routes implemented and covered by loopback tests; real broker integration not yet verified |
+| USB chip discovery | Host-side serial discovery and explicit esptool chip-ID probe; physical probe not recorded |
+| ESP-IDF firmware | Vulnerable classic ESP32 reference source only; no build or board validation recorded |
+| Security experiments | Replay and T800 protocols are planned; no experiment runs or measured results exist |
 
-The Streamlit console now uses the dark, mint-accented SPECTRA-32 interface with an interactive DevKit board, pin and component details, vulnerable/hardened profiles, session-local security scenarios, telemetry, attack-path highlights, and an event log. The console is an in-memory visualization and does not call the local node-model API, publish MQTT messages, send attack traffic, write firmware, or control hardware.
+Current maturity is **prototype / v0.1 software behavior model**. The console's Hardened profile and plotted counters are illustrative. They are not hardware measurements or evidence that a real defense works.
 
-## First milestone: v0.1 software simulation
+## What runs today
 
-The local Python model in `simulator/` exposes a web page and REST API, accepts `ON`/`OFF` MQTT messages, and tracks a virtual LED. It runs separately from the Streamlit console. The console uses its own session-local sample state; its vulnerable/hardened profile and event outcomes are illustrative comparisons, not defenses in the Python model or firmware.
+The Streamlit dashboard keeps its state in the current Streamlit session. Scenario actions update counters, virtual pin state, an event record, and the highlighted path. They do not call the Python node API or broker, send network traffic, write firmware, or control GPIO.
 
-This is software behavior simulation, not ESP32 emulation. It does not run ESP-IDF firmware or model ESP32 Wi-Fi, lwIP, GPIO timing, CPU, RAM, flash, or power. Board pins and components are illustrative rather than a wiring diagram. The later ESP-IDF port lives in `firmware/vulnerable/basic-node` and needs a real board plus ESP-IDF to validate.
+The optional Python node is a separate process with its own volatile virtual LED, loopback HTTP API, and MQTT client. Its default broker configuration listens only on `127.0.0.1`. It accepts repeated valid commands and does not implement authentication or replay prevention.
 
-### Run the Streamlit console
+The Hardware view enumerates USB serial ports on the machine running the Python app. **Identify chip** is an explicit local action that may reset the board but does not erase or write flash. Streamlit Community Cloud cannot access USB devices attached to your computer. Current attack scenarios remain session-only and do not control the physical board.
 
-Use Python 3.10+ and the pinned packages in `simulator/requirements.txt`. From the repository root:
+## Architecture
+
+```mermaid
+flowchart LR
+  Browser[Browser] -->|UI events| Streamlit[Streamlit console]
+  Streamlit --> Session[Per-session state]
+  Session --> Scenarios[Deterministic scenario model]
+  Scenarios --> Session
+  Streamlit --> Board[Interactive board illustration]
+  Streamlit --> Serial[Host USB discovery]
+
+  subgraph Separate local node
+    Client[HTTP client] <--> API[Python HTTP API]
+    Publisher[MQTT publisher] --> Broker[Loopback Mosquitto]
+    Broker --> Node[Virtual node state]
+    API <--> Node
+    Node --> Broker
+  end
+
+  subgraph Future hardware path — unverified
+    Firmware[ESP-IDF reference firmware] --> Lab[Isolated ESP32 lab]
+  end
+```
+
+See [the detailed architecture](docs/architecture.md), [requirements and scope](docs/requirements.md), [methodology](docs/methodology.md), and [known limitations](docs/limitations.md).
+
+## Quick start: Streamlit console
+
+Use Python 3.11 or newer. From the repository root:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r simulator/requirements.txt
+python -m pip install -r requirements.txt
 streamlit run simulator/dashboard/app.py
 ```
 
-Open `http://127.0.0.1:8501`. The console does not require the MQTT broker or the separate Python node model. Its sample counters and scenario results live only in the current Streamlit session.
+Open `http://127.0.0.1:8501`. The console does not require Mosquitto or the standalone node.
 
-### Run the optional local node model
+Run the automated tests:
 
-The node model and broker remain separate tools for the software-in-the-loop milestone. Start a loopback-only broker in one terminal with `mosquitto -c lab/simulation/mosquitto.conf`. In another terminal, run `python simulator/vulnerable/basic_node.py`. The model's minimal web page and REST API are available on `127.0.0.1:8080`; MQTT topics are `spectra/device01/cmd` and `spectra/device01/status`.
-
-The local model counts every valid command it applies, including repeats. This is observation instrumentation and does not prevent replay. Use the [hardware lab configuration](lab/mosquitto.conf.example) only later, on a dedicated network with no upstream connection.
-
-## Research tracks
-
-- [Project architecture](docs/ARCHITECTURE.md)
-- [Brand and interface guidance](docs/BRAND.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
-- [Safety and data handling](docs/SAFETY_AND_DATA.md)
-- [Research and paper selection](docs/research/RESEARCH_ANALYSIS.md)
-- [Streamlit threat and scenario catalog](docs/research/STREAMLIT_SCENARIO_CATALOG.md)
-- [T800 reproduction plan](docs/research/T800_REPRODUCTION_PLAN.md)
-- [T800 experiment protocol](docs/research/T800_EXPERIMENT_PROTOCOL.md)
-- [Experiment 01: MQTT command replay](experiments/EXP-01-replay/README.md)
-- [Software simulator guide](simulator/README.md)
-- [Streamlit device console](simulator/dashboard/app.py)
-
-The T800 paper is a separate, strong candidate for a faithful reproduction because its authors publish code and a hardware reproduction manual. It studies TCP port-scan filtering, not MQTT replay. ReplIoT is the closer research reference for replay-test methodology; SPECTRA-32 will clearly label any ESP32-specific adaptation rather than call it an exact reproduction.
-
-## Repository map
-
-```text
-simulator/                  v0.1 local software-in-the-loop model and dashboard
-firmware/
-  vulnerable/basic-node/   ESP-IDF reference port for later hardware runs
-  hardened/                reserved for separate hardened implementations
-experiments/
-  EXP-01-replay/           replay experiment design; not yet run
-lab/                       loopback simulation and isolated hardware broker configs
-docs/                      architecture, brand, safety, and roadmap
-docs/research/              paper analysis and T800 reproduction materials
+```powershell
+python -m unittest discover -s tests -v
+python -m compileall -q data services components simulator tests tools
+python tools/check_docs.py
 ```
 
-Each future experiment should keep the vulnerable and hardened implementations distinct and record its threat model, exact configuration, run provenance, failures, and measurements. Useful outcomes include accepted/rejected commands, latency, RAM/flash, bandwidth, recovery time, false positives/negatives, and power when measured with suitable instrumentation.
+The test suite uses a local loopback test server and Streamlit `AppTest`; it does not require a physical board or MQTT broker.
+
+To run the same focused lint and dependency checks as CI:
+
+```powershell
+python -m pip install -r requirements-dev.txt
+ruff check --select E4,E7,E9,F data services components simulator tests tools
+pip-audit -r requirements.txt
+pip-audit -r requirements-dev.txt
+```
+
+## Optional local Python node
+
+Install Mosquitto separately. Start the loopback-only broker in one terminal:
+
+```powershell
+mosquitto -c lab/simulation/mosquitto.conf
+```
+
+Start the node in another terminal:
+
+```powershell
+python simulator/vulnerable/basic_node.py
+```
+
+The page and REST API are available at `http://127.0.0.1:8080`. The API exposes `GET /api/state` and `POST /api/led` with exactly one `state=on` or `state=off` form value. MQTT command/status topics are `spectra/device01/cmd` and `spectra/device01/status`.
+
+The HTTP model has route tests. The MQTT path has not had a broker-backed integration run in this repository. Do not change the sample broker to listen on a LAN interface for desktop simulation.
+
+## Research and validation
+
+- [Experiment 01: MQTT command replay](experiments/EXP-01-replay/README.md) — protocol design only; no run ledger entries.
+- [Research analysis and paper selection](docs/research/RESEARCH_ANALYSIS.md)
+- [Streamlit scenario catalog](docs/research/STREAMLIT_SCENARIO_CATALOG.md)
+- [T800 reproduction plan](docs/research/T800_REPRODUCTION_PLAN.md) and [protocol](docs/research/T800_EXPERIMENT_PROTOCOL.md) — separate TCP port-scan paper track.
+- [Benchmarks](docs/benchmarks.md) — no measurements reported; proposed metrics and method only.
+- [Traceability matrix](docs/traceability.md) — connects requirements to evidence and verification status.
+- [Repository engineering audit](docs/REPOSITORY_AUDIT.md) — baseline findings, changes, checks, maturity scores, and remaining limits.
+- [SDG alignment](docs/sdg-alignment.md) — potential SDG 9.5 relationship only; no impact measured.
+
+Never treat paper-reported results or session-model values as SPECTRA-32 measurements.
+
+## Repository structure
+
+```text
+components/       Streamlit custom board component
+data/             Sample node state, scenarios, and board metadata
+services/         Session transitions and host-side chip identification
+simulator/
+  dashboard/      Streamlit app
+  vulnerable/     Separate Python behavior model
+  web/            Standalone node page
+firmware/
+  vulnerable/     Unverified classic ESP32 ESP-IDF reference source
+  hardened/       Reserved for separate future firmware defenses
+experiments/      Experiment definitions; no results yet
+lab/              Loopback and future isolated-lab broker configurations
+docs/             Architecture, requirements, protocols, limits, and research
+tests/            Python unit, HTTP-route, and Streamlit UI tests
+```
+
+## Safety and limitations
+
+The desktop broker and node are unauthenticated and loopback-only. Future hardware testing requires an isolated access point with no upstream connection, owned ESP32 hardware, and a reviewed run protocol. Do not expose the example broker or vulnerable firmware to a home, office, campus, public, or Internet-facing network. The initial hardware plan is limited to a board-verified low-voltage LED.
+
+The software model does not emulate ESP32 radio, lwIP, GPIO timing, CPU, RAM, flash, or power. The board map is illustrative, and no hardened firmware or physical experiment is verified. See [Safety and data handling](docs/SAFETY_AND_DATA.md) and [SECURITY.md](SECURITY.md).
+
+## Contributing and citation
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change. Report security issues using the process in [SECURITY.md](SECURITY.md). Cite the project using [CITATION.cff](CITATION.cff).
+
+## License
+
+SPECTRA-32-authored material is available under the MIT License in [LICENSE](LICENSE). The generated workflow diagram also includes third-party assets with separate notices; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

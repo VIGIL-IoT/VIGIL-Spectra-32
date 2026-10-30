@@ -135,6 +135,12 @@ def identify_esp_chip(port_name: str, timeout_seconds: int = 20) -> ChipIdentifi
             "chip": "Unknown",
             "message": "esptool is not installed. Install simulator/requirements.txt and restart the app.",
         }
+    if result.returncode != 0:
+        return {
+            "status": "unidentified",
+            "chip": "Unknown",
+            "message": "esptool could not complete the chip-identification request. Confirm the port, close serial monitors, and retry.",
+        }
     status, chip = classify_esptool_output(output)
     if status == "supported":
         return {"status": status, "chip": chip, "message": "Classic ESP32 detected; supported by SPECTRA-32 v0.1."}

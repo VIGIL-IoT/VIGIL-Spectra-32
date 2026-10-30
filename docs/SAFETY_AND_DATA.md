@@ -4,10 +4,11 @@ SPECTRA-32 is an embedded-security research platform. All testing is limited to 
 
 ## Computer-run simulator
 
-1. The v0.1 model, Streamlit dashboard, and Mosquitto example bind to 127.0.0.1. Run Streamlit from the repository root so `.streamlit/config.toml` is applied; keep all three services loopback-only.
+1. The standalone v0.1 node and Mosquitto example bind to 127.0.0.1. The Streamlit server config also binds its local development server to 127.0.0.1. Run Streamlit from the repository root so `.streamlit/config.toml` is applied.
 2. The broker has anonymous access and no TLS by design. Do not change it to listen on a LAN interface for the software-only milestone.
 3. The model changes only a virtual LED state. It does not send traffic to other hosts or control a physical output.
-4. The Streamlit security-event controls update only the current dashboard session's in-memory model. Replay, authentication, high request-rate, OTA, and debug scenarios do not send MQTT messages or network traffic. The separate node API is used only by the virtual GPIO4 ON/OFF control. No scanning, flooding, brute force, OTA write, or interaction with unrelated devices is part of this software milestone.
+4. The Streamlit security-event controls update only the current dashboard session's in-memory model. Replay, authentication, high request-rate, OTA, and debug scenarios do not call the node API, publish MQTT messages, or send network traffic. The dashboard is not connected to the standalone node process. No scanning, flooding, brute force, OTA write, physical GPIO control, or interaction with unrelated devices is part of this software milestone.
+5. USB serial discovery runs on the machine hosting the Streamlit Python process. Port listing does not open the port. The user-triggered esptool chip-ID probe may reset a board but does not write or erase flash.
 
 ## Later hardware runs
 

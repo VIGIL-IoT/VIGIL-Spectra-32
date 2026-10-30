@@ -40,6 +40,13 @@ class ScenarioCatalogTests(unittest.TestCase):
         self.assertIn("--no-stub", run_command.call_args.args[0])
         self.assertNotIn("write-flash", run_command.call_args.args[0])
 
+    @patch("services.hardware.list_serial_ports", return_value=([{"device": "COM3", "description": "USB serial", "vendor_id": 1, "product_id": 2}], None))
+    @patch("services.hardware.subprocess.run", return_value=SimpleNamespace(stdout="Detecting chip type... ESP32", stderr="probe failed", returncode=2))
+    def test_failed_esptool_command_is_not_reported_as_a_detected_chip(self, _run_command, _list_ports) -> None:
+        result = identify_esp_chip("COM3")
+        self.assertEqual(result["status"], "unidentified")
+        self.assertEqual(result["chip"], "Unknown")
+
     def test_all_scenarios_run_in_both_profiles(self) -> None:
         for profile in ("Vulnerable", "Hardened"):
             for scenario in SCENARIOS:
@@ -52,6 +59,24 @@ class ScenarioCatalogTests(unittest.TestCase):
 
                     self.assertEqual(event["event_type"], state["events"][0]["event_type"])
                     self.assertEqual(event["target"], state["events"][0]["target"])
+
+    def test_replay_outcome_differs_between_session_profiles(self) -> None:
+        outcomes = {}
+        for profile in ("Vulnerable", "Hardened"):
+            state = create_initial_state()
+            set_security_mode(state, profile)
+            set_simulation_mode(state, True)
+            event = simulate_event(state, "Replay attempt")
+            outcomes[profile] = event["decision"]
+
+        self.assertEqual(outcomes, {"Vulnerable": "Accepted", "Hardened": "Rejected"})
+
+    def test_event_history_is_capped_at_sixty_records(self) -> None:
+        state = create_initial_state()
+        set_simulation_mode(state, True)
+        for _ in range(65):
+            simulate_event(state, "Normal traffic")
+        self.assertEqual(len(state["events"]), 60)
 
 
 if __name__ == "__main__":
