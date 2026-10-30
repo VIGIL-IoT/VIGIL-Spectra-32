@@ -81,6 +81,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | NFR-05 | UI and model state remain bounded: session event history is capped at 60 events and chart history at 60 samples; the counter chart uses a readable zero-based scale and shows the latest sample even when only one sample exists. |
 | NFR-06 | Experiment files must separate measured, simulated, expected, and paper-reported outcomes. |
 | NFR-07 | The Python 3.14 quality job exports and validates a CycloneDX 1.5 SBOM for the locked runtime dependency set, then uploads it as a short-lived artifact. |
+| NFR-08 | Dashboard colors and typography follow `docs/BRAND.md`; bundled fonts load locally so the UI does not depend on third-party font requests. |
 
 ## Technical stack
 

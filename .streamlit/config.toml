@@ -2,16 +2,37 @@
 address = "127.0.0.1"
 port = 8501
 headless = true
+enableStaticServing = true
 
 [browser]
 gatherUsageStats = false
 
+[[theme.fontFaces]]
+family = "DM Sans"
+url = "app/static/fonts/DM-Sans-Variable.ttf"
+weight = "100 1000"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Manrope"
+url = "app/static/fonts/Manrope-Variable.ttf"
+weight = "200 800"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "DM Mono"
+url = "app/static/fonts/DM-Mono-Regular.ttf"
+weight = "400"
+style = "normal"
+
 [theme]
 base = "dark"
-primaryColor = "#B8F36A"
-backgroundColor = "#0B100E"
-secondaryBackgroundColor = "#111917"
-textColor = "#EAF2ED"
-font = "sans serif"
+primaryColor = "#74DFC3"
+backgroundColor = "#0D1111"
+secondaryBackgroundColor = "#151A1A"
+textColor = "#F2F4F1"
+font = "DM Sans"
+headingFont = "Manrope"
+codeFont = "DM Mono"
 baseRadius = "small"
-borderColor = "#2A3C35"
+borderColor = "#2B3531"

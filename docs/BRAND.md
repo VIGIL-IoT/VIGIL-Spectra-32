@@ -29,6 +29,8 @@ Use the existing SPECTRA-32 console direction: a restrained dark data terminal, 
 
 Use DM Sans for interface text, Manrope for titles, and DM Mono for compact telemetry. Status values must include text labels so color is never the only indicator.
 
+The Streamlit dashboard self-hosts these font files from the repository so local and hosted sessions use the same type without fetching fonts from a third-party service. Asset sources, revisions, hashes, and license files are listed in [typography asset provenance](typography-assets.md).
+
 ## Voice
 
 Be calm, direct, and research-oriented. Distinguish planned work, source code, hardware-verified behavior, and measured findings. Label the vulnerable baseline and lab-only setup plainly without turning the interface into an attack console.

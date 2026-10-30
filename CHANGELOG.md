@@ -17,6 +17,7 @@ This project has no published version tags or release notes in the current repos
 ### Improved
 
 - Made the session counter chart readable from a zero baseline, added latest-sample markers, and kept time labels distinct at short intervals.
+- Aligned Streamlit and board colors with the documented VIGIL-IoT palette; bundled licensed DM Sans, Manrope, and DM Mono fonts for consistent local rendering.
 
 ### Limitations
 

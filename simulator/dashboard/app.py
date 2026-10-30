@@ -519,12 +519,17 @@ def render_command_activity() -> None:
             )
         )
     chart_data = pd.DataFrame(chart_rows)
+    time_start = chart_rows[0]["Time"]
+    time_end = chart_rows[-1]["Time"]
+    if time_start == time_end:
+        time_start -= pd.Timedelta(seconds=2)
+        time_end += pd.Timedelta(seconds=2)
     max_count = max((row["Value"] for row in chart_rows), default=0)
     tick_step = max(1, math.ceil(max_count / 5))
     chart_max = tick_step * 5
     chart_ticks = list(range(0, chart_max + 1, tick_step))
     chart_spec = {
-        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
         "layer": [
             {"mark": {"type": "line", "strokeWidth": 2, "clip": True}},
             {
@@ -536,6 +541,10 @@ def render_command_activity() -> None:
             "x": {
                 "field": "Time",
                 "type": "temporal",
+                "scale": {
+                    "domain": [time_start.isoformat(), time_end.isoformat()],
+                    "nice": False,
+                },
                 "axis": {
                     "title": "Time",
                     "format": "%H:%M:%S",
@@ -560,7 +569,7 @@ def render_command_activity() -> None:
                 "type": "nominal",
                 "scale": {
                     "domain": ["Accepted commands", "Blocked requests"],
-                    "range": ["#56d7c4", "#ff946b"],
+                    "range": ["#74dfc3", "#e8bd85"],
                 },
                 "legend": {"title": None, "orient": "top", "direction": "horizontal"},
             },

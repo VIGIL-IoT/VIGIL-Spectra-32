@@ -52,6 +52,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Added an ESP-IDF 6.1 build workflow for classic `esp32`; CI passed and generated the checked-in component lock for ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0.
 - Added a Python 3.14 CI step that exports CycloneDX 1.5 from the locked runtime dependencies, validates its format and contents, then uploads a 30-day artifact. Run `41094597806` passed; its downloaded artifact contains 51 runtime components and excludes the development tools.
 - Refined the bounded session counter chart with an explicit zero-based scale, readable integer ticks, visible latest-sample points, and second-resolution time labels. A local visual review at 1280×720 confirmed both series and their axes are visible below the board; this remains software-model UI, not device telemetry.
+- Aligned the Streamlit theme and board component with `docs/BRAND.md`; self-hosted DM Sans, Manrope, and DM Mono at a pinned upstream revision with local OFL texts and SHA-256 provenance.
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
 - Added `.gitignore` rules for captures, serial logs, and local generated Archify QA receipts.
@@ -145,8 +146,17 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 ## Follow-up Verification: Session Counter Chart
 
 - Updated the local chart to use an explicit zero-based integer scale, two separately colored counters, and latest-sample markers so a fresh or flat series remains visible. Time labels include seconds to distinguish samples recorded close together.
+- Matched the chart's Vega-Lite schema to the bundled v6 renderer and set a finite x-axis domain, including a padded domain when the chart has only one timestamp.
 - Local visual review at 1280×720 showed the chart and adjacent lower dashboard cards aligned without overlap. The chart represents only this Streamlit session.
-- The 16-test suite, focused Ruff checks, Python compilation, and `git diff --check` passed after this change; CI confirmation is recorded by the associated main-branch run.
+- The 16-test suite, focused Ruff checks, Python compilation, documentation-link check, and `git diff --check` passed after this change; CI confirmation is recorded by the associated main-branch run.
+
+## Follow-up Verification: Dashboard Brand Assets
+
+- The local Streamlit app served all three bundled fonts with HTTP 200. Browser font checks passed for DM Sans, Manrope, and DM Mono; the board iframe also reported DM Sans loaded.
+- Local browser review showed the updated mint/amber palette across the board, counter chart, and lower cards. The `static/` directory is app-local and contains only the three font files.
+- Taste Skill lint reported 0 failures and 0 warnings. Responsive screenshots at 1440, 768, and 390 pixels confirmed the header no longer collides with navigation; the board fits the desktop/tablet canvas, and the lower cards align in the reviewed desktop layout.
+- The visual inspector still reports compact text (46% below 13 px) and three font families. The small text is concentrated in schematic pin labels, chart axes, and metadata; the three families are explicitly required by `docs/BRAND.md`. It also reports that most dashboard panels are below the first screen, consistent with this scrollable console.
+- NFR-08 is verified for the local UI and its static assets; hosted deployment rendering has not been independently observed in this audit.
 
 ## Security Findings
 
