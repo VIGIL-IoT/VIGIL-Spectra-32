@@ -40,7 +40,7 @@ flowchart LR
   Streamlit --> Board[Interactive board illustration]
   Streamlit --> Serial[Host USB discovery]
 
-  subgraph Separate local node
+  subgraph LocalNode["Separate local node"]
     Client[HTTP client] <--> API[Python HTTP API]
     Publisher[MQTT publisher] --> Broker[Loopback Mosquitto]
     Broker --> Node[Virtual node state]
@@ -48,7 +48,7 @@ flowchart LR
     Node --> Broker
   end
 
-  subgraph Future hardware path — unverified
+  subgraph FutureHardware["Future hardware path (unverified)"]
     Firmware[ESP-IDF reference firmware] --> Lab[Isolated ESP32 lab]
   end
 ```
