@@ -1,0 +1,40 @@
+name: ESP32 firmware build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/esp32-firmware.yml
+      - firmware/vulnerable/basic-node/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: esp32-firmware-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-classic-esp32:
+    name: ESP-IDF 6.1 · classic ESP32
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build firmware and resolve components
+        uses: espressif/esp-idf-ci-action@9d38657f3d789ca759b2b37aaf5ceffbc42c4f0d # v1
+        with:
+          path: firmware/vulnerable/basic-node
+          esp_idf_version: v6.1
+          target: esp32
+          command: idf.py build
+
+      - name: Publish generated dependency lock for review
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: spectra32-esp-idf-v6.1-dependencies-lock
+          path: firmware/vulnerable/basic-node/dependencies.lock
+          if-no-files-found: error
+          retention-days: 7
