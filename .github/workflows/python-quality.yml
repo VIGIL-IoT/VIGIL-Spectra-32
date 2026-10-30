@@ -13,6 +13,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  mqtt-integration:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: 0.13.6
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+
+      - name: Install Mosquitto broker
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y mosquitto
+          sudo systemctl stop mosquitto || true
+
+      - name: Install locked application and development dependencies
+        run: uv sync --locked --group dev
+
+      - name: Exercise MQTT command and status flow on loopback
+        run: uv run --locked --group dev python -m unittest discover -s tests -p "test_node_mqtt.py" -v
+
   test:
     runs-on: ubuntu-24.04
     strategy:

@@ -66,7 +66,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | FR-03 | Provide bounded, inspectable events and counters for catalogued scenarios, with a readable session-local time series for accepted commands and blocked requests. |
 | FR-04 | Enumerate host serial ports and run chip identification only after an explicit UI action. |
 | FR-05 | Provide a separate loopback Python node API for virtual LED state and control. |
-| FR-06 | Provide optional MQTT command/status behavior on the separate node, with lab-only broker guidance. |
+| FR-06 | Provide optional MQTT command/status behavior on the separate node, with lab-only broker guidance and a loopback broker integration check in CI. |
 | FR-07 | Keep the ESP-IDF vulnerable reference path separate from dashboard simulation and from any future hardened firmware. |
 | FR-08 | Preserve run provenance, failure records, configuration, and evidence for any future experiment. |
 
@@ -95,7 +95,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | MQTT client | Paho MQTT 2.1.0 | Separate virtual node, MQTT 3.1.1 client protocol |
 | USB serial | pySerial 3.5 | Host-side port discovery |
 | Chip probe | esptool 5.6.0 | Explicit classic/other ESP identification |
-| Broker | Mosquitto | Optional; version not recorded |
+| Broker | Mosquitto | Optional local broker; the CI integration job uses Ubuntu 24.04's package |
 | Firmware | ESP-IDF 6.1.0, classic `esp32` target | CI compile passes; no physical board verification |
 | Firmware MQTT | `espressif/mqtt` 1.1.0 | Exact version and component hash recorded in `firmware/vulnerable/basic-node/dependencies.lock` |
 | Front end | HTML, CSS, JavaScript, SVG | Streamlit custom board component and standalone node page |
