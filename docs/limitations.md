@@ -19,7 +19,7 @@
 
 ## Firmware and hardware
 
-- ESP-IDF source is not built or flashed in this environment. No physical ESP32, sensor, or calibrated measurement device was used in the audit.
+- ESP-IDF 6.1 compiles the classic ESP32 target in CI, but the image has not been flashed or verified on a physical board. No sensor or calibrated measurement device was used in the audit.
 - The vulnerable firmware and lab broker lack application authentication and transport encryption. They are unsafe outside an isolated, owned lab.
 - The firmware's HTTP/MQTT output path is separate from dashboard controls. There is no browser-to-board attack command channel or physical event log view.
 - The board/pin mapping requires validation against the exact physical board before wiring. Only a low-voltage LED with suitable current limiting is in the first hardware plan; no hazardous actuator is supported.
@@ -36,7 +36,7 @@
 
 - Python dependencies are pinned in `pyproject.toml` and resolved in the cross-platform `uv.lock`; the lock is generated with uv 0.13.6 and checked in CI with `--locked`.
 - Python 3.14.7 was tested locally. CI covers Python 3.12, 3.13, and 3.14; the other matrix interpreters are not installed in this local environment.
-- Mosquitto and ESP-IDF versions are not recorded as locally verified. Firmware component resolution has no checked-in dependency lock.
+- Mosquitto is not installed locally. The firmware CI build uses ESP-IDF 6.1.0 and the checked-in `dependencies.lock` pins `espressif/mqtt` 1.1.0; neither broker-backed behavior nor physical firmware behavior is verified.
 - No package build is defined because the project is an application repository, not a distributable Python library.
 - GitHub Actions audits the locked runtime and development environment with `pip-audit`. No SBOM is generated yet.
 

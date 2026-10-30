@@ -1,6 +1,6 @@
 # SPECTRA-32 Research Analysis
 
-**Status:** desk research and implementation planning; the firmware has not been built or flashed and no security experiment has been run.  
+**Status:** desk research and implementation planning; the firmware compiles in ESP-IDF 6.1 CI but has not been flashed, and no security experiment has been run.
 **Research checked:** 25 October 2026.
 
 ## Recommendation

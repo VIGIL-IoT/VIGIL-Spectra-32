@@ -6,7 +6,7 @@ SPECTRA-32 uses staged implementation so the model can be inspected before hardw
 
 1. **Streamlit session model:** deterministic scenario transitions mutate in-memory `DeviceState`, append an event, update a virtual pin/counter, and render the result. No broker, node API, radio, or physical GPIO call is made by a scenario.
 2. **Standalone software node:** `VirtualNode` owns volatile virtual-LED state. A loopback HTTP server and optional Paho MQTT link call the same state object. The dashboard does not consume this service.
-3. **ESP-IDF reference firmware:** a separate, intentionally vulnerable classic ESP32 implementation models HTTP/MQTT control and a configurable low-voltage output. It is not built or compared yet.
+3. **ESP-IDF reference firmware:** a separate, intentionally vulnerable classic ESP32 implementation models HTTP/MQTT control and a configurable low-voltage output. ESP-IDF 6.1 compiles it in CI; it has not been flashed or compared with the software model.
 
 This separation avoids silently turning a teaching UI into hardware-control software and makes the scope of future parity tests explicit.
 

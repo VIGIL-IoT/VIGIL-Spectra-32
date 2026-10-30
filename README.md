@@ -16,7 +16,7 @@ SPECTRA-32 is VIGIL-IoT's experimental attack-and-defense testbed for studying I
 | Streamlit console | Implemented session-local behavior model with board illustration, deterministic scenarios, counters, and event log |
 | Python virtual node | HTTP/virtual LED routes implemented and covered by loopback tests; real broker integration not yet verified |
 | USB chip discovery | Host-side serial discovery and explicit esptool chip-ID probe; physical probe not recorded |
-| ESP-IDF firmware | Vulnerable classic ESP32 reference source only; no build or board validation recorded |
+| ESP-IDF firmware | Vulnerable classic ESP32 reference builds in ESP-IDF 6.1 CI; physical board validation not recorded |
 | Security experiments | Replay and T800 protocols are planned; no experiment runs or measured results exist |
 
 Current maturity is **prototype / v0.1 software behavior model**. The console's Hardened profile and plotted counters are illustrative. They are not hardware measurements or evidence that a real defense works.
@@ -125,7 +125,7 @@ simulator/
   vulnerable/     Separate Python behavior model
   web/            Standalone node page
 firmware/
-  vulnerable/     Unverified classic ESP32 ESP-IDF reference source
+  vulnerable/     CI-built classic ESP32 ESP-IDF reference; not hardware-verified
   hardened/       Reserved for separate future firmware defenses
 experiments/      Experiment definitions; no results yet
 lab/              Loopback and future isolated-lab broker configurations

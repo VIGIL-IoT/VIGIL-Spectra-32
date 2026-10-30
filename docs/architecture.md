@@ -1,6 +1,6 @@
 # SPECTRA-32 Architecture
 
-**Status:** current architecture, checked against the repository on 2026-10-29. The software model and Streamlit console are implemented; the ESP-IDF firmware is a reference port that has not been built or flashed.
+**Status:** current architecture, checked against the repository on 2026-10-30. The software model and Streamlit console are implemented; ESP-IDF 6.1 builds the classic ESP32 reference in CI, but no physical board has been flashed or verified.
 
 ## System boundary
 
@@ -27,7 +27,7 @@ flowchart LR
     Mqtt <--> State
   end
 
-  subgraph Future hardware path — unverified
+  subgraph Future hardware path — board behavior unverified
     Firmware[ESP-IDF vulnerable reference firmware] -->|Wi-Fi| LabAP[Isolated lab AP]
     LabAP --> LabBroker[Lab MQTT broker]
     LabAP --> DeviceHTTP[Device HTTP server]
@@ -48,7 +48,7 @@ The console and standalone node are intentionally separate. Values shown in the 
 | Host chip identification | `services/hardware.py` | Lists serial ports and runs an explicit esptool ROM `chip-id` probe | Implemented; local-host only, no flash write/erase command |
 | Standalone node | `simulator/vulnerable/basic_node.py` | Virtual LED state, HTTP API, optional MQTT command/status link | Implemented in source; MQTT service not verified in this audit |
 | Broker configuration | `lab/simulation/mosquitto.conf` | Anonymous broker bound to `127.0.0.1` for desktop simulation | Implemented; requires Mosquitto to run |
-| ESP-IDF reference | `firmware/vulnerable/basic-node/` | Classic ESP32 station, HTTP LED endpoints, MQTT client, configurable LED GPIO | Source present; build and hardware behavior unverified |
+| ESP-IDF reference | `firmware/vulnerable/basic-node/` | Classic ESP32 station, HTTP LED endpoints, MQTT client, configurable LED GPIO | ESP-IDF 6.1 CI build passes; physical behavior unverified |
 | Experiment protocols | `experiments/`, `docs/research/` | Planned MQTT replay study and separate T800 reproduction | Protocols only; no runs recorded |
 | Pages diagram | `.github/workflows/deploy-workflow-page.yml`, `docs/site/workflow/` | Builds and publishes a static workflow diagram with an explicit file allowlist | Workflow defined; deployment after the latest source change was not run in this audit |
 
@@ -94,7 +94,7 @@ The model is application-level behavior simulation, not ESP32 emulation. It does
 
 The **Hardware** view enumerates serial ports on the machine running the Streamlit Python process. Port enumeration does not open/reset the board. Only after a user selects **Identify chip** does the server run `python -m esptool --port <selected-port> --baud 115200 --no-stub chip-id`. The result classifies classic ESP32 targets as supported and other Espressif chips as unsupported in this milestone. This identification call may reset a board but contains no flash-write or erase operation. A Streamlit Cloud server cannot see USB devices attached to a user's computer.
 
-The ESP-IDF reference firmware is a separate implementation path. It would join a configured isolated WPA2 lab network, serve unauthenticated HTTP endpoints, connect to an unauthenticated MQTT broker, and control a configured low-voltage LED GPIO. It has no application authentication, HTTPS, MQTT credentials/TLS, replay defense, or signed OTA implementation. Those missing controls are deliberate in the vulnerable baseline and make it unsafe for an untrusted network. It is not built or hardware-verified.
+The ESP-IDF reference firmware is a separate implementation path. It joins a configured isolated WPA2 lab network, serves unauthenticated HTTP endpoints, connects to an unauthenticated MQTT broker, and controls a configured low-voltage LED GPIO. The pinned ESP-IDF 6.1 CI workflow compiles the classic `esp32` target and resolves the checked-in component lock. The firmware has no application authentication, HTTPS, MQTT credentials/TLS, replay defense, or signed OTA implementation. Those missing controls are deliberate in the vulnerable baseline and make it unsafe for an untrusted network. It has not been flashed or hardware-verified.
 
 ## Deployment view
 
@@ -103,7 +103,7 @@ The ESP-IDF reference firmware is a separate implementation path. It would join 
 | Local console | Python, pinned Streamlit dependencies, browser UI | `.streamlit/config.toml` binds the server to loopback; local serial discovery sees this host only |
 | Streamlit Community Cloud | Same UI and session model | Cloud host cannot discover a user's local USB board; no physical telemetry or attack path is implemented |
 | Optional desktop node | Python HTTP node and optional Mosquitto | Both are configured for loopback in the software-only milestone |
-| Future hardware lab | ESP-IDF firmware, isolated AP, broker, host | Not yet built or validated; see `lab/README.md` and `docs/SAFETY_AND_DATA.md` |
+| Future hardware lab | ESP-IDF firmware, isolated AP, broker, host | CI build passes; physical device and lab behavior are not yet validated; see `lab/README.md` and `docs/SAFETY_AND_DATA.md` |
 | Workflow diagram site | Static files assembled by GitHub Actions and GitHub Pages | Explicit allowlist only; not the simulator or a hardware control surface |
 
 ## Trust boundaries and protocol facts

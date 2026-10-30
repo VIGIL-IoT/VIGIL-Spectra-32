@@ -3,11 +3,11 @@
 **Audit dates:** 2026-10-29 to 2026-10-30
 **Baseline revision:** `c2e0aaa` (`Add MIT license`)
 **Current classification:** prototype / v0.1 software behavior model
-**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. At the previous revision, the Streamlit app returned HTTP 200 and GitHub Actions passed on Python 3.12 and 3.14. No Pages deployment or hardware test was performed.
+**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI. No Pages deployment, firmware flash, or hardware experiment was performed.
 
 ## Repository Overview
 
-SPECTRA-32 is the experimental embedded-security testbed of VIGIL-IoT. It combines a session-local Streamlit behavior model, a separate loopback Python HTTP/MQTT node, and an ESP-IDF classic ESP32 reference firmware path. The firmware, broker-backed MQTT flow, and physical board behavior are not verified. The project is an application and research prototype, not a distributable Python library.
+SPECTRA-32 is the experimental embedded-security testbed of VIGIL-IoT. It combines a session-local Streamlit behavior model, a separate loopback Python HTTP/MQTT node, and an ESP-IDF classic ESP32 reference firmware path. Python CI and the firmware compile workflow pass; broker-backed MQTT flow and physical board behavior are not verified. The project is an application and research prototype, not a distributable Python library.
 
 ## Initial Condition
 
@@ -32,7 +32,7 @@ The repository has three distinct paths:
 
 1. The Streamlit console keeps session-local state; scenarios do not emit packets or call a broker, node API, firmware, or physical GPIO.
 2. The standalone Python node exposes local HTTP routes and optional MQTT behavior. The Streamlit app does not consume its state.
-3. The ESP-IDF firmware is a separate vulnerable reference implementation that has not been built or tested on a board.
+3. The ESP-IDF firmware is a separate vulnerable reference implementation; CI compiles it for classic `esp32`, but it has not been flashed or tested on a board.
 
 The revised [architecture](architecture.md) documents these boundaries, component ownership, data flow, deployment environments, hardware discovery, and trust limits with Mermaid diagrams.
 
@@ -49,6 +49,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Added Python CI for Python 3.12 and 3.14, runtime and development dependency audits, correctness-focused Ruff checks, and documentation-link checking. Removed the short-lived Dependabot version-update schedule after its initial run opened duplicate pandas update PRs (#1 and #2); both PRs were closed, and dependency auditing remains active in CI.
 - Replaced the split pip requirement files with `pyproject.toml` and a cross-platform, hash-bearing `uv.lock`. Runtime dependencies and development checks are now declared separately; the hosted Streamlit app does not install development tools.
 - Pinned uv 0.13.6 and changed CI to use locked installs across Python 3.12, 3.13, and 3.14.
+- Added an ESP-IDF 6.1 build workflow for classic `esp32`; CI passed and generated the checked-in component lock for ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0.
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
 - Added `.gitignore` rules for captures, serial logs, and local generated Archify QA receipts.
@@ -58,6 +59,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - `.github/ISSUE_TEMPLATE/bug_report.yml`
 - `.github/ISSUE_TEMPLATE/feature_request.yml`
 - `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/workflows/esp32-firmware.yml`
 - `.github/workflows/python-quality.yml`
 - `CHANGELOG.md`
 - `CITATION.cff`
@@ -77,6 +79,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - `docs/sdg-alignment.md`
 - `docs/site/workflow/third-party-notices.html`
 - `docs/traceability.md`
+- `firmware/vulnerable/basic-node/dependencies.lock`
 - `licenses/third-party/JetBrains-Mono-OFL.txt`
 - `licenses/third-party/archify-MIT.txt`
 - `pyproject.toml`
@@ -128,7 +131,8 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 - The existing suite passed again: **16 tests passed in 21.81 seconds**.
 - Ruff, Python compilation, and documentation-link checks passed against the locked environment; the documentation checker verified 33 files.
 - `pip-audit` reported **no known vulnerabilities** in the locked runtime and development environment. It emitted cache-deserialization warnings but completed successfully.
-- `git diff --check` passed. The Python 3.12/3.13/3.14 GitHub Actions run is required to verify the updated CI matrix.
+- `git diff --check` passed. The Python 3.12/3.13/3.14 GitHub Actions run passed.
+- GitHub Actions [built the classic ESP32 firmware with ESP-IDF 6.1](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41031092858); the generated component lock contains ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0.
 
 ## Security Findings
 
@@ -149,7 +153,7 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 
 ## Dependency Findings
 
-Runtime dependencies are pinned in `pyproject.toml`; development-only audit and lint tools are in the `dev` dependency group. `uv.lock` fixes transitive package versions and distribution hashes across supported platforms and Python 3.12–3.14. CI installs with `uv sync --locked`; Streamlit Community Cloud recognizes the root `uv.lock`. The ESP-IDF component versions remain unlocked.
+Runtime dependencies are pinned in `pyproject.toml`; development-only audit and lint tools are in the `dev` dependency group. `uv.lock` fixes transitive package versions and distribution hashes across supported platforms and Python 3.12–3.14. CI installs with `uv sync --locked`; Streamlit Community Cloud recognizes the root `uv.lock`. The firmware's `dependencies.lock` pins ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0 for target `esp32`.
 
 The repository is not packaged as a Python library. Its `pyproject.toml` defines application dependencies, while `tool.uv.package = false` keeps uv from trying to build a wheel or source distribution.
 
@@ -167,15 +171,14 @@ Local install and test commands use a pinned uv version and checked-in cross-pla
 
 ## Traceability Status
 
-The [traceability matrix](traceability.md) contains functional and nonfunctional requirements with bounded verification statuses. No requirement is marked as hardware-verified. MQTT broker integration, ESP-IDF build, physical chip identification, and all security experiments remain unverified or untested.
+The [traceability matrix](traceability.md) contains functional and nonfunctional requirements with bounded verification statuses. No requirement is marked as hardware-verified. MQTT broker integration, physical chip identification, model/firmware parity, and all security experiments remain unverified or untested.
 
 ## Remaining Limitations
 
-- No Mosquitto executable or ESP-IDF toolchain was available for an MQTT integration run or firmware build.
+- Mosquitto and a local ESP-IDF toolchain were unavailable; the firmware compile is verified only in the pinned GitHub Actions environment, and MQTT broker integration remains untested.
 - No physical ESP32 or calibrated measurement setup was used.
 - No attack/defense experiment has run; the Streamlit outcomes remain deterministic model behavior.
-- The ESP-IDF component lock is not present; no firmware build or broker-backed integration test was run.
-- The newly updated Python 3.12/3.13/3.14 CI matrix needs a successful run on this revision. Pages deployment was not run.
+- The Python 3.12/3.13/3.14 matrix and ESP-IDF 6.1 build passed in GitHub Actions. Pages deployment was not run.
 - The workflow-page workflow runs only through manual workflow dispatch; no page was deployed during this audit.
 
 ## Initial Maturity Score
@@ -199,20 +202,20 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 | Architecture & Modularity | 12/15 | Three paths separated in architecture, diagrams, docs, and ADRs; unused duplicates removed | No hardware/model parity verification or modular package boundary |
 | Documentation | 13/15 | Requirements, architecture, method, metrics, limitations, safety, roadmap, audit, and traceability | No published experiment results or firmware bring-up guide backed by hardware |
 | Code Quality | 11/15 | Explicit dependencies, esptool failure handling, bounded state tests, dead code removed, Ruff correctness checks | No type checker or firmware static analysis configured; stylistic and broader opinionated lint rules remain disabled |
-| Testing | 12/15 | 16 tests, loopback HTTP coverage, AppTest, clean locked-environment run; prior GitHub CI passed on Python 3.12 and 3.14 | Updated three-version matrix, MQTT integration, and hardware-in-loop validation remain unverified |
+| Testing | 13/15 | 16 tests, loopback HTTP coverage, AppTest, clean locked-environment run; Python 3.12/3.13/3.14 CI and ESP-IDF 6.1 classic ESP32 build pass | MQTT integration and hardware-in-loop validation remain unverified |
 | Security | 7/10 | Loopback boundaries, safe chip-ID behavior, no local history-scan matches, runtime and developer dependency audits pass in CI | Vulnerable firmware by design; main is unprotected; GitHub secret scanning is disabled; no SBOM or physical validation |
-| Reproducibility | 9/10 | Cross-platform, hash-bearing Python lock; pinned uv; locked CI installs; Python 3.12/3.13/3.14 matrix and setup commands | No ESP-IDF component lock or verified build |
+| Reproducibility | 9/10 | Cross-platform hash-bearing Python lock, pinned uv, locked CI installs, ESP-IDF component lock, and passing pinned firmware build | No physical firmware flash/build evidence or board-specific configuration record |
 | Open Source Governance | 8/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog | No tagged release or main-branch protection rule |
 | Research Rigor & Traceability | 7/10 | Requirements traceability, evidence labels, protocols, ADRs, benchmark plan, conservative SDG statement | No experiment has been run; protocols still require lab and statistical review |
-| **Total** | **79/100** |  |  |
+| **Total** | **80/100** |  |  |
 
-The updated score of **79/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
+The updated score of **80/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
 
 ## Recommended Next Actions
 
 1. Add a main-branch ruleset that blocks force-pushes and deletion and requires the Python quality checks to pass.
 2. Enable GitHub Secret Scanning if available for this organization and repository.
-3. Build the classic ESP32 firmware in a pinned ESP-IDF environment and record any board-specific differences.
+3. Flash the built firmware on the selected classic ESP32 board and record board-specific behavior and differences.
 4. Run the optional Python node with Mosquitto on loopback and add broker-backed integration tests.
 5. Freeze EXP-01 protocol details, then collect authorized lab runs with commit/configuration provenance and raw evidence.
-6. Lock the ESP-IDF component resolution, then generate and archive an SPDX or CycloneDX SBOM with a release artifact.
+6. Generate and archive an SPDX or CycloneDX SBOM with a release artifact.

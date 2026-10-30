@@ -4,7 +4,7 @@
 
 ## Identity and problem statement
 
-**SPECTRA-32 — Security Platform for Embedded Cyber Threat Research & Analysis** is the experimental attack-and-defense testbed of VIGIL-IoT. It is a hybrid embedded-security research project: a Python software behavior model and Streamlit console exist today; an ESP-IDF reference firmware and future authorized hardware experiments are separate, unverified paths.
+**SPECTRA-32 — Security Platform for Embedded Cyber Threat Research & Analysis** is the experimental attack-and-defense testbed of VIGIL-IoT. It is a hybrid embedded-security research project: a Python software behavior model and Streamlit console exist today; the ESP-IDF reference compiles in CI, while physical hardware experiments remain unverified.
 
 The engineering problem is to make selected IoT security behaviors inspectable and repeatable on a low-cost development path without confusing a host-side model with physical-device evidence. The current software model makes command/state behavior available before a board is required. The repository does not claim that a browser simulator replaces hardware testing, or that its profile labels implement actual security controls.
 
@@ -45,7 +45,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 ### Partly implemented or not yet verified
 
 - The standalone Python node's MQTT code exists, but a broker-backed integration run is not verified.
-- The ESP-IDF source exists, but no build, flash, board test, or parity run is recorded.
+- The ESP-IDF source builds for classic `esp32` in CI, but no flash, board test, or parity run is recorded.
 - Physical chip classification is unit-tested with mocked esptool output; no physical probe is recorded in the repository.
 - The current Python app and tests were run on Python 3.14.7. The declared support range is Python 3.12 through 3.14; CI covers all three minor versions.
 
@@ -94,8 +94,8 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | USB serial | pySerial 3.5 | Host-side port discovery |
 | Chip probe | esptool 5.6.0 | Explicit classic/other ESP identification |
 | Broker | Mosquitto | Optional; version not recorded |
-| Firmware | ESP-IDF intended 6.1, classic `esp32` target | Source-only; build not available in this environment |
-| Firmware MQTT | `espressif/mqtt` component constraint `^1.1.0` | Lockfile not present; resolved component version is unverified |
+| Firmware | ESP-IDF 6.1.0, classic `esp32` target | CI compile passes; no physical board verification |
+| Firmware MQTT | `espressif/mqtt` 1.1.0 | Exact version and component hash recorded in `firmware/vulnerable/basic-node/dependencies.lock` |
 | Front end | HTML, CSS, JavaScript, SVG | Streamlit custom board component and standalone node page |
 | CI and hosting | GitHub Actions, GitHub Pages | Python validation workflow and static workflow page |
 | Dependency audit | pip-audit 2.10.1 | Locked runtime and development environment audit in CI |

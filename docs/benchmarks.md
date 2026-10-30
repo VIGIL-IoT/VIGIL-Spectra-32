@@ -33,4 +33,4 @@
 
 ## Why no results table is published
 
-The Python model and dashboard tests check correctness paths, not throughput or latency. The Mosquitto executable, ESP-IDF toolchain, physical board, and measurement instruments were unavailable for this audit. Reporting numerical performance here would fabricate evidence.
+The Python model and dashboard tests check correctness paths, not throughput or latency. The Mosquitto executable, local ESP-IDF toolchain, physical board, and measurement instruments were unavailable for this audit. A pinned ESP-IDF 6.1 CI build verifies compilation only. Reporting numerical performance here would fabricate evidence.

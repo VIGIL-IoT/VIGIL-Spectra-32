@@ -35,7 +35,8 @@ Host process CPU and memory are properties of this computer-run simulator and mu
 
 ## v0.3 — ESP32 hardware port
 
-- [ ] Build and flash the ESP-IDF baseline on the selected classic ESP32 board.
+- [x] Build the vulnerable ESP-IDF baseline for classic `esp32` with the pinned ESP-IDF 6.1 CI workflow.
+- [ ] Flash and verify the build on the selected classic ESP32 board.
 - [ ] Connect to a dedicated isolated WPA2 Wi-Fi network and local broker.
 - [ ] Replace the virtual output with a board-verified low-voltage LED GPIO.
 - [ ] Repeat the baseline command sequences and compare state behavior with the software model.
