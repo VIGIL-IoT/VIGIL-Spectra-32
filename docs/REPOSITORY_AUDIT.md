@@ -3,7 +3,7 @@
 **Audit dates:** 2026-10-29 to 2026-10-30
 **Baseline revision:** `c2e0aaa` (`Add MIT license`)
 **Current classification:** prototype / v0.1 software behavior model
-**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. The Streamlit app was also started locally and returned HTTP 200. No Pages deployment or hardware test was performed.
+**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. The Streamlit app was also started locally and returned HTTP 200. GitHub Actions passed both Python matrix jobs (3.12 and 3.14). No Pages deployment or hardware test was performed.
 
 ## Repository Overview
 
@@ -46,7 +46,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Added loopback HTTP route tests for initial state, valid and invalid forms, and unknown routes.
 - Removed unreferenced legacy `simulator/dashboard/board.py` and `simulator/dashboard/security_model.py` modules.
 - Declared pandas and refreshed Streamlit to 1.66.1. A dependency audit found 39 advisories against transitive Pillow 12.3.0; Streamlit 1.66.1 supports Pillow 13, so Pillow 13.0.0 is explicitly pinned. The follow-up `pip-audit` scan reported no known vulnerabilities.
-- Added Python CI for Python 3.12 and 3.14, a dependency audit, correctness-focused Ruff checks, documentation-link checking, and Dependabot updates.
+- Added Python CI for Python 3.12 and 3.14, runtime and development dependency audits, correctness-focused Ruff checks, and documentation-link checking. Removed the short-lived Dependabot version-update schedule after its initial run opened duplicate pandas update PRs (#1 and #2); both PRs were closed, and dependency auditing remains active in CI.
 - Pinned CI developer tools in `requirements-dev.txt` so security scanning and linting are reproducible.
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
@@ -57,7 +57,6 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - `.github/ISSUE_TEMPLATE/bug_report.yml`
 - `.github/ISSUE_TEMPLATE/feature_request.yml`
 - `.github/PULL_REQUEST_TEMPLATE.md`
-- `.github/dependabot.yml`
 - `.github/workflows/python-quality.yml`
 - `CHANGELOG.md`
 - `CITATION.cff`
@@ -110,17 +109,19 @@ The two unused legacy dashboard modules listed above were removed.
 - Developer-tool dependency audit: configured in CI, but the local resolver timed out against PyPI while resolving the `requirements-dev.txt` scan; no local result is claimed.
 - Lint: Ruff 0.17.3 with the CI rule set `E4,E7,E9,F` passed for application, test, and tooling sources.
 - Streamlit 1.66.1 smoke: app started from the clean environment on a separate local port and returned HTTP 200.
-- Configuration: GitHub Actions, Dependabot, and issue-template YAML parsed successfully; `git diff --check` reported no whitespace errors.
+- Configuration: GitHub Actions and issue-template YAML parsed successfully; git diff --check reported no whitespace errors.
 - Secret scan: no high-confidence GitHub token, AWS access-key, private-key, or `client_secret` pattern matched tracked or untracked project files.
 
 The Streamlit AppTest suite emits benign `missing ScriptRunContext` warnings in bare test mode. This did not fail the tests.
 
 ## Test Results
 
-On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.73 seconds**. Compilation, focused Ruff lint, documentation-link checks, clean-environment dependency validation, runtime dependency audit, Streamlit HTTP smoke, workflow YAML parsing, and `git diff --check` also passed. The development-tool dependency audit could not be resolved locally because PyPI timed out. Local checks cover Python 3.14 only; Python 3.12 remains delegated to the CI matrix and has not yet run on GitHub.
+On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.73 seconds**. Compilation, focused Ruff lint, documentation-link checks, clean-environment dependency validation, runtime dependency audit, Streamlit HTTP smoke, workflow YAML parsing, and `git diff --check` also passed. The development-tool dependency audit could not be resolved locally because PyPI timed out. Local checks were performed on Python 3.14. The subsequent main-branch GitHub Actions run passed both Python 3.12 and Python 3.14 matrix jobs.
 
 ## Security Findings
 
+- GitHub reports that main has no branch protection rule. This is a repository setting, not evidence of a suspicious commit; no protection settings were changed during the audit.
+- GitHub Secret Scanning is disabled for this repository. The local full-history scan found no common credential patterns, but platform secret scanning could not be verified.
 - Desktop HTTP/MQTT examples are unauthenticated and must remain loopback-only. The future firmware baseline is deliberately vulnerable and must be used only in an isolated, owned lab.
 - Host-side chip identification requires an explicit action and does not issue flash-write or erase commands; it may reset the selected board.
 - The dashboard cannot access a user's USB device when hosted in Streamlit Community Cloud.
@@ -131,7 +132,7 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 ## Personal Path Audit
 
 - Scanned working-tree files for absolute Windows user-profile paths and Unix home paths. The matches were confined to ignored local QA/cache outputs; 23 JSON reports now use a generic `<USERPROFILE>` placeholder, and 14 opaque Ruff cache entries have been normalized. A repeat byte-level scan of workspace files found no remaining absolute profile/home path strings.
-- Scanned all 27 commits reachable from `origin/main`, including their blob contents, for Windows profile and Unix home paths. No matches were found, so no historical commit rewrite is needed and the existing commit IDs remain intact.
+- At audit start, the pre-existing 27-commit main history had no personal home-path matches. After the repository modernization was pushed, the full current main history was scanned for personal paths and common credential patterns; no matches were found, so no historical content rewrite is needed.
 - A local Codex checkpoint tree is separate from the branch commit history and is not sent by the explicit branch push. The application-managed checkpoint is not part of the published repository.
 
 ## Dependency Findings
@@ -150,7 +151,7 @@ The repository now maps requirements to objectives, decisions, implementation, t
 
 ## Reproducibility Improvements
 
-Local install and test commands are documented; direct runtime dependencies are pinned; CI runs compile, documentation-link, and unit/UI checks on Python 3.12 and 3.14; the workflow page publishes a reviewed file allowlist with third-party notices. Clean installation was verified locally on Python 3.14.7. GitHub-hosted CI and Pages were not triggered as part of this audit.
+Local install and test commands are documented; direct runtime dependencies are pinned; CI runs compile, documentation-link, and unit/UI checks on Python 3.12 and 3.14; the workflow page publishes a reviewed file allowlist with third-party notices. Clean installation was verified locally on Python 3.14.7. The main-branch GitHub Actions Python quality run passed both matrix jobs on Python 3.12 and 3.14. The Pages deployment workflow is manual-only and was not run.
 
 ## Traceability Status
 
@@ -162,8 +163,8 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 - No physical ESP32 or calibrated measurement setup was used.
 - No attack/defense experiment has run; the Streamlit outcomes remain deterministic model behavior.
 - No transitive dependency lockfile exists.
-- GitHub CI and Pages deployment were not run after these changes.
-- The workflow-page workflow is configured to deploy on `main`; this audit did not publish a Pages update.
+- GitHub CI passed on Python 3.12 and 3.14. Pages deployment was not run.
+- The workflow-page workflow runs only through manual workflow dispatch; no page was deployed during this audit.
 
 ## Initial Maturity Score
 
@@ -186,19 +187,20 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 | Architecture & Modularity | 12/15 | Three paths separated in architecture, diagrams, docs, and ADRs; unused duplicates removed | No hardware/model parity verification or modular package boundary |
 | Documentation | 13/15 | Requirements, architecture, method, metrics, limitations, safety, roadmap, audit, and traceability | No published experiment results or firmware bring-up guide backed by hardware |
 | Code Quality | 11/15 | Explicit dependencies, esptool failure handling, bounded state tests, dead code removed, Ruff correctness checks | No type checker or firmware static analysis configured; stylistic and broader opinionated lint rules remain disabled |
-| Testing | 11/15 | 16 tests, loopback HTTP coverage, AppTest, clean-environment run | One local Python version; no MQTT, hardware-in-loop, or CI result yet |
-| Security | 8/10 | Loopback boundaries, safe chip-ID behavior, no secret match, runtime dependency audit clean | Vulnerable firmware by design; dev-tool scan pending CI; no SBOM; no physical validation |
+| Testing | 12/15 | 16 tests, loopback HTTP coverage, AppTest, clean-environment run, passing GitHub CI on Python 3.12 and 3.14 | No MQTT or hardware-in-loop validation |
+| Security | 7/10 | Loopback boundaries, safe chip-ID behavior, no local history-scan matches, runtime and developer dependency audits pass in CI | Vulnerable firmware by design; main is unprotected; GitHub secret scanning is disabled; no SBOM or physical validation |
 | Reproducibility | 8/10 | Pinned direct dependencies, clean Python 3.14 install, CI matrix, test and docs commands | No full transitive lock; no ESP-IDF component lock or verified build |
-| Open Source Governance | 9/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog | No tagged release or public CI result from this change set |
+| Open Source Governance | 8/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog | No tagged release or main-branch protection rule |
 | Research Rigor & Traceability | 7/10 | Requirements traceability, evidence labels, protocols, ADRs, benchmark plan, conservative SDG statement | No experiment has been run; protocols still require lab and statistical review |
-| **Total** | **79/100** |  |  |
+| **Total** | **78/100** |  |  |
 
-The increase from **55/100 to 79/100** reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
+The updated score of **78/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
 
 ## Recommended Next Actions
 
-1. Run the GitHub Actions test and dependency-audit matrix on Python 3.12 and 3.14.
-2. Build the classic ESP32 firmware in a pinned ESP-IDF environment and record any board-specific differences.
-3. Run the optional Python node with Mosquitto on loopback and add broker-backed integration tests.
-4. Freeze EXP-01 protocol details, then collect authorized lab runs with commit/configuration provenance and raw evidence.
-5. Add a transitive dependency lock and generate an SPDX or CycloneDX SBOM when preparing a distributable release artifact.
+1. Add a main-branch ruleset that blocks force-pushes and deletion and requires the Python quality checks to pass.
+2. Enable GitHub Secret Scanning if available for this organization and repository.
+3. Build the classic ESP32 firmware in a pinned ESP-IDF environment and record any board-specific differences.
+4. Run the optional Python node with Mosquitto on loopback and add broker-backed integration tests.
+5. Freeze EXP-01 protocol details, then collect authorized lab runs with commit/configuration provenance and raw evidence.
+6. Add a transitive dependency lock and generate an SPDX or CycloneDX SBOM when preparing a distributable release artifact.
