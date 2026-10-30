@@ -63,7 +63,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 |---|---|
 | FR-01 | Provide a per-session model whose scenario actions do not call the broker, standalone node API, or physical GPIO. |
 | FR-02 | Render the classic ESP32 DevKit-style reference pins/components and expose selected component details. |
-| FR-03 | Provide bounded, inspectable events and counters for the catalogued model scenarios. |
+| FR-03 | Provide bounded, inspectable events and counters for catalogued scenarios, with a readable session-local time series for accepted commands and blocked requests. |
 | FR-04 | Enumerate host serial ports and run chip identification only after an explicit UI action. |
 | FR-05 | Provide a separate loopback Python node API for virtual LED state and control. |
 | FR-06 | Provide optional MQTT command/status behavior on the separate node, with lab-only broker guidance. |
@@ -78,7 +78,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | NFR-02 | Dashboard/profile/result wording must not imply hardware telemetry or measured security. |
 | NFR-03 | Invalid HTTP form input is rejected; chip identification has a finite subprocess timeout and no write/erase command. |
 | NFR-04 | Supported Python versions and runtime dependencies are explicit; a checked-in cross-platform lock fixes transitive Python dependency versions. |
-| NFR-05 | UI and model state remain bounded: session event history is capped at 60 events and chart history at 60 samples. |
+| NFR-05 | UI and model state remain bounded: session event history is capped at 60 events and chart history at 60 samples; the counter chart uses a readable zero-based scale and shows the latest sample even when only one sample exists. |
 | NFR-06 | Experiment files must separate measured, simulated, expected, and paper-reported outcomes. |
 | NFR-07 | The Python 3.14 quality job exports and validates a CycloneDX 1.5 SBOM for the locked runtime dependency set, then uploads it as a short-lived artifact. |
 

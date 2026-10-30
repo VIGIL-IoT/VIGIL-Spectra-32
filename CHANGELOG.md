@@ -14,6 +14,10 @@ This project has no published version tags or release notes in the current repos
 - MIT project license, third-party notices, tests, CI, contribution guidance, and repository traceability documentation.
 - Cross-platform Python dependency lock, pinned ESP-IDF component lock, and a validated CycloneDX runtime SBOM artifact from Python 3.14 CI (30-day retention).
 
+### Improved
+
+- Made the session counter chart readable from a zero baseline, added latest-sample markers, and kept time labels distinct at short intervals.
+
 ### Limitations
 
 - No security experiment, MQTT integration run, or physical-board validation is recorded. The CI SBOM artifact is retained for 30 days; no release-specific SBOM archive is configured.

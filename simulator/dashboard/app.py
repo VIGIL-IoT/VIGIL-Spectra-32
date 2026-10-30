@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import importlib
+import math
 from datetime import datetime
 from pathlib import Path
 import sys
@@ -498,26 +499,104 @@ def render_command_activity() -> None:
         del history[:-60]
         st.session_state.command_activity_history = history
 
-    chart_data = pd.DataFrame(
-        {
-            "Time": [sample["time"].replace(tzinfo=None) for sample in history],
-            "Accepted commands": [sample["accepted"] for sample in history],
-            "Blocked requests": [sample["blocked"] for sample in history],
-        }
-    )
+    chart_rows = []
+    for index, sample in enumerate(history):
+        timestamp = sample["time"].replace(tzinfo=None)
+        chart_rows.extend(
+            (
+                {
+                    "Time": timestamp,
+                    "Counter": "Accepted commands",
+                    "Value": int(sample["accepted"]),
+                    "Latest": index == len(history) - 1,
+                },
+                {
+                    "Time": timestamp,
+                    "Counter": "Blocked requests",
+                    "Value": int(sample["blocked"]),
+                    "Latest": index == len(history) - 1,
+                },
+            )
+        )
+    chart_data = pd.DataFrame(chart_rows)
+    max_count = max((row["Value"] for row in chart_rows), default=0)
+    tick_step = max(1, math.ceil(max_count / 5))
+    chart_max = tick_step * 5
+    chart_ticks = list(range(0, chart_max + 1, tick_step))
+    chart_spec = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "layer": [
+            {"mark": {"type": "line", "strokeWidth": 2, "clip": True}},
+            {
+                "transform": [{"filter": {"field": "Latest", "equal": True}}],
+                "mark": {"type": "point", "filled": True, "size": 36},
+            },
+        ],
+        "encoding": {
+            "x": {
+                "field": "Time",
+                "type": "temporal",
+                "axis": {
+                    "title": "Time",
+                    "format": "%H:%M:%S",
+                    "tickCount": 4,
+                    "grid": False,
+                },
+            },
+            "y": {
+                "field": "Value",
+                "type": "quantitative",
+                "scale": {"domain": [0, chart_max], "nice": False},
+                "axis": {
+                    "title": "Count",
+                    "values": chart_ticks,
+                    "format": "d",
+                    "domain": False,
+                    "grid": True,
+                },
+            },
+            "color": {
+                "field": "Counter",
+                "type": "nominal",
+                "scale": {
+                    "domain": ["Accepted commands", "Blocked requests"],
+                    "range": ["#56d7c4", "#ff946b"],
+                },
+                "legend": {"title": None, "orient": "top", "direction": "horizontal"},
+            },
+            "tooltip": [
+                {"field": "Time", "type": "temporal", "title": "Time", "format": "%H:%M:%S"},
+                {"field": "Counter", "type": "nominal", "title": "Counter"},
+                {"field": "Value", "type": "quantitative", "title": "Count", "format": "d"},
+            ],
+        },
+        "config": {
+            "background": "transparent",
+            "view": {"stroke": None},
+            "axis": {
+                "labelColor": "#a9bcb3",
+                "titleColor": "#a9bcb3",
+                "labelFontSize": 11,
+                "titleFontSize": 11,
+                "gridColor": "#263631",
+                "gridOpacity": 0.8,
+            },
+            "legend": {"labelColor": "#a9bcb3", "labelFontSize": 11, "symbolStrokeWidth": 2},
+        },
+        "padding": {"left": 0, "right": 8, "top": 2, "bottom": 0},
+    }
     with st.container(border=True, key="telemetry_panel"):
         st.markdown(
             '<div class="panel-title"><h2>Security counters</h2><span>SESSION MODEL · LIVE</span></div>',
             unsafe_allow_html=True,
         )
-        st.line_chart(
+        st.vega_lite_chart(
             chart_data,
-            x="Time",
-            y=["Accepted commands", "Blocked requests"],
-            color=["#56d7c4", "#ff946b"],
+            chart_spec,
             width="stretch",
-            height=145,
-            y_label="Commands",
+            height=160,
+            theme=None,
+            key="command_activity_chart",
             alt="Accepted commands and blocked requests over time in the local simulation model.",
         )
         st.markdown(

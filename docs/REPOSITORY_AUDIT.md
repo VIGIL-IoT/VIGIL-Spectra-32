@@ -51,6 +51,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Pinned uv 0.13.6 and changed CI to use locked installs across Python 3.12, 3.13, and 3.14.
 - Added an ESP-IDF 6.1 build workflow for classic `esp32`; CI passed and generated the checked-in component lock for ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0.
 - Added a Python 3.14 CI step that exports CycloneDX 1.5 from the locked runtime dependencies, validates its format and contents, then uploads a 30-day artifact. Run `41094597806` passed; its downloaded artifact contains 51 runtime components and excludes the development tools.
+- Refined the bounded session counter chart with an explicit zero-based scale, readable integer ticks, visible latest-sample points, and second-resolution time labels. A local visual review at 1280×720 confirmed both series and their axes are visible below the board; this remains software-model UI, not device telemetry.
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
 - Added `.gitignore` rules for captures, serial logs, and local generated Archify QA receipts.
@@ -140,6 +141,12 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 - `git diff --check` passed. The Python 3.12/3.13/3.14 GitHub Actions run passed.
 - GitHub Actions [built the classic ESP32 firmware with ESP-IDF 6.1](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41031092858); the generated component lock contains ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0.
 - Python quality run [41094597806](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41094597806) passed. The uploaded runtime SBOM was downloaded and parsed locally: CycloneDX 1.5, 51 runtime components, correct project metadata, and no Ruff or pip-audit components.
+
+## Follow-up Verification: Session Counter Chart
+
+- Updated the local chart to use an explicit zero-based integer scale, two separately colored counters, and latest-sample markers so a fresh or flat series remains visible. Time labels include seconds to distinguish samples recorded close together.
+- Local visual review at 1280×720 showed the chart and adjacent lower dashboard cards aligned without overlap. The chart represents only this Streamlit session.
+- The 16-test suite, focused Ruff checks, Python compilation, and `git diff --check` passed after this change; CI confirmation is recorded by the associated main-branch run.
 
 ## Security Findings
 
