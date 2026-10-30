@@ -7,7 +7,7 @@
 
 ## Repository Overview
 
-SPECTRA-32 is the experimental embedded-security testbed of VIGIL-IoT. It combines a session-local Streamlit behavior model, a separate loopback Python HTTP/MQTT node, and an ESP-IDF classic ESP32 reference firmware path. Python CI and the firmware compile workflow pass; a broker-backed MQTT CI check has been added and is awaiting its hosted result, while physical board behavior remains unverified. The project is an application and research prototype, not a distributable Python library.
+SPECTRA-32 is the experimental embedded-security testbed of VIGIL-IoT. It combines a session-local Streamlit behavior model, a separate loopback Python HTTP/MQTT node, and an ESP-IDF classic ESP32 reference firmware path. Python CI and the firmware compile workflow pass; a broker-backed MQTT CI check now passes on loopback, while physical board behavior remains unverified. The project is an application and research prototype, not a distributable Python library.
 
 ## Initial Condition
 
@@ -53,7 +53,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Added a Python 3.14 CI step that exports CycloneDX 1.5 from the locked runtime dependencies, validates its format and contents, then uploads a 30-day artifact. Run `41094597806` passed; its downloaded artifact contains 51 runtime components and excludes the development tools.
 - Refined the bounded session counter chart with an explicit zero-based scale, readable integer ticks, visible latest-sample points, and second-resolution time labels. A local visual review at 1280×720 confirmed both series and their axes are visible below the board; this remains software-model UI, not device telemetry.
 - Aligned the Streamlit theme and board component with `docs/BRAND.md`; self-hosted DM Sans, Manrope, and DM Mono at a pinned upstream revision with local OFL texts and SHA-256 provenance.
-- Added a loopback-only Mosquitto integration test for command acceptance, invalid-command rejection, and status publication, plus a dedicated CI job. The local suite skips this test because Mosquitto is not installed; hosted verification is pending.
+- Added a loopback-only Mosquitto integration test for command acceptance, invalid-command rejection, and status publication, plus a dedicated CI job. Hosted verification passed in [Python quality run 41104285546](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41104285546); the local suite skips this broker-dependent test because Mosquitto is not installed locally.
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
 - Added `.gitignore` rules for captures, serial logs, and local generated Archify QA receipts.
@@ -162,8 +162,8 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 
 ## Follow-up Verification: MQTT Integration
 
-- Added `tests/test_node_mqtt.py`, which starts an ephemeral Mosquitto listener bound to `127.0.0.1` and checks the standalone node's ON/OFF command and status flow, plus rejection of an invalid payload.
-- A dedicated `python-quality` job installs Mosquitto on the hosted Ubuntu runner and runs the integration test. The local Python suite reports the test as skipped when the broker is absent; hosted result is pending.
+- Added `tests/test_node_mqtt.py`, which starts an ephemeral Mosquitto listener bound to `127.0.0.1` and checks the standalone node's ON/OFF command and status flow, plus rejection of an invalid payload. A same-publisher follow-up command provides a delivery barrier for the invalid-payload assertion.
+- A dedicated `python-quality` job installs Mosquitto on the hosted Ubuntu runner and runs the integration test. The broker test and Python 3.12, 3.13, and 3.14 matrix passed in [run 41104285546](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41104285546). The local Python suite reports the test as skipped when the broker is absent.
 - The latest local full-suite result is **17 cases: 16 passed and 1 Mosquitto-dependent test skipped**. Ruff, compileall, documentation links, and workflow YAML parsing passed; the earlier 16-test result above is retained as historical evidence from the preceding audit run.
 
 ## Security Findings
@@ -203,11 +203,11 @@ Local install and test commands use a pinned uv version and checked-in cross-pla
 
 ## Traceability Status
 
-The [traceability matrix](traceability.md) contains functional and nonfunctional requirements with bounded verification statuses. NFR-07 is verified by Python quality run `41094597806`; no requirement is marked as hardware-verified. MQTT broker integration is pending its new CI run; physical chip identification, model/firmware parity, and all security experiments remain unverified or untested.
+The [traceability matrix](traceability.md) contains functional and nonfunctional requirements with bounded verification statuses. NFR-07 is verified by Python quality run `41094597806`; FR-06 is verified for the loopback software model by run `41104285546`. No requirement is marked as hardware-verified; physical chip identification, model/firmware parity, and all security experiments remain unverified or untested.
 
 ## Remaining Limitations
 
-- Mosquitto and a local ESP-IDF toolchain were unavailable; the firmware compile is verified only in the pinned GitHub Actions environment, and the new broker-backed MQTT CI result is pending.
+- Mosquitto and a local ESP-IDF toolchain were unavailable; the broker-backed MQTT flow and firmware compile are verified only in GitHub Actions, with no corresponding local broker or physical-board run.
 - No physical ESP32 or calibrated measurement setup was used.
 - No attack/defense experiment has run; the Streamlit outcomes remain deterministic model behavior.
 - The Python 3.12/3.13/3.14 matrix and ESP-IDF 6.1 build passed in GitHub Actions. Pages deployment was not run.
@@ -234,20 +234,20 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 | Architecture & Modularity | 12/15 | Three paths separated in architecture, diagrams, docs, and ADRs; unused duplicates removed | No hardware/model parity verification or modular package boundary |
 | Documentation | 13/15 | Requirements, architecture, method, metrics, limitations, safety, roadmap, audit, and traceability | No published experiment results or firmware bring-up guide backed by hardware |
 | Code Quality | 11/15 | Explicit dependencies, esptool failure handling, bounded state tests, dead code removed, Ruff correctness checks | No type checker or firmware static analysis configured; stylistic and broader opinionated lint rules remain disabled |
-| Testing | 13/15 | 17 test cases (16 pass locally, 1 broker-dependent skip), loopback HTTP coverage, AppTest; Python 3.12/3.13/3.14 CI and ESP-IDF 6.1 classic ESP32 build pass | New MQTT CI job is pending; hardware-in-loop validation remains unverified |
+| Testing | 14/15 | 17 test cases (16 pass locally, 1 broker-dependent skip), loopback HTTP and Mosquitto MQTT coverage, AppTest; Python 3.12/3.13/3.14 CI and ESP-IDF 6.1 classic ESP32 build pass | Hardware-in-loop validation remains unverified |
 | Security | 8/10 | Loopback boundaries, safe chip-ID behavior, no local history-scan matches, runtime and developer dependency audits pass in CI, and the runtime SBOM is validated and uploaded | Vulnerable firmware by design; main is unprotected; GitHub secret scanning is disabled; no physical validation |
 | Reproducibility | 9/10 | Cross-platform hash-bearing Python lock, pinned uv, locked CI installs, ESP-IDF component lock, and passing pinned firmware build | No physical firmware flash/build evidence or board-specific configuration record |
 | Open Source Governance | 8/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog | No tagged release or main-branch protection rule |
 | Research Rigor & Traceability | 7/10 | Requirements traceability, evidence labels, protocols, ADRs, benchmark plan, conservative SDG statement | No experiment has been run; protocols still require lab and statistical review |
-| **Total** | **81/100** |  |  |
+| **Total** | **82/100** |  |  |
 
-The updated score of **81/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
+The updated score of **82/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
 
 ## Recommended Next Actions
 
 1. Add a main-branch ruleset that blocks force-pushes and deletion and requires the Python quality checks to pass.
 2. Enable GitHub Secret Scanning if available for this organization and repository.
 3. Flash the built firmware on the selected classic ESP32 board and record board-specific behavior and differences.
-4. Confirm the new broker-backed MQTT CI job passes; then record a local Mosquitto run when available.
+4. Record a local Mosquitto run when available, and keep the broker version and environment with its evidence.
 5. Freeze EXP-01 protocol details, then collect authorized lab runs with commit/configuration provenance and raw evidence.
 6. Add a release-specific SBOM archive when a tagged release process is introduced; include firmware components as well as Python runtime dependencies.
