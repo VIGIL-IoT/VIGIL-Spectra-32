@@ -3,7 +3,7 @@
 **Audit dates:** 2026-10-29 to 2026-10-30
 **Baseline revision:** `c2e0aaa` (`Add MIT license`)
 **Current classification:** prototype / v0.1 software behavior model
-**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI. No Pages deployment, firmware flash, or hardware experiment was performed.
+**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI; and the Python runtime SBOM artifact was downloaded and validated. No Pages deployment, firmware flash, or hardware experiment was performed.
 
 ## Repository Overview
 
@@ -50,7 +50,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Replaced the split pip requirement files with `pyproject.toml` and a cross-platform, hash-bearing `uv.lock`. Runtime dependencies and development checks are now declared separately; the hosted Streamlit app does not install development tools.
 - Pinned uv 0.13.6 and changed CI to use locked installs across Python 3.12, 3.13, and 3.14.
 - Added an ESP-IDF 6.1 build workflow for classic `esp32`; CI passed and generated the checked-in component lock for ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0.
-- Added a Python 3.14 CI step that exports CycloneDX 1.5 from the locked runtime dependencies, validates its format and contents, then uploads a 30-day artifact. The new workflow change still requires a passing run before it is treated as verified.
+- Added a Python 3.14 CI step that exports CycloneDX 1.5 from the locked runtime dependencies, validates its format and contents, then uploads a 30-day artifact. Run `41094597806` passed; its downloaded artifact contains 51 runtime components and excludes the development tools.
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
 - Added `.gitignore` rules for captures, serial logs, and local generated Archify QA receipts.
@@ -139,6 +139,7 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 - `pip-audit` reported **no known vulnerabilities** in the locked runtime and development environment. It emitted cache-deserialization warnings but completed successfully.
 - `git diff --check` passed. The Python 3.12/3.13/3.14 GitHub Actions run passed.
 - GitHub Actions [built the classic ESP32 firmware with ESP-IDF 6.1](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41031092858); the generated component lock contains ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0.
+- Python quality run [41094597806](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41094597806) passed. The uploaded runtime SBOM was downloaded and parsed locally: CycloneDX 1.5, 51 runtime components, correct project metadata, and no Ruff or pip-audit components.
 
 ## Security Findings
 
@@ -149,7 +150,7 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 - The dashboard cannot access a user's USB device when hosted in Streamlit Community Cloud.
 - No high-confidence hardcoded-secret pattern was found in the repository scan.
 - The initial runtime dependency audit flagged Pillow 12.3.0. After updating Streamlit to 1.66.1 and explicitly pinning its compatible Pillow 13.0.0 release, `pip-audit` reported no known vulnerabilities in runtime requirements.
-- CI is configured to scan both runtime and development requirements. The local development-tool scan was blocked by a PyPI timeout. CI is now configured to upload a validated runtime SBOM for 30 days; a release-specific SBOM archive is not configured.
+- CI is configured to scan both runtime and development requirements. The local development-tool scan was blocked by a PyPI timeout. The verified runtime SBOM artifact is retained for 30 days; a release-specific SBOM archive is not configured.
 
 ## Personal Path Audit
 
@@ -159,7 +160,7 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 
 ## Dependency Findings
 
-Runtime dependencies are pinned in `pyproject.toml`; development-only audit and lint tools are in the `dev` dependency group. `uv.lock` fixes transitive package versions and distribution hashes across supported platforms and Python 3.12–3.14. CI installs with `uv sync --locked`; Streamlit Community Cloud recognizes the root `uv.lock`. The Python 3.14 CI job is configured to export a validated CycloneDX 1.5 runtime SBOM from that lock. The firmware's `dependencies.lock` pins ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0 for target `esp32`.
+Runtime dependencies are pinned in `pyproject.toml`; development-only audit and lint tools are in the `dev` dependency group. `uv.lock` fixes transitive package versions and distribution hashes across supported platforms and Python 3.12–3.14. CI installs with `uv sync --locked`; Streamlit Community Cloud recognizes the root `uv.lock`. The Python 3.14 CI job exports and validates a CycloneDX 1.5 runtime SBOM from that lock. The firmware's `dependencies.lock` pins ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0 for target `esp32`.
 
 The repository is not packaged as a Python library. Its `pyproject.toml` defines application dependencies, while `tool.uv.package = false` keeps uv from trying to build a wheel or source distribution.
 
@@ -173,11 +174,11 @@ The repository now maps requirements to objectives, decisions, implementation, t
 
 ## Reproducibility Improvements
 
-Local install and test commands use a pinned uv version and checked-in cross-platform lock; CI runs locked installs, dependency auditing, compile, documentation-link, and unit/UI checks on Python 3.12, 3.13, and 3.14. The Streamlit runtime excludes development tools. The Python 3.14 CI job is configured to generate a validated runtime SBOM artifact retained for 30 days; its first run is pending. The workflow page publishes a reviewed file allowlist with third-party notices. The Pages deployment workflow is manual-only and was not run.
+Local install and test commands use a pinned uv version and checked-in cross-platform lock; CI runs locked installs, dependency auditing, compile, documentation-link, and unit/UI checks on Python 3.12, 3.13, and 3.14. The Streamlit runtime excludes development tools. Python quality run `41094597806` generated, validated, and uploaded the runtime SBOM artifact for 30 days. The workflow page publishes a reviewed file allowlist with third-party notices. The Pages deployment workflow is manual-only and was not run.
 
 ## Traceability Status
 
-The [traceability matrix](traceability.md) contains functional and nonfunctional requirements with bounded verification statuses. No requirement is marked as hardware-verified. MQTT broker integration, physical chip identification, model/firmware parity, and all security experiments remain unverified or untested.
+The [traceability matrix](traceability.md) contains functional and nonfunctional requirements with bounded verification statuses. NFR-07 is verified by Python quality run `41094597806`; no requirement is marked as hardware-verified. MQTT broker integration, physical chip identification, model/firmware parity, and all security experiments remain unverified or untested.
 
 ## Remaining Limitations
 
@@ -209,13 +210,13 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 | Documentation | 13/15 | Requirements, architecture, method, metrics, limitations, safety, roadmap, audit, and traceability | No published experiment results or firmware bring-up guide backed by hardware |
 | Code Quality | 11/15 | Explicit dependencies, esptool failure handling, bounded state tests, dead code removed, Ruff correctness checks | No type checker or firmware static analysis configured; stylistic and broader opinionated lint rules remain disabled |
 | Testing | 13/15 | 16 tests, loopback HTTP coverage, AppTest, clean locked-environment run; Python 3.12/3.13/3.14 CI and ESP-IDF 6.1 classic ESP32 build pass | MQTT integration and hardware-in-loop validation remain unverified |
-| Security | 7/10 | Loopback boundaries, safe chip-ID behavior, no local history-scan matches, runtime and developer dependency audits pass in CI | Vulnerable firmware by design; main is unprotected; GitHub secret scanning is disabled; no SBOM or physical validation |
+| Security | 8/10 | Loopback boundaries, safe chip-ID behavior, no local history-scan matches, runtime and developer dependency audits pass in CI, and the runtime SBOM is validated and uploaded | Vulnerable firmware by design; main is unprotected; GitHub secret scanning is disabled; no physical validation |
 | Reproducibility | 9/10 | Cross-platform hash-bearing Python lock, pinned uv, locked CI installs, ESP-IDF component lock, and passing pinned firmware build | No physical firmware flash/build evidence or board-specific configuration record |
 | Open Source Governance | 8/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog | No tagged release or main-branch protection rule |
 | Research Rigor & Traceability | 7/10 | Requirements traceability, evidence labels, protocols, ADRs, benchmark plan, conservative SDG statement | No experiment has been run; protocols still require lab and statistical review |
-| **Total** | **80/100** |  |  |
+| **Total** | **81/100** |  |  |
 
-The updated score of **80/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
+The updated score of **81/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
 
 ## Recommended Next Actions
 
@@ -224,4 +225,4 @@ The updated score of **80/100**, from an initial 55/100, reflects better enginee
 3. Flash the built firmware on the selected classic ESP32 board and record board-specific behavior and differences.
 4. Run the optional Python node with Mosquitto on loopback and add broker-backed integration tests.
 5. Freeze EXP-01 protocol details, then collect authorized lab runs with commit/configuration provenance and raw evidence.
-6. Generate and archive an SPDX or CycloneDX SBOM with a release artifact.
+6. Add a release-specific SBOM archive when a tagged release process is introduced; include firmware components as well as Python runtime dependencies.

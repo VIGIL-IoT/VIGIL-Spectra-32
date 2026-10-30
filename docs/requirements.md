@@ -100,7 +100,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | Front end | HTML, CSS, JavaScript, SVG | Streamlit custom board component and standalone node page |
 | CI and hosting | GitHub Actions, GitHub Pages | Python validation workflow and static workflow page |
 | Dependency audit | pip-audit 2.10.1 | Locked runtime and development environment audit in CI |
-| Runtime SBOM | CycloneDX 1.5 via uv 0.13.6 | CI is configured to validate it and upload a 30-day artifact; first run pending |
+| Runtime SBOM | CycloneDX 1.5 via uv 0.13.6 | Exported, validated, and uploaded as a 30-day artifact by the Python 3.14 quality job |
 | Python lint | Ruff 0.17.3 | Correctness-focused E4/E7/E9/F checks in CI |
 | Diagram renderer | Archify 3.2.0 at pinned commit `208acba8d412335185b2056fedf54b3405df43fb` | Workflow diagram generation |
 

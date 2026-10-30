@@ -12,7 +12,7 @@ This project has no published version tags or release notes in the current repos
 - ESP-IDF classic ESP32 vulnerable reference implementation; its ESP-IDF 6.1 CI build passes, but it has not been flashed or verified on hardware.
 - Replay and T800 research plans, safety boundaries, and an interactive Archify workflow page.
 - MIT project license, third-party notices, tests, CI, contribution guidance, and repository traceability documentation.
-- Cross-platform Python dependency lock, pinned ESP-IDF component lock, and CI configured to validate and upload a CycloneDX runtime SBOM.
+- Cross-platform Python dependency lock, pinned ESP-IDF component lock, and a validated CycloneDX runtime SBOM artifact from Python 3.14 CI (30-day retention).
 
 ### Limitations
 
