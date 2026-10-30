@@ -4,24 +4,20 @@ Thank you for helping improve the VIGIL-IoT embedded-security research testbed. 
 
 ## Development setup
 
-Use Python 3.11 or newer. From the repository root:
+Use Python 3.12, 3.13, or 3.14 and [uv 0.13.6](https://docs.astral.sh/uv/getting-started/installation/). From the repository root:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m pip install -r requirements-dev.txt
+uv sync --locked --group dev
 ```
 
 Run the checks before opening a pull request:
 
 ```powershell
-python -m unittest discover -s tests -v
-python -m compileall -q data services components simulator tests tools
-python tools/check_docs.py
-ruff check --select E4,E7,E9,F data services components simulator tests tools
-pip-audit -r requirements.txt
-pip-audit -r requirements-dev.txt
+uv run --locked --group dev python -m unittest discover -s tests -v
+uv run --locked --group dev python -m compileall -q data services components simulator tests tools
+uv run --locked --group dev python tools/check_docs.py
+uv run --locked --group dev ruff check --select E4,E7,E9,F data services components simulator tests tools
+uv run --locked --group dev pip-audit
 ```
 
 The Streamlit tests use `AppTest`; the node HTTP tests bind to loopback and use a fake MQTT link. Neither suite requires a physical ESP32 or broker.

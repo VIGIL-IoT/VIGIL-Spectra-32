@@ -20,13 +20,11 @@ The Python node model in `simulator/vulnerable/` remains a separate software-in-
 
 ## Run the console
 
-Use Python 3.10 or newer. From the repository root:
+Use Python 3.12, 3.13, or 3.14 with [uv 0.13.6](https://docs.astral.sh/uv/getting-started/installation/). From the repository root:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r simulator/requirements.txt
-streamlit run simulator/dashboard/app.py
+uv sync --locked
+uv run --locked streamlit run simulator/dashboard/app.py
 ```
 
 Open `http://127.0.0.1:8501`. No MQTT broker or node-model process is required for the console.

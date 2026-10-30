@@ -3,7 +3,7 @@
 **Audit dates:** 2026-10-29 to 2026-10-30
 **Baseline revision:** `c2e0aaa` (`Add MIT license`)
 **Current classification:** prototype / v0.1 software behavior model
-**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. The Streamlit app was also started locally and returned HTTP 200. GitHub Actions passed both Python matrix jobs (3.12 and 3.14). No Pages deployment or hardware test was performed.
+**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. At the previous revision, the Streamlit app returned HTTP 200 and GitHub Actions passed on Python 3.12 and 3.14. No Pages deployment or hardware test was performed.
 
 ## Repository Overview
 
@@ -47,7 +47,8 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Removed unreferenced legacy `simulator/dashboard/board.py` and `simulator/dashboard/security_model.py` modules.
 - Declared pandas and refreshed Streamlit to 1.66.1. A dependency audit found 39 advisories against transitive Pillow 12.3.0; Streamlit 1.66.1 supports Pillow 13, so Pillow 13.0.0 is explicitly pinned. The follow-up `pip-audit` scan reported no known vulnerabilities.
 - Added Python CI for Python 3.12 and 3.14, runtime and development dependency audits, correctness-focused Ruff checks, and documentation-link checking. Removed the short-lived Dependabot version-update schedule after its initial run opened duplicate pandas update PRs (#1 and #2); both PRs were closed, and dependency auditing remains active in CI.
-- Pinned CI developer tools in `requirements-dev.txt` so security scanning and linting are reproducible.
+- Replaced the split pip requirement files with `pyproject.toml` and a cross-platform, hash-bearing `uv.lock`. Runtime dependencies and development checks are now declared separately; the hosted Streamlit app does not install development tools.
+- Pinned uv 0.13.6 and changed CI to use locked installs across Python 3.12, 3.13, and 3.14.
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
 - Added `.gitignore` rules for captures, serial logs, and local generated Archify QA receipts.
@@ -78,7 +79,8 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - `docs/traceability.md`
 - `licenses/third-party/JetBrains-Mono-OFL.txt`
 - `licenses/third-party/archify-MIT.txt`
-- `requirements-dev.txt`
+- `pyproject.toml`
+- `uv.lock`
 - `tests/test_node_http.py`
 - `tools/check_docs.py`
 
@@ -93,10 +95,10 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - `docs/site/workflow/index.html`
 - `services/hardware.py`
 - `simulator/README.md`
-- `simulator/requirements.txt`
 - `tests/test_scenarios.py`
 
 The two unused legacy dashboard modules listed above were removed.
+The original `requirements.txt`, `requirements-dev.txt`, and `simulator/requirements.txt` manifests were later replaced by the single uv project and lock files.
 
 ## Testing Performed
 
@@ -118,6 +120,16 @@ The Streamlit AppTest suite emits benign `missing ScriptRunContext` warnings in 
 
 On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.73 seconds**. Compilation, focused Ruff lint, documentation-link checks, clean-environment dependency validation, runtime dependency audit, Streamlit HTTP smoke, workflow YAML parsing, and `git diff --check` also passed. The development-tool dependency audit could not be resolved locally because PyPI timed out. Local checks were performed on Python 3.14. The subsequent main-branch GitHub Actions run passed both Python 3.12 and Python 3.14 matrix jobs.
 
+## Follow-up Verification: Locked Python Environment
+
+- `uv lock --check` confirmed the checked-in lock is current and resolves 71 packages.
+- A fresh temporary Python 3.14.7 environment installed all 70 runtime and development packages from the lock; `pip check` reported no broken requirements.
+- A separate runtime-only sync installed 51 packages and confirmed that neither Ruff nor pip-audit is installed in the default app environment; Streamlit launched from it and returned HTTP 200.
+- The existing suite passed again: **16 tests passed in 21.81 seconds**.
+- Ruff, Python compilation, and documentation-link checks passed against the locked environment; the documentation checker verified 33 files.
+- `pip-audit` reported **no known vulnerabilities** in the locked runtime and development environment. It emitted cache-deserialization warnings but completed successfully.
+- `git diff --check` passed. The Python 3.12/3.13/3.14 GitHub Actions run is required to verify the updated CI matrix.
+
 ## Security Findings
 
 - GitHub reports that main has no branch protection rule. This is a repository setting, not evidence of a suspicious commit; no protection settings were changed during the audit.
@@ -137,9 +149,9 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 
 ## Dependency Findings
 
-Direct runtime requirements are pinned in `simulator/requirements.txt`, including pandas, Streamlit, and Pillow. The root `requirements.txt` delegates to that file. The Python support floor is 3.11; the CI matrix targets 3.12 and 3.14. Transitive Python dependencies are resolved by pip rather than a checked-in lockfile, and ESP-IDF component versions are not locked.
+Runtime dependencies are pinned in `pyproject.toml`; development-only audit and lint tools are in the `dev` dependency group. `uv.lock` fixes transitive package versions and distribution hashes across supported platforms and Python 3.12–3.14. CI installs with `uv sync --locked`; Streamlit Community Cloud recognizes the root `uv.lock`. The ESP-IDF component versions remain unlocked.
 
-The repository is not packaged as a Python library: there is no `pyproject.toml`, build backend, wheel, or source distribution. This is intentional for the current Streamlit application.
+The repository is not packaged as a Python library. Its `pyproject.toml` defines application dependencies, while `tool.uv.package = false` keeps uv from trying to build a wheel or source distribution.
 
 ## Documentation Improvements
 
@@ -151,7 +163,7 @@ The repository now maps requirements to objectives, decisions, implementation, t
 
 ## Reproducibility Improvements
 
-Local install and test commands are documented; direct runtime dependencies are pinned; CI runs compile, documentation-link, and unit/UI checks on Python 3.12 and 3.14; the workflow page publishes a reviewed file allowlist with third-party notices. Clean installation was verified locally on Python 3.14.7. The main-branch GitHub Actions Python quality run passed both matrix jobs on Python 3.12 and 3.14. The Pages deployment workflow is manual-only and was not run.
+Local install and test commands use a pinned uv version and checked-in cross-platform lock; CI runs locked installs, dependency auditing, compile, documentation-link, and unit/UI checks on Python 3.12, 3.13, and 3.14. The Streamlit runtime excludes development tools. The workflow page publishes a reviewed file allowlist with third-party notices. The Pages deployment workflow is manual-only and was not run.
 
 ## Traceability Status
 
@@ -162,8 +174,8 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 - No Mosquitto executable or ESP-IDF toolchain was available for an MQTT integration run or firmware build.
 - No physical ESP32 or calibrated measurement setup was used.
 - No attack/defense experiment has run; the Streamlit outcomes remain deterministic model behavior.
-- No transitive dependency lockfile exists.
-- GitHub CI passed on Python 3.12 and 3.14. Pages deployment was not run.
+- The ESP-IDF component lock is not present; no firmware build or broker-backed integration test was run.
+- The newly updated Python 3.12/3.13/3.14 CI matrix needs a successful run on this revision. Pages deployment was not run.
 - The workflow-page workflow runs only through manual workflow dispatch; no page was deployed during this audit.
 
 ## Initial Maturity Score
@@ -187,14 +199,14 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 | Architecture & Modularity | 12/15 | Three paths separated in architecture, diagrams, docs, and ADRs; unused duplicates removed | No hardware/model parity verification or modular package boundary |
 | Documentation | 13/15 | Requirements, architecture, method, metrics, limitations, safety, roadmap, audit, and traceability | No published experiment results or firmware bring-up guide backed by hardware |
 | Code Quality | 11/15 | Explicit dependencies, esptool failure handling, bounded state tests, dead code removed, Ruff correctness checks | No type checker or firmware static analysis configured; stylistic and broader opinionated lint rules remain disabled |
-| Testing | 12/15 | 16 tests, loopback HTTP coverage, AppTest, clean-environment run, passing GitHub CI on Python 3.12 and 3.14 | No MQTT or hardware-in-loop validation |
+| Testing | 12/15 | 16 tests, loopback HTTP coverage, AppTest, clean locked-environment run; prior GitHub CI passed on Python 3.12 and 3.14 | Updated three-version matrix, MQTT integration, and hardware-in-loop validation remain unverified |
 | Security | 7/10 | Loopback boundaries, safe chip-ID behavior, no local history-scan matches, runtime and developer dependency audits pass in CI | Vulnerable firmware by design; main is unprotected; GitHub secret scanning is disabled; no SBOM or physical validation |
-| Reproducibility | 8/10 | Pinned direct dependencies, clean Python 3.14 install, CI matrix, test and docs commands | No full transitive lock; no ESP-IDF component lock or verified build |
+| Reproducibility | 9/10 | Cross-platform, hash-bearing Python lock; pinned uv; locked CI installs; Python 3.12/3.13/3.14 matrix and setup commands | No ESP-IDF component lock or verified build |
 | Open Source Governance | 8/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog | No tagged release or main-branch protection rule |
 | Research Rigor & Traceability | 7/10 | Requirements traceability, evidence labels, protocols, ADRs, benchmark plan, conservative SDG statement | No experiment has been run; protocols still require lab and statistical review |
-| **Total** | **78/100** |  |  |
+| **Total** | **79/100** |  |  |
 
-The updated score of **78/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
+The updated score of **79/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
 
 ## Recommended Next Actions
 
@@ -203,4 +215,4 @@ The updated score of **78/100**, from an initial 55/100, reflects better enginee
 3. Build the classic ESP32 firmware in a pinned ESP-IDF environment and record any board-specific differences.
 4. Run the optional Python node with Mosquitto on loopback and add broker-backed integration tests.
 5. Freeze EXP-01 protocol details, then collect authorized lab runs with commit/configuration provenance and raw evidence.
-6. Add a transitive dependency lock and generate an SPDX or CycloneDX SBOM when preparing a distributable release artifact.
+6. Lock the ESP-IDF component resolution, then generate and archive an SPDX or CycloneDX SBOM with a release artifact.

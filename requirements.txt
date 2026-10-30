@@ -1,3 +1,0 @@
-# Streamlit Community Cloud reads dependencies from the repository root.
-# Keep the dashboard's pinned dependency set in one place.
--r simulator/requirements.txt

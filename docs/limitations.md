@@ -34,11 +34,11 @@
 
 ## Reproducibility and operations
 
-- Runtime dependencies are pinned directly, but there is no fully resolved cross-platform transitive lockfile. Resolver output may change as dependency metadata evolves.
-- Python 3.14.7 was tested locally; Python 3.12 is included in CI but this local environment did not run it.
+- Python dependencies are pinned in `pyproject.toml` and resolved in the cross-platform `uv.lock`; the lock is generated with uv 0.13.6 and checked in CI with `--locked`.
+- Python 3.14.7 was tested locally. CI covers Python 3.12, 3.13, and 3.14; the other matrix interpreters are not installed in this local environment.
 - Mosquitto and ESP-IDF versions are not recorded as locally verified. Firmware component resolution has no checked-in dependency lock.
 - No package build is defined because the project is an application repository, not a distributable Python library.
-- GitHub Actions audits the declared runtime and development requirements with `pip-audit`. No SBOM is generated yet.
+- GitHub Actions audits the locked runtime and development environment with `pip-audit`. No SBOM is generated yet.
 
 ## Scope and safety
 

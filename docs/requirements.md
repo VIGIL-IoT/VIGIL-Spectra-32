@@ -25,7 +25,7 @@ The current gap is project-specific: dashboard scenarios, a standalone node mode
 | O-2: Make the standalone software node's HTTP behavior reproducible | Valid LED forms update one virtual state; invalid/duplicate values and unknown routes are rejected | `tests/test_node_http.py` |
 | O-3: Distinguish software model, host USB discovery, and hardware | UI/docs label sample values; chip probe is explicit; no attack scenario is represented as physical telemetry | architecture docs, `services/hardware.py`, scenario tests |
 | O-4: Define a defensible replay experiment | Threat model, controls, outcomes, repetition plan, run ledger, and reproduction label are written before data collection | `experiments/EXP-01-replay/README.md` |
-| O-5: Enable another contributor to verify the Python prototype | Pinned direct dependencies, setup instructions, CI checks, and test commands are available | README, requirements, Python quality workflow |
+| O-5: Enable another contributor to verify the Python prototype | A cross-platform dependency lock, setup instructions, CI checks, and test commands are available | README, `pyproject.toml`, `uv.lock`, Python quality workflow |
 | O-6: Validate the ESP32 implementation | Build, flash, and compare a declared firmware commit on a documented board and isolated lab | Future evidence; not met today |
 
 The objectives do not imply measured effectiveness. O-6 is a future validation goal.
@@ -47,7 +47,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 - The standalone Python node's MQTT code exists, but a broker-backed integration run is not verified.
 - The ESP-IDF source exists, but no build, flash, board test, or parity run is recorded.
 - Physical chip classification is unit-tested with mocked esptool output; no physical probe is recorded in the repository.
-- The current Python app and tests were run on Python 3.14.7. The declared dependency floor is Python 3.11 because pinned Streamlit and pandas metadata require it; other versions need CI evidence.
+- The current Python app and tests were run on Python 3.14.7. The declared support range is Python 3.12 through 3.14; CI covers all three minor versions.
 
 ### Out of scope for the current release
 
@@ -77,7 +77,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | NFR-01 | Default desktop simulator services bind to loopback; the unauthenticated hardware example must remain on an isolated authorized lab network. |
 | NFR-02 | Dashboard/profile/result wording must not imply hardware telemetry or measured security. |
 | NFR-03 | Invalid HTTP form input is rejected; chip identification has a finite subprocess timeout and no write/erase command. |
-| NFR-04 | Direct runtime dependencies and supported Python floor are explicit. Full transitive dependency locking remains future work. |
+| NFR-04 | Supported Python versions and runtime dependencies are explicit; a checked-in cross-platform lock fixes transitive Python dependency versions. |
 | NFR-05 | UI and model state remain bounded: session event history is capped at 60 events and chart history at 60 samples. |
 | NFR-06 | Experiment files must separate measured, simulated, expected, and paper-reported outcomes. |
 
@@ -85,7 +85,8 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 
 | Layer | Technology/version | Use/status |
 |---|---|---|
-| Language | Python 3.11+; audited locally on 3.14.7 | Dashboard, model, and tests |
+| Language | Python >=3.12,<3.15; audited locally on 3.14.7 | Dashboard, model, and tests; CI covers 3.12, 3.13, and 3.14 |
+| Environment lock | uv 0.13.6 | Cross-platform Python dependency lock; development tools are in a separate group |
 | Dashboard | Streamlit 1.66.1 | Local or hosted session UI |
 | Table/chart data | pandas 3.0.0 | In-memory counter chart |
 | Image support | Pillow 13.0.0 | Streamlit transitive dependency; explicitly pinned to the patched compatible release |
@@ -97,7 +98,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | Firmware MQTT | `espressif/mqtt` component constraint `^1.1.0` | Lockfile not present; resolved component version is unverified |
 | Front end | HTML, CSS, JavaScript, SVG | Streamlit custom board component and standalone node page |
 | CI and hosting | GitHub Actions, GitHub Pages | Python validation workflow and static workflow page |
-| Dependency audit | pip-audit 2.10.1 | Runtime and development requirement audit in CI |
+| Dependency audit | pip-audit 2.10.1 | Locked runtime and development environment audit in CI |
 | Python lint | Ruff 0.17.3 | Correctness-focused E4/E7/E9/F checks in CI |
 | Diagram renderer | Archify 3.2.0 at pinned commit `208acba8d412335185b2056fedf54b3405df43fb` | Workflow diagram generation |
 

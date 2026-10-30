@@ -1,0 +1,25 @@
+[project]
+name = "vigil-spectra-32"
+version = "0.1.0"
+description = "A low-cost embedded and IoT security research testbed."
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "esptool==5.6.0",
+    "paho-mqtt==2.1.0",
+    "pandas==3.0.0",
+    "pillow==13.0.0",
+    "pyserial==3.5",
+    "streamlit==1.66.1",
+]
+
+[dependency-groups]
+dev = [
+    "pip-audit==2.10.1",
+    "ruff==0.17.3",
+]
+
+[tool.uv]
+default-groups = []
+package = false
+required-version = "==0.13.6"

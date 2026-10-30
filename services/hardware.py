@@ -29,7 +29,7 @@ def list_serial_ports() -> tuple[list[SerialPort], str | None]:
     try:
         from serial.tools import list_ports
     except ImportError:
-        return [], "pySerial is not installed. Install simulator/requirements.txt and restart the app."
+        return [], "pySerial is not installed. Run `uv sync --locked` from the repository root, then restart the app."
 
     try:
         ports = [
@@ -113,7 +113,7 @@ def identify_esp_chip(port_name: str, timeout_seconds: int = 20) -> ChipIdentifi
         return {
             "status": "tool_missing",
             "chip": "Unknown",
-            "message": "esptool is not installed. Install simulator/requirements.txt and restart the app.",
+            "message": "esptool is not installed. Run `uv sync --locked` from the repository root, then restart the app.",
         }
     except subprocess.TimeoutExpired:
         return {
@@ -133,7 +133,7 @@ def identify_esp_chip(port_name: str, timeout_seconds: int = 20) -> ChipIdentifi
         return {
             "status": "tool_missing",
             "chip": "Unknown",
-            "message": "esptool is not installed. Install simulator/requirements.txt and restart the app.",
+            "message": "esptool is not installed. Run `uv sync --locked` from the repository root, then restart the app.",
         }
     if result.returncode != 0:
         return {

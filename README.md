@@ -57,13 +57,11 @@ See [the detailed architecture](docs/architecture.md), [requirements and scope](
 
 ## Quick start: Streamlit console
 
-Use Python 3.11 or newer. From the repository root:
+Use Python 3.12, 3.13, or 3.14 with [uv 0.13.6](https://docs.astral.sh/uv/getting-started/installation/). The committed `uv.lock` resolves exact versions and package hashes for supported platforms. From the repository root:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-streamlit run simulator/dashboard/app.py
+uv sync --locked
+uv run --locked streamlit run simulator/dashboard/app.py
 ```
 
 Open `http://127.0.0.1:8501`. The console does not require Mosquitto or the standalone node.
@@ -71,9 +69,9 @@ Open `http://127.0.0.1:8501`. The console does not require Mosquitto or the stan
 Run the automated tests:
 
 ```powershell
-python -m unittest discover -s tests -v
-python -m compileall -q data services components simulator tests tools
-python tools/check_docs.py
+uv run --locked --group dev python -m unittest discover -s tests -v
+uv run --locked --group dev python -m compileall -q data services components simulator tests tools
+uv run --locked --group dev python tools/check_docs.py
 ```
 
 The test suite uses a local loopback test server and Streamlit `AppTest`; it does not require a physical board or MQTT broker.
@@ -81,10 +79,8 @@ The test suite uses a local loopback test server and Streamlit `AppTest`; it doe
 To run the same focused lint and dependency checks as CI:
 
 ```powershell
-python -m pip install -r requirements-dev.txt
-ruff check --select E4,E7,E9,F data services components simulator tests tools
-pip-audit -r requirements.txt
-pip-audit -r requirements-dev.txt
+uv run --locked --group dev ruff check --select E4,E7,E9,F data services components simulator tests tools
+uv run --locked --group dev pip-audit
 ```
 
 ## Optional local Python node
