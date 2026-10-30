@@ -53,3 +53,38 @@ jobs:
 
       - name: Run tests
         run: uv run --locked --group dev python -m unittest discover -s tests -v
+
+      - name: Export locked runtime SBOM
+        if: matrix.python-version == '3.14'
+        run: uv --preview-features sbom-export export --locked --format cyclonedx1.5 --no-dev --output-file spectra32-runtime.cdx.json
+
+      - name: Validate runtime SBOM
+        if: matrix.python-version == '3.14'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          sbom = json.loads(Path("spectra32-runtime.cdx.json").read_text(encoding="utf-8"))
+          assert sbom.get("bomFormat") == "CycloneDX", "unexpected SBOM format"
+          assert sbom.get("specVersion") == "1.5", "unexpected CycloneDX version"
+          components = sbom.get("components", [])
+          assert components, "runtime SBOM contains no components"
+          names = {component.get("name", "").casefold() for component in components}
+          assert not any("ruff" in name for name in names), "development dependency leaked into runtime SBOM"
+          assert not any("pip-audit" in name or "pip_audit" in name for name in names), (
+              "development dependency leaked into runtime SBOM"
+          )
+          root = sbom.get("metadata", {}).get("component", {}).get("name")
+          assert root == "vigil-spectra-32", f"unexpected project metadata: {root!r}"
+          print(f"Validated CycloneDX 1.5 runtime SBOM with {len(components)} components")
+          PY
+
+      - name: Upload runtime SBOM
+        if: matrix.python-version == '3.14'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: spectra32-python-runtime-sbom
+          path: spectra32-runtime.cdx.json
+          if-no-files-found: error
+          retention-days: 30

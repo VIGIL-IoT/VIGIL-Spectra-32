@@ -50,6 +50,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Replaced the split pip requirement files with `pyproject.toml` and a cross-platform, hash-bearing `uv.lock`. Runtime dependencies and development checks are now declared separately; the hosted Streamlit app does not install development tools.
 - Pinned uv 0.13.6 and changed CI to use locked installs across Python 3.12, 3.13, and 3.14.
 - Added an ESP-IDF 6.1 build workflow for classic `esp32`; CI passed and generated the checked-in component lock for ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0.
+- Added a Python 3.14 CI step that exports CycloneDX 1.5 from the locked runtime dependencies, validates its format and contents, then uploads a 30-day artifact. The new workflow change still requires a passing run before it is treated as verified.
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
 - Added `.gitignore` rules for captures, serial logs, and local generated Archify QA receipts.
@@ -89,6 +90,11 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 
 ## Files Modified
 
+- `.github/workflows/python-quality.yml` — configured CycloneDX runtime SBOM export, validation, and artifact upload
+- `CHANGELOG.md`
+- `docs/REPOSITORY_AUDIT.md`
+- `docs/requirements.md`
+- `docs/traceability.md`
 - `.github/workflows/deploy-workflow-page.yml`
 - `.gitignore`
 - `README.md`
@@ -143,7 +149,7 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 - The dashboard cannot access a user's USB device when hosted in Streamlit Community Cloud.
 - No high-confidence hardcoded-secret pattern was found in the repository scan.
 - The initial runtime dependency audit flagged Pillow 12.3.0. After updating Streamlit to 1.66.1 and explicitly pinning its compatible Pillow 13.0.0 release, `pip-audit` reported no known vulnerabilities in runtime requirements.
-- CI is configured to scan both runtime and development requirements. The local development-tool scan was blocked by a PyPI timeout. There is still no SBOM artifact or scheduled release bill of materials.
+- CI is configured to scan both runtime and development requirements. The local development-tool scan was blocked by a PyPI timeout. CI is now configured to upload a validated runtime SBOM for 30 days; a release-specific SBOM archive is not configured.
 
 ## Personal Path Audit
 
@@ -153,7 +159,7 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 
 ## Dependency Findings
 
-Runtime dependencies are pinned in `pyproject.toml`; development-only audit and lint tools are in the `dev` dependency group. `uv.lock` fixes transitive package versions and distribution hashes across supported platforms and Python 3.12–3.14. CI installs with `uv sync --locked`; Streamlit Community Cloud recognizes the root `uv.lock`. The firmware's `dependencies.lock` pins ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0 for target `esp32`.
+Runtime dependencies are pinned in `pyproject.toml`; development-only audit and lint tools are in the `dev` dependency group. `uv.lock` fixes transitive package versions and distribution hashes across supported platforms and Python 3.12–3.14. CI installs with `uv sync --locked`; Streamlit Community Cloud recognizes the root `uv.lock`. The Python 3.14 CI job is configured to export a validated CycloneDX 1.5 runtime SBOM from that lock. The firmware's `dependencies.lock` pins ESP-IDF 6.1.0 and `espressif/mqtt` 1.1.0 for target `esp32`.
 
 The repository is not packaged as a Python library. Its `pyproject.toml` defines application dependencies, while `tool.uv.package = false` keeps uv from trying to build a wheel or source distribution.
 
@@ -167,7 +173,7 @@ The repository now maps requirements to objectives, decisions, implementation, t
 
 ## Reproducibility Improvements
 
-Local install and test commands use a pinned uv version and checked-in cross-platform lock; CI runs locked installs, dependency auditing, compile, documentation-link, and unit/UI checks on Python 3.12, 3.13, and 3.14. The Streamlit runtime excludes development tools. The workflow page publishes a reviewed file allowlist with third-party notices. The Pages deployment workflow is manual-only and was not run.
+Local install and test commands use a pinned uv version and checked-in cross-platform lock; CI runs locked installs, dependency auditing, compile, documentation-link, and unit/UI checks on Python 3.12, 3.13, and 3.14. The Streamlit runtime excludes development tools. The Python 3.14 CI job is configured to generate a validated runtime SBOM artifact retained for 30 days; its first run is pending. The workflow page publishes a reviewed file allowlist with third-party notices. The Pages deployment workflow is manual-only and was not run.
 
 ## Traceability Status
 
