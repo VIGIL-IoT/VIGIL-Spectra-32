@@ -89,6 +89,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - `pyproject.toml`
 - `uv.lock`
 - `tests/test_node_http.py`
+- `tests/test_node_mqtt.py`
 - `tools/check_docs.py`
 
 ## Files Modified

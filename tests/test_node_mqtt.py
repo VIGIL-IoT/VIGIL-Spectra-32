@@ -98,15 +98,18 @@ class NodeMqttIntegrationTests(unittest.TestCase):
 
                 invalid_publish = subscriber.publish(COMMAND_TOPIC, payload="TOGGLE", qos=0, retain=False)
                 self.assertEqual(invalid_publish.rc, mqtt.MQTT_ERR_SUCCESS)
-                time.sleep(0.25)
+                # Same-publisher MQTT ordering makes this status the delivery barrier for TOGGLE.
+                barrier_publish = subscriber.publish(COMMAND_TOPIC, payload="ON", qos=0, retain=False)
+                self.assertEqual(barrier_publish.rc, mqtt.MQTT_ERR_SUCCESS)
+                self.assertEqual(self._next_status(status_messages), "ON")
                 self.assertEqual(node.snapshot()["led"], "ON")
-                self.assertEqual(node.snapshot()["commands_applied"], 1)
+                self.assertEqual(node.snapshot()["commands_applied"], 2)
 
                 publish = subscriber.publish(COMMAND_TOPIC, payload="OFF", qos=0, retain=False)
                 self.assertEqual(publish.rc, mqtt.MQTT_ERR_SUCCESS)
                 self.assertEqual(self._next_status(status_messages), "OFF")
                 self.assertEqual(node.snapshot()["led"], "OFF")
-                self.assertEqual(node.snapshot()["commands_applied"], 2)
+                self.assertEqual(node.snapshot()["commands_applied"], 3)
             finally:
                 if mqtt_link is not None:
                     mqtt_link.close()
