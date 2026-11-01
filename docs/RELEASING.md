@@ -13,7 +13,7 @@ Published release snapshots and the current feature-release preparation are:
 | `v0.1.0` | `58ba1f7861b7fea6c8be2d529720f4f9584f9c7c` | Research-grade software-model baseline, repository CI, and runtime SBOM |
 | `v0.2.0` | `b03fab2dc9801702048c46bbdd165893f9e15879` | Dashboard chart and brand refinements, plus broker-verified loopback MQTT coverage |
 | `v0.2.1` | `f18369c232c966c039cdcdf2dfd122348b2325ba` | Release provenance includes the exact ESP-IDF Component Manager lock |
-| `v0.3.0` | Release commit on `main`; tag after CI passes | Eight-scenario Chaos Lab behavioral resilience model and EXP-02 protocol |
+| `v0.3.0` | `7a20960a195089a128f5970889b5441a72a8a904` | Eight-scenario Chaos Lab behavioral resilience model and EXP-02 protocol |
 
 The next feature release after `v0.3.0` should be `v0.4.0`, unless its scope is only a compatible fix to the `v0.3.x` line.
 
