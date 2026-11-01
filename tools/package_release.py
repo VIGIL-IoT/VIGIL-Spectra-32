@@ -1,4 +1,4 @@
-"""Validate release provenance and package the Python runtime SBOM assets."""
+"""Validate release provenance and package Python and ESP-IDF inventory assets."""
 
 from __future__ import annotations
 
@@ -45,10 +45,11 @@ def package_release(
     workflow_run: int,
     firmware_run: int,
     sbom_path: Path,
+    firmware_lock_path: Path,
     output_dir: Path,
     uv_version: str,
-) -> tuple[Path, Path, Path]:
-    """Validate the tagged source and SBOM, then create release assets."""
+) -> tuple[Path, Path, Path, Path]:
+    """Validate tagged-source inventories, then create checksum-bound assets."""
     match = TAG_PATTERN.fullmatch(tag)
     if match is None:
         raise ValueError("tag must use vMAJOR.MINOR.PATCH SemVer format")
@@ -58,6 +59,10 @@ def package_release(
         raise ValueError("firmware workflow run ID must be a positive integer")
     if not sbom_path.is_file():
         raise FileNotFoundError(f"SBOM file does not exist: {sbom_path}")
+    if not firmware_lock_path.is_file():
+        raise FileNotFoundError(
+            f"ESP-IDF dependency lock does not exist: {firmware_lock_path}"
+        )
 
     tag_object_type = _git("cat-file", "-t", tag)
     if tag_object_type != "tag":
@@ -74,6 +79,9 @@ def package_release(
         raise ValueError(
             f"tag {tag} does not match tagged pyproject version {project_version!r}"
         )
+    tagged_firmware_lock = _git(
+        "show", f"{tag}:firmware/vulnerable/basic-node/dependencies.lock"
+    )
 
     sbom: dict[str, Any] = json.loads(sbom_path.read_text(encoding="utf-8"))
     if not isinstance(sbom, dict):
@@ -103,16 +111,39 @@ def package_release(
         names = ", ".join(sorted(leaked_development_tools))
         raise ValueError(f"development tools found in runtime SBOM: {names}")
 
+    firmware_lock = firmware_lock_path.read_text(encoding="utf-8")
+    if firmware_lock.strip() != tagged_firmware_lock:
+        raise ValueError("firmware dependency lock does not match the tagged source")
+    required_lock_entries = (
+        "  espressif/mqtt:",
+        "  idf:",
+        "      type: idf",
+        "    version: 6.1.0",
+        "target: esp32",
+    )
+    if any(entry not in firmware_lock for entry in required_lock_entries):
+        raise ValueError(
+            "firmware dependency lock must include ESP-IDF 6.1.0, "
+            "espressif/mqtt, and target esp32"
+        )
+
     output_dir.mkdir(parents=True, exist_ok=True)
     sbom_name = f"spectra32-{tag}-runtime.cdx.json"
+    firmware_lock_name = f"spectra32-{tag}-esp-idf-dependencies.lock"
     sbom_asset = output_dir / sbom_name
+    firmware_lock_asset = output_dir / firmware_lock_name
     manifest_asset = output_dir / "release-manifest.json"
     checksum_asset = output_dir / "SHA256SUMS.txt"
-    if any(path.exists() for path in (sbom_asset, manifest_asset, checksum_asset)):
+    if any(
+        path.exists()
+        for path in (sbom_asset, firmware_lock_asset, manifest_asset, checksum_asset)
+    ):
         raise FileExistsError("release output already contains one or more asset names")
 
     shutil.copyfile(sbom_path, sbom_asset)
+    shutil.copyfile(firmware_lock_path, firmware_lock_asset)
     sbom_digest = _sha256(sbom_asset)
+    firmware_lock_digest = _sha256(firmware_lock_asset)
     manifest = {
         "schema": "vigil-iot.release-manifest.v1",
         "repository": REPOSITORY_URL,
@@ -133,6 +164,17 @@ def package_release(
             "sha256": sbom_digest,
             "component_count": len(components),
         },
+        "firmware_dependency_inventory": {
+            "format": "ESP-IDF Component Manager lockfile",
+            "coverage": (
+                "Component Manager-resolved dependencies only; excludes ESP-IDF "
+                "built-in components and compiler/toolchain binaries"
+            ),
+            "file": firmware_lock_name,
+            "sha256": firmware_lock_digest,
+            "target": "esp32",
+            "esp_idf_version": "6.1.0",
+        },
         "generated_at_utc": datetime.now(UTC).isoformat(),
     }
     manifest_asset.write_text(
@@ -141,18 +183,21 @@ def package_release(
     )
     manifest_digest = _sha256(manifest_asset)
     checksum_asset.write_text(
-        f"{sbom_digest}  {sbom_name}\n{manifest_digest}  {manifest_asset.name}\n",
+        f"{sbom_digest}  {sbom_name}\n"
+        f"{firmware_lock_digest}  {firmware_lock_name}\n"
+        f"{manifest_digest}  {manifest_asset.name}\n",
         encoding="utf-8",
     )
-    return sbom_asset, checksum_asset, manifest_asset
+    return sbom_asset, firmware_lock_asset, checksum_asset, manifest_asset
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--tag", required=True, help="annotated release tag, e.g. v0.2.0")
+    parser.add_argument("--tag", required=True, help="annotated release tag, e.g. v0.2.1")
     parser.add_argument("--workflow-run", type=int, required=True, help="successful Python quality run ID for this tag")
     parser.add_argument("--firmware-run", type=int, required=True, help="successful ESP-IDF build run ID for this tag")
     parser.add_argument("--sbom", type=Path, required=True, help="CycloneDX 1.5 runtime SBOM from that workflow run")
+    parser.add_argument("--firmware-lock", type=Path, required=True, help="ESP-IDF dependency lock artifact from that firmware build")
     parser.add_argument("--output-dir", type=Path, required=True, help="empty or new directory for release assets")
     parser.add_argument("--uv-version", default="0.13.6", help="uv version used by the verified workflow")
     args = parser.parse_args()
@@ -163,6 +208,7 @@ def main() -> int:
             workflow_run=args.workflow_run,
             firmware_run=args.firmware_run,
             sbom_path=args.sbom,
+            firmware_lock_path=args.firmware_lock,
             output_dir=args.output_dir,
             uv_version=args.uv_version,
         )

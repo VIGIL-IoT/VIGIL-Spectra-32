@@ -2,8 +2,8 @@
 
 **Audit dates:** 2026-10-29 to 2026-11-01
 **Baseline revision:** `c2e0aaa` (`Add MIT license`)
-**Current classification:** prototype / v0.2 software behavior model
-**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, releases, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI; and version-matched Python runtime SBOMs were attached to both GitHub releases. No Pages deployment, firmware flash, or hardware experiment was performed.
+**Current classification:** prototype / v0.2.1 release candidate (software behavior model)
+**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, releases, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI; and v0.1.0 and v0.2.0 include version-matched Python runtime SBOMs. Release preparation now packages the exact ESP-IDF Component Manager lock from its tagged build. No Pages deployment, firmware flash, or hardware experiment was performed.
 
 ## Repository Overview
 
@@ -170,18 +170,18 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 
 - Added `tests/test_node_mqtt.py`, which starts an ephemeral Mosquitto listener bound to `127.0.0.1` and checks the standalone node's ON/OFF command and status flow, plus rejection of an invalid payload. A same-publisher follow-up command provides a delivery barrier for the invalid-payload assertion.
 - A dedicated `python-quality` job installs Mosquitto on the hosted Ubuntu runner and runs the integration test. The broker test and Python 3.12, 3.13, and 3.14 matrix passed in [run 41104285546](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41104285546). The local Python suite reports the test as skipped when the broker is absent.
-- The latest local full-suite result is **17 cases: 16 passed and 1 Mosquitto-dependent test skipped**. Ruff, compileall, documentation links, and workflow YAML parsing passed; the earlier 16-test result above is retained as historical evidence from the preceding audit run.
+- The latest local full-suite result is **21 cases: 20 passed and 1 Mosquitto-dependent test skipped**. Ruff with the CI rule set, compileall, documentation links, and `uv lock --check` passed; local pip-audit could not reach PyPI during this run.
 
 ## Security Findings
 
-- GitHub reports that main has no branch protection rule. This is a repository setting, not evidence of a suspicious commit; no protection settings were changed during the audit.
-- GitHub Secret Scanning is disabled for this repository. The local full-history scan found no common credential patterns, but platform secret scanning could not be verified.
+- GitHub reports that main has no branch protection rule. This is a repository setting, not evidence of a suspicious commit. It remains unconfigured while the repository is using the direct-to-main workflow requested by the owner.
+- GitHub Secret Scanning and push protection are enabled for this public repository. The API reports zero open secret-scanning alerts; the local full-history scan also found no common credential patterns.
 - Desktop HTTP/MQTT examples are unauthenticated and must remain loopback-only. The future firmware baseline is deliberately vulnerable and must be used only in an isolated, owned lab.
 - Host-side chip identification requires an explicit action and does not issue flash-write or erase commands; it may reset the selected board.
 - The dashboard cannot access a user's USB device when hosted in Streamlit Community Cloud.
 - No high-confidence hardcoded-secret pattern was found in the repository scan.
 - The initial runtime dependency audit flagged Pillow 12.3.0. After updating Streamlit to 1.66.1 and explicitly pinning its compatible Pillow 13.0.0 release, `pip-audit` reported no known vulnerabilities in runtime requirements.
-- CI is configured to scan both runtime and development requirements. The local development-tool scan was blocked by a PyPI timeout. Both tagged releases now archive their version-matched Python runtime SBOM, checksums, and provenance manifest; firmware dependencies are not yet included in those SBOMs.
+- CI is configured to scan both runtime and development requirements. The local development-tool scan was blocked by a PyPI timeout. v0.1.0 and v0.2.0 archive the Python runtime SBOM, checksums, and provenance manifest. Release preparation now adds the exact ESP-IDF Component Manager lock and its checksum; this does not cover built-in ESP-IDF components or compiler/toolchain binaries.
 
 ## Personal Path Audit
 
@@ -240,20 +240,20 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 | Architecture & Modularity | 12/15 | Three paths separated in architecture, diagrams, docs, and ADRs; unused duplicates removed | No hardware/model parity verification or modular package boundary |
 | Documentation | 13/15 | Requirements, architecture, method, metrics, limitations, safety, roadmap, audit, and traceability | No published experiment results or firmware bring-up guide backed by hardware |
 | Code Quality | 11/15 | Explicit dependencies, esptool failure handling, bounded state tests, dead code removed, Ruff correctness checks | No type checker or firmware static analysis configured; stylistic and broader opinionated lint rules remain disabled |
-| Testing | 14/15 | 17 test cases (16 pass locally, 1 broker-dependent skip), loopback HTTP and Mosquitto MQTT coverage, AppTest; Python 3.12/3.13/3.14 CI and ESP-IDF 6.1 classic ESP32 build pass | Hardware-in-loop validation remains unverified |
-| Security | 8/10 | Loopback boundaries, safe chip-ID behavior, no local history-scan matches, runtime and developer dependency audits pass in CI, and the runtime SBOM is validated and uploaded | Vulnerable firmware by design; main is unprotected; GitHub secret scanning is disabled; no physical validation |
+| Testing | 14/15 | 21 test cases (20 pass locally, 1 broker-dependent skip), loopback HTTP and MQTT coverage, AppTest, and release-package provenance checks; Python 3.12/3.13/3.14 CI and ESP-IDF 6.1 classic ESP32 build pass | Hardware-in-loop validation remains unverified |
+| Security | 9/10 | Loopback boundaries, safe chip-ID behavior, secret scanning and push protection enabled with zero open alerts, no local history-scan matches, dependency audits pass in CI, and the runtime SBOM is validated and archived | Vulnerable firmware by design; main is unprotected; no physical validation |
 | Reproducibility | 9/10 | Cross-platform hash-bearing Python lock, pinned uv, locked CI installs, ESP-IDF component lock, and passing pinned firmware build | No physical firmware flash/build evidence or board-specific configuration record |
 | Open Source Governance | 9/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog, and two verified tagged releases | Main-branch protection rule remains absent |
 | Research Rigor & Traceability | 7/10 | Requirements traceability, evidence labels, protocols, ADRs, benchmark plan, conservative SDG statement | No experiment has been run; protocols still require lab and statistical review |
-| **Total** | **83/100** |  |  |
+| **Total** | **84/100** |  |  |
 
-The updated score of **83/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
+The updated score of **84/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
 
 ## Recommended Next Actions
 
-1. Add a main-branch ruleset that blocks force-pushes and deletion and requires the Python quality checks to pass.
-2. Enable GitHub Secret Scanning if available for this organization and repository.
-3. Flash the built firmware on the selected classic ESP32 board and record board-specific behavior and differences.
-4. Record a local Mosquitto run when available, and keep the broker version and environment with its evidence.
-5. Freeze EXP-01 protocol details, then collect authorized lab runs with commit/configuration provenance and raw evidence.
-6. Extend release SBOM coverage to firmware components as well as Python runtime dependencies.
+1. Add a main-branch ruleset only if the repository moves from direct pushes to a pull-request workflow; branch protection conflicts with the current direct-to-main instruction.
+2. Flash the built firmware on the selected classic ESP32 board and record board-specific behavior and differences.
+3. Record a local Mosquitto run when the broker is available, and keep its version and environment with the evidence.
+4. Select and freeze EXP-01's command envelope and freshness behavior, then collect authorized lab runs with commit/configuration provenance and raw evidence.
+5. Generate a complete firmware SBOM when the ESP-IDF build tooling can account for built-in components and compiler/toolchain binaries; the current release asset is only the Component Manager lock.
+6. Add Python type checking and firmware static analysis, then reassess the remaining code-quality gap.

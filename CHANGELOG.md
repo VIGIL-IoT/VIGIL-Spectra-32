@@ -2,6 +2,17 @@
 
 This file records versioned project changes and verification scope. It is not a research-results log. Released source snapshots and assets are available from [GitHub Releases](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases).
 
+## [0.2.1] - 2026-11-01
+
+### Improved
+
+- Release provenance now includes the exact ESP-IDF Component Manager dependency lock from the tagged firmware build and verifies its checksum alongside the runtime SBOM.
+- Enabled GitHub Secret Scanning and push protection for the public repository.
+
+### Limitations
+
+- The ESP-IDF lock covers Component Manager-resolved components only; it is not a complete firmware SBOM. No physical ESP32 validation or security experiment is included.
+
 ## [0.2.0] - 2026-11-01
 
 ### Added

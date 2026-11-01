@@ -1,6 +1,6 @@
 [project]
 name = "vigil-spectra-32"
-version = "0.2.0"
+version = "0.2.1"
 description = "A low-cost embedded and IoT security research testbed."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"

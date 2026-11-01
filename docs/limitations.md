@@ -38,7 +38,7 @@
 - Python 3.14.7 was tested locally. CI covers Python 3.12, 3.13, and 3.14; the other matrix interpreters are not installed in this local environment.
 - Mosquitto is not installed locally. The Python node's broker-backed behavior is verified in hosted loopback CI, while physical firmware behavior is not verified. The firmware CI build uses ESP-IDF 6.1.0 and the checked-in `dependencies.lock` pins `espressif/mqtt` 1.1.0.
 - No package build is defined because the project is an application repository, not a distributable Python library.
-- GitHub Actions audits the locked runtime and development environment with `pip-audit`; the Python 3.14 job generates and uploads a CycloneDX 1.5 runtime SBOM. The release checklist packages a version-matched runtime SBOM with each GitHub Release; it does not cover ESP-IDF firmware dependencies.
+- GitHub Actions audits the locked runtime and development environment with `pip-audit`; the Python 3.14 job generates and uploads a CycloneDX 1.5 runtime SBOM. GitHub Releases also attach the exact ESP-IDF Component Manager lock from the firmware build. That lock does not enumerate ESP-IDF built-in components or compiler/toolchain binaries, so it is not a complete firmware SBOM.
 
 ## Scope and safety
 
