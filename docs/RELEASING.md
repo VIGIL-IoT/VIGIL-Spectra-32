@@ -11,8 +11,8 @@ The initial release milestones and the current patch preparation are:
 | Version | Source snapshot | Scope |
 |---|---|---|
 | `v0.1.0` | `58ba1f7861b7fea6c8be2d529720f4f9584f9c7c` | Research-grade software-model baseline, repository CI, and runtime SBOM |
-| `v0.2.0` | The release-preparation commit on `main` | Dashboard chart and brand refinements, plus broker-verified loopback MQTT coverage |
-| `v0.2.1` | Release-preparation commit on `main` | Release provenance includes the exact ESP-IDF Component Manager lock |
+| `v0.2.0` | `b03fab2dc9801702048c46bbdd165893f9e15879` | Dashboard chart and brand refinements, plus broker-verified loopback MQTT coverage |
+| `v0.2.1` | `f18369c232c966c039cdcdf2dfd122348b2325ba` | Release provenance includes the exact ESP-IDF Component Manager lock |
 
 The next feature release should be `v0.3.0`, unless its scope is only a fix to the `v0.2.x` line.
 

@@ -9,6 +9,10 @@ This file records versioned project changes and verification scope. It is not a 
 - Release provenance now includes the exact ESP-IDF Component Manager dependency lock from the tagged firmware build and verifies its checksum alongside the runtime SBOM.
 - Enabled GitHub Secret Scanning and push protection for the public repository.
 
+### Verification
+
+- Exact-tag Python quality and dependency audit passed in [run 41331976344](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41331976344); the ESP-IDF 6.1 classic ESP32 build passed in [run 41331976521](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41331976521).
+
 ### Limitations
 
 - The ESP-IDF lock covers Component Manager-resolved components only; it is not a complete firmware SBOM. No physical ESP32 validation or security experiment is included.

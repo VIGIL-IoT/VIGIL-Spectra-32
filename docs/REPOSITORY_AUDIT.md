@@ -2,8 +2,8 @@
 
 **Audit dates:** 2026-10-29 to 2026-11-01
 **Baseline revision:** `c2e0aaa` (`Add MIT license`)
-**Current classification:** prototype / v0.2.1 release candidate (software behavior model)
-**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, releases, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI; and v0.1.0 and v0.2.0 include version-matched Python runtime SBOMs. Release preparation now packages the exact ESP-IDF Component Manager lock from its tagged build. No Pages deployment, firmware flash, or hardware experiment was performed.
+**Current classification:** prototype / v0.2.1 software behavior model
+**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, releases, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI; and v0.2.1 attaches both a version-matched runtime SBOM and the exact ESP-IDF Component Manager lock from its tagged build. No Pages deployment, firmware flash, or hardware experiment was performed.
 
 ## Repository Overview
 
@@ -62,7 +62,9 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 
 - [`v0.1.0`](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases/tag/v0.1.0) points to `58ba1f7861b7fea6c8be2d529720f4f9584f9c7c`. Its exact-tag Python quality run [41323154451](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154451) and ESP-IDF firmware run [41323154494](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154494) passed before publication.
 - [`v0.2.0`](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases/tag/v0.2.0) points to `b03fab2dc9801702048c46bbdd165893f9e15879`. Its exact-tag Python quality run [41323154657](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154657) and ESP-IDF firmware run [41323154363](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154363) passed before publication.
+- [`v0.2.1`](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases/tag/v0.2.1) points to `f18369c232c966c039cdcdf2dfd122348b2325ba`. Its exact-tag Python quality and dependency-audit run [41331976344](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41331976344) and ESP-IDF firmware run [41331976521](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41331976521) passed before publication.
 - Each release includes a version-matched CycloneDX 1.5 Python runtime SBOM, `SHA256SUMS.txt`, and `release-manifest.json` with source and workflow provenance. The SBOMs each contain 51 runtime components; neither represents the firmware dependency inventory.
+- v0.2.1 also attaches `spectra32-v0.2.1-esp-idf-dependencies.lock`. Its digest and coverage limits are in the manifest. This Component Manager lock excludes built-in ESP-IDF components and toolchain binaries; it is not a complete firmware SBOM.
 
 ## Files Added
 
@@ -205,7 +207,7 @@ The repository now maps requirements to objectives, decisions, implementation, t
 
 ## Reproducibility Improvements
 
-Local install and test commands use a pinned uv version and checked-in cross-platform lock; CI runs locked installs, dependency auditing, compile, documentation-link, and unit/UI checks on Python 3.12, 3.13, and 3.14. The Streamlit runtime excludes development tools. Python quality run `41094597806` generated, validated, and uploaded the runtime SBOM artifact for 30 days. The workflow page publishes a reviewed file allowlist with third-party notices. The Pages deployment workflow is manual-only and was not run.
+Local install and test commands use a pinned uv version and checked-in cross-platform lock; CI runs locked installs, dependency auditing, compile, documentation-link, and unit/UI checks on Python 3.12, 3.13, and 3.14. The Streamlit runtime excludes development tools. v0.2.1's exact-tag Python run generated, validated, and uploaded the version-matched runtime SBOM; its firmware run built classic `esp32` and uploaded the Component Manager lock, both attached with verified digests. The workflow page publishes a reviewed file allowlist with third-party notices. The Pages deployment workflow is manual-only and was not run.
 
 ## Traceability Status
 
