@@ -1,9 +1,9 @@
 # Repository Engineering Audit
 
-**Audit dates:** 2026-10-29 to 2026-10-30
+**Audit dates:** 2026-10-29 to 2026-11-01
 **Baseline revision:** `c2e0aaa` (`Add MIT license`)
-**Current classification:** prototype / v0.1 software behavior model
-**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI; and the Python runtime SBOM artifact was downloaded and validated. No Pages deployment, firmware flash, or hardware experiment was performed.
+**Current classification:** prototype / v0.2 software behavior model
+**Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, releases, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI; and version-matched Python runtime SBOMs were attached to both GitHub releases. No Pages deployment, firmware flash, or hardware experiment was performed.
 
 ## Repository Overview
 
@@ -57,6 +57,12 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 - Added contribution, security, conduct, citation, changelog, issue-template, and pull-request-template files.
 - Added Archify and JetBrains Mono third-party license texts and made them available through the workflow-page allowlist.
 - Added `.gitignore` rules for captures, serial logs, and local generated Archify QA receipts.
+
+## Published Releases
+
+- [`v0.1.0`](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases/tag/v0.1.0) points to `58ba1f7861b7fea6c8be2d529720f4f9584f9c7c`. Its exact-tag Python quality run [41323154451](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154451) and ESP-IDF firmware run [41323154494](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154494) passed before publication.
+- [`v0.2.0`](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases/tag/v0.2.0) points to `b03fab2dc9801702048c46bbdd165893f9e15879`. Its exact-tag Python quality run [41323154657](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154657) and ESP-IDF firmware run [41323154363](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154363) passed before publication.
+- Each release includes a version-matched CycloneDX 1.5 Python runtime SBOM, `SHA256SUMS.txt`, and `release-manifest.json` with source and workflow provenance. The SBOMs each contain 51 runtime components; neither represents the firmware dependency inventory.
 
 ## Files Added
 
@@ -175,7 +181,7 @@ On Python 3.14.7, the clean-environment suite ran **16 tests: all passed in 16.7
 - The dashboard cannot access a user's USB device when hosted in Streamlit Community Cloud.
 - No high-confidence hardcoded-secret pattern was found in the repository scan.
 - The initial runtime dependency audit flagged Pillow 12.3.0. After updating Streamlit to 1.66.1 and explicitly pinning its compatible Pillow 13.0.0 release, `pip-audit` reported no known vulnerabilities in runtime requirements.
-- CI is configured to scan both runtime and development requirements. The local development-tool scan was blocked by a PyPI timeout. The verified runtime SBOM artifact is retained for 30 days; a release-specific SBOM archive is not configured.
+- CI is configured to scan both runtime and development requirements. The local development-tool scan was blocked by a PyPI timeout. Both tagged releases now archive their version-matched Python runtime SBOM, checksums, and provenance manifest; firmware dependencies are not yet included in those SBOMs.
 
 ## Personal Path Audit
 
@@ -237,11 +243,11 @@ The [traceability matrix](traceability.md) contains functional and nonfunctional
 | Testing | 14/15 | 17 test cases (16 pass locally, 1 broker-dependent skip), loopback HTTP and Mosquitto MQTT coverage, AppTest; Python 3.12/3.13/3.14 CI and ESP-IDF 6.1 classic ESP32 build pass | Hardware-in-loop validation remains unverified |
 | Security | 8/10 | Loopback boundaries, safe chip-ID behavior, no local history-scan matches, runtime and developer dependency audits pass in CI, and the runtime SBOM is validated and uploaded | Vulnerable firmware by design; main is unprotected; GitHub secret scanning is disabled; no physical validation |
 | Reproducibility | 9/10 | Cross-platform hash-bearing Python lock, pinned uv, locked CI installs, ESP-IDF component lock, and passing pinned firmware build | No physical firmware flash/build evidence or board-specific configuration record |
-| Open Source Governance | 8/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog | No tagged release or main-branch protection rule |
+| Open Source Governance | 9/10 | MIT license, third-party notices, contribution/security/conduct/citation docs, templates, changelog, and two verified tagged releases | Main-branch protection rule remains absent |
 | Research Rigor & Traceability | 7/10 | Requirements traceability, evidence labels, protocols, ADRs, benchmark plan, conservative SDG statement | No experiment has been run; protocols still require lab and statistical review |
-| **Total** | **82/100** |  |  |
+| **Total** | **83/100** |  |  |
 
-The updated score of **82/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
+The updated score of **83/100**, from an initial 55/100, reflects better engineering controls and evidence handling, not a change in device security or experimental capability.
 
 ## Recommended Next Actions
 
@@ -250,4 +256,4 @@ The updated score of **82/100**, from an initial 55/100, reflects better enginee
 3. Flash the built firmware on the selected classic ESP32 board and record board-specific behavior and differences.
 4. Record a local Mosquitto run when available, and keep the broker version and environment with its evidence.
 5. Freeze EXP-01 protocol details, then collect authorized lab runs with commit/configuration provenance and raw evidence.
-6. Add a release-specific SBOM archive when a tagged release process is introduced; include firmware components as well as Python runtime dependencies.
+6. Extend release SBOM coverage to firmware components as well as Python runtime dependencies.

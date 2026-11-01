@@ -16,7 +16,7 @@ This file records versioned project changes and verification scope. It is not a 
 
 ### Verification
 
-- The exact release tag is checked with Python quality and MQTT integration CI; the release manifest records the tag, source commit, and workflow run.
+- Exact-tag Python quality and MQTT integration passed in [run 41323154657](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154657); the ESP-IDF build passed in [run 41323154363](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154363). The release includes a version-matched SBOM and provenance manifest.
 
 ### Limitations
 
@@ -32,8 +32,7 @@ This file records versioned project changes and verification scope. It is not a 
 
 ### Verification
 
-- Python quality run [41097715101](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41097715101) passed on the tagged source snapshot and produced its runtime SBOM.
-- The exact tag will also be checked with the ESP-IDF firmware workflow before publication.
+- Exact-tag Python quality run [41323154451](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154451) and ESP-IDF firmware build [41323154494](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41323154494) passed before publication. The release includes a version-matched runtime SBOM and provenance manifest.
 
 ### Limitations
 
