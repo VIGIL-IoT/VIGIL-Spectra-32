@@ -2,6 +2,27 @@
 
 This file records versioned project changes and verification scope. It is not a research-results log. Released source snapshots and assets are available from [GitHub Releases](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases).
 
+## [0.3.0] - 2026-11-02
+
+### Added
+
+- A separate session-only Chaos Lab with eight deterministic ESP32 IoT node failure scenarios, ten simulated seconds per run, Vulnerable/Hardened comparisons, a logical board path, service-availability chart, metrics, and event timeline.
+- EXP-02, a reproducible behavioral-resilience protocol with explicit research questions, model hypotheses, controls, formulas, and physical-testing exclusions.
+- An ADR and requirements traceability for Chaos Lab's execution boundary and modeled outcomes.
+
+### Improved
+
+- Responsive Chaos Lab experiment controls at tablet and phone widths; the tablet action label remains fully visible.
+- Versioned device state initializes the Chaos model independently from security-event counters.
+
+### Verification
+
+- Local Python quality checks passed on Python 3.14; exact-tag Python matrix and ESP-IDF classic ESP32 build are release gates. `release-manifest.json` records the source commit, workflow runs, and asset digests.
+
+### Limitations
+
+- Chaos Lab is a deterministic software behavior model. It does not inject physical faults, send network traffic, control an ESP32, or report measured resilience.
+
 ## [0.2.1] - 2026-11-01
 
 ### Improved

@@ -6,15 +6,16 @@ GitHub Releases are published manually after the source tag has passed CI. No wo
 
 The project version in `pyproject.toml`, the `CITATION.cff` version, the annotated Git tag, the GitHub Release title, and the release manifest must agree. Use `vMAJOR.MINOR.PATCH` tags. While the project remains below 1.0, a new user-facing capability normally increments the minor version; a compatible correction increments the patch version.
 
-The initial release milestones and the current patch preparation are:
+Published release snapshots and the current feature-release preparation are:
 
 | Version | Source snapshot | Scope |
 |---|---|---|
 | `v0.1.0` | `58ba1f7861b7fea6c8be2d529720f4f9584f9c7c` | Research-grade software-model baseline, repository CI, and runtime SBOM |
 | `v0.2.0` | `b03fab2dc9801702048c46bbdd165893f9e15879` | Dashboard chart and brand refinements, plus broker-verified loopback MQTT coverage |
 | `v0.2.1` | `f18369c232c966c039cdcdf2dfd122348b2325ba` | Release provenance includes the exact ESP-IDF Component Manager lock |
+| `v0.3.0` | Release commit on `main`; tag after CI passes | Eight-scenario Chaos Lab behavioral resilience model and EXP-02 protocol |
 
-The next feature release should be `v0.3.0`, unless its scope is only a fix to the `v0.2.x` line.
+The next feature release after `v0.3.0` should be `v0.4.0`, unless its scope is only a compatible fix to the `v0.3.x` line.
 
 ## Release checklist
 
@@ -47,3 +48,4 @@ The runtime SBOM does not describe the ESP-IDF firmware dependency graph. The re
 - [v0.1.0](releases/v0.1.0.md)
 - [v0.2.0](releases/v0.2.0.md)
 - [v0.2.1](releases/v0.2.1.md)
+- [v0.3.0](releases/v0.3.0.md)

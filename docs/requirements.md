@@ -27,6 +27,8 @@ The current gap is project-specific: dashboard scenarios, a standalone node mode
 | O-4: Define a defensible replay experiment | Threat model, controls, outcomes, repetition plan, run ledger, and reproduction label are written before data collection | `experiments/EXP-01-replay/README.md` |
 | O-5: Enable another contributor to verify the Python prototype | A cross-platform dependency lock, setup instructions, CI checks, and test commands are available | README, `pyproject.toml`, `uv.lock`, Python quality workflow |
 | O-6: Validate the ESP32 implementation | Build, flash, and compare a declared firmware commit on a documented board and isolated lab | Future evidence; not met today |
+| O-7: Teach fault containment and recovery without requiring hardware | Run one of eight bounded deterministic scenarios and inspect its lifecycle, status, and comparison in a Streamlit session | `data/chaos_scenarios.py`, `services/chaos_simulator.py`, `tests/test_chaos_simulator.py`, dashboard AppTest |
+| O-8: Keep model outputs separate from experimental evidence | Label all Chaos outputs as behavioral simulation and document definitions and limits for each score/metric | Chaos Lab UI, `docs/CHAOS_LAB.md`, EXP-02 protocol |
 
 The objectives do not imply measured effectiveness. O-6 is a future validation goal.
 
@@ -40,12 +42,14 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 - Loopback Mosquitto configuration for the computer-run node.
 - A classic ESP32 ESP-IDF reference implementation in source form.
 - Written replay and T800 experimental protocols; these protocols have no associated run results.
+- A separate eight-scenario Chaos Lab that models failure, detection, degradation, and recovery in the Streamlit session. It has no physical or network backend.
 - GitHub Pages publication of a static Archify research workflow diagram.
 
 ### Partly implemented or not yet verified
 
 - The standalone Python node's MQTT command/status path is verified against a loopback Mosquitto broker in CI; no physical firmware or hosted broker behavior is implied.
 - The ESP-IDF source builds for classic `esp32` in CI, but no flash, board test, or parity run is recorded.
+- Chaos Lab scenarios, profile plans, metric calculations, and the Streamlit view are unit/smoke-tested. No physical fault injection or empirical resilience run is recorded.
 - Physical chip classification is unit-tested with mocked esptool output; no physical probe is recorded in the repository.
 - The current Python app and tests were run on Python 3.14.7. The declared support range is Python 3.12 through 3.14; CI covers all three minor versions.
 
@@ -56,6 +60,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 - Exact reproduction of REPLIOT or T800 without their documented artifacts, environments, hardware, and run evidence.
 - Production security, safety certification, multi-user persistent storage, cloud device management, or real-time device telemetry.
 - Claims about commercial products or security improvement based only on the UI model.
+- Executing a Chaos Lab fault on a process, network, broker, serial device, firmware image, or GPIO.
 
 ## Functional requirements
 
@@ -69,6 +74,10 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | FR-06 | Provide optional MQTT command/status behavior on the separate node, with lab-only broker guidance and a loopback broker integration check in CI. |
 | FR-07 | Keep the ESP-IDF vulnerable reference path separate from dashboard simulation and from any future hardened firmware. |
 | FR-08 | Preserve run provenance, failure records, configuration, and evidence for any future experiment. |
+| FR-11 | Provide a separate Chaos catalog with required assumptions, behaviors, recovery policy, primary metric, educational explanation, and limitations for each scenario. |
+| FR-12 | Advance a bounded Chaos lifecycle from a non-blocking Streamlit timer; keep logical time directly controllable for deterministic tests. |
+| FR-13 | Compare Vulnerable and Hardened profile behavior and emit explicitly modeled availability, operation, recovery, retry, restart, and score metrics. |
+| FR-14 | Keep Chaos experiments session-local and prohibit network, process, serial, firmware, and GPIO effects. |
 
 ## Nonfunctional requirements
 
@@ -82,6 +91,8 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 | NFR-06 | Experiment files must separate measured, simulated, expected, and paper-reported outcomes. |
 | NFR-07 | The Python 3.14 quality job exports and validates a CycloneDX 1.5 SBOM for the locked runtime dependency set, then uploads it as a short-lived artifact. |
 | NFR-08 | Dashboard colors and typography follow `docs/BRAND.md`; bundled fonts load locally so the UI does not depend on third-party font requests. |
+| NFR-09 | Version and validate the session state so a stale Streamlit session resets safely after a schema change. |
+| NFR-10 | Keep the Chaos timeline bounded to 60 events and the scenario catalog fixed and deterministic; custom inputs are range-limited. |
 
 ## Technical stack
 
@@ -117,4 +128,4 @@ There is no database, application persistence layer, ML framework, sensor, or ph
 
 ## Maturity
 
-Current classification: **prototype / v0.1 software behavior model**. The dashboard has automated smoke coverage. The standalone HTTP API has local route tests. MQTT integration and ESP32 firmware have not been verified, and no security experiment has been run.
+Current classification: **prototype / v0.3.0 software behavior model**. The dashboard and deterministic Chaos transitions have automated smoke/unit coverage. The standalone HTTP API has local route tests and MQTT integration is exercised against loopback Mosquitto in CI. Chaos outputs are not resilience measurements; physical firmware behavior and experiments remain unverified.

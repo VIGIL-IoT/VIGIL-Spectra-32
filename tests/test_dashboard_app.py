@@ -35,7 +35,7 @@ class DashboardAppTests(unittest.TestCase):
         self.assertEqual(app.session_state["active_view"], "Console")
         self.assertEqual(app.session_state["simulation_scenario"], "MQTT without TLS")
 
-        for view in ("Events", "Hardware", "Console"):
+        for view in ("Events", "Hardware", "Chaos Lab", "Console"):
             app.radio(key="active_view").set_value(view).run()
             self.assert_app_has_no_exceptions(app)
 
@@ -57,6 +57,23 @@ class DashboardAppTests(unittest.TestCase):
         for severity in ("All", "HIGH", "MEDIUM", "INFO"):
             app.selectbox(key="event_severity_filter").set_value(severity).run()
             self.assert_app_has_no_exceptions(app)
+
+        app.radio(key="active_view").set_value("Chaos Lab").run()
+        self.assert_app_has_no_exceptions(app)
+        self.assertEqual(len(app.selectbox(key="chaos_scenario").options), 8)
+        app.selectbox(key="chaos_scenario").set_value("mqtt-broker-outage").run()
+        app.radio(key="chaos_profile").set_value("Compare both").run()
+        app.button(key="chaos_start").click().run()
+        self.assertTrue(app.session_state["device_state"]["chaos"]["active"])
+        app.session_state["device_state"]["chaos"]["started_at_monotonic"] -= 11
+        app.run()
+        self.assert_app_has_no_exceptions(app)
+        chaos = app.session_state["device_state"]["chaos"]
+        self.assertFalse(chaos["active"])
+        self.assertEqual(set(chaos["result"]["profiles"]), {"Vulnerable", "Hardened"})
+        app.button(key="chaos_reset").click().run()
+        self.assert_app_has_no_exceptions(app)
+        self.assertEqual(app.session_state["device_state"]["chaos"]["stage"], "IDLE")
 
     def test_hot_deploy_refreshes_stale_module_apis(self) -> None:
         import data.device_state as device_state_module

@@ -7,8 +7,9 @@ from typing import TypedDict
 from zoneinfo import ZoneInfo
 
 from data.board_definition import PIN_DEFINITIONS
+from data.chaos_state import ChaosState, create_initial_chaos_state
 
-STATE_SCHEMA_VERSION = 1
+STATE_SCHEMA_VERSION = 2
 
 
 class PinState(TypedDict):
@@ -42,6 +43,7 @@ class DeviceState(TypedDict):
     selected_component: str
     active_path: list[str]
     events: list[EventRecord]
+    chaos: ChaosState
 
 
 def local_timestamp() -> str:
@@ -104,4 +106,5 @@ def create_initial_state() -> DeviceState:
                 "target": "SPECTRA-NODE-01",
             }
         ],
+        "chaos": create_initial_chaos_state(),
     }

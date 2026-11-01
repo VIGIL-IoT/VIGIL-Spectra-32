@@ -1,10 +1,10 @@
 # SPECTRA-32 Architecture
 
-**Status:** current architecture, checked against the repository on 2026-10-30. The software model and Streamlit console are implemented; ESP-IDF 6.1 builds the classic ESP32 reference in CI, but no physical board has been flashed or verified.
+**Status:** current architecture, checked against the repository on 2026-11-02. The session-local security simulator and Chaos Lab are implemented; ESP-IDF 6.1 builds the classic ESP32 reference in CI, but no physical board has been flashed or verified.
 
 ## System boundary
 
-SPECTRA-32 currently has three distinct execution paths. The Streamlit console is an in-memory, per-session model. The standalone Python node is a separate loopback HTTP/MQTT process. The ESP-IDF source is a future hardware implementation. The dashboard does **not** connect to the node process, MQTT broker, or physical firmware for its security scenarios.
+SPECTRA-32 currently has three execution environments: two isolated in-memory Streamlit models (security scenarios and Chaos Lab), a separate loopback Python HTTP/MQTT process, and a future ESP-IDF hardware path. The dashboard does **not** connect to the node process, MQTT broker, or physical firmware for either modeled view.
 
 ```mermaid
 flowchart LR
@@ -12,6 +12,9 @@ flowchart LR
   App --> Session[Streamlit session state]
   Session --> Scenario[Scenario transition service]
   Scenario --> Session
+  App --> Chaos[Chaos lifecycle service]
+  Chaos --> ChaosSession[Session-local Chaos state]
+  ChaosSession --> App
   App --> Board[Interactive SVG board component]
   App --> Chart[Session counters and chart]
   App --> Serial[Host USB serial discovery]
@@ -44,12 +47,15 @@ The console and standalone node are intentionally separate. Values shown in the 
 | Session state | `data/device_state.py` | Versioned sample state, board pins, sample event | Implemented; values are illustrative |
 | Scenario catalog | `data/scenarios.py` | Scenario labels, descriptions, profile outcomes, legacy widget-label migration | Implemented |
 | Scenario transitions | `services/simulator.py` | Mutates only the session model and retains at most 60 events | Implemented; deterministic simulation |
+| Chaos scenario catalog | `data/chaos_scenarios.py` | Eight scenario descriptions and explicit per-profile milestone plans | Implemented; deterministic and simulation-only |
+| Chaos session state | `data/chaos_state.py` | Versioned, structured lifecycle, profile, status, timeline, and metric state | Implemented; nested under versioned `DeviceState` |
+| Chaos transitions | `services/chaos_simulator.py` | Advances milestones, dependency state, deterministic packet-loss outcomes, and modeled metrics | Implemented; no sleeping or external side effects |
 | Board reference | `data/board_definition.py`, `components/board.py`, `components/board_component/index.html` | Pin metadata and accessible selectable SVG board | Implemented; representative DevKit-style layout |
 | Host chip identification | `services/hardware.py` | Lists serial ports and runs an explicit esptool ROM `chip-id` probe | Implemented; local-host only, no flash write/erase command |
-| Standalone node | `simulator/vulnerable/basic_node.py` | Virtual LED state, HTTP API, optional MQTT command/status link | Implemented in source; MQTT service not verified in this audit |
+| Standalone node | `simulator/vulnerable/basic_node.py` | Virtual LED state, HTTP API, optional MQTT command/status link | HTTP routes and loopback MQTT command/status flow verified in CI; physical deployment unverified |
 | Broker configuration | `lab/simulation/mosquitto.conf` | Anonymous broker bound to `127.0.0.1` for desktop simulation | Implemented; requires Mosquitto to run |
 | ESP-IDF reference | `firmware/vulnerable/basic-node/` | Classic ESP32 station, HTTP LED endpoints, MQTT client, configurable LED GPIO | ESP-IDF 6.1 CI build passes; physical behavior unverified |
-| Experiment protocols | `experiments/`, `docs/research/` | Planned MQTT replay study and separate T800 reproduction | Protocols only; no runs recorded |
+| Experiment protocols | `experiments/`, `docs/research/` | EXP-01 replay, EXP-02 behavioral Chaos Lab, and separate T800 reproduction | Protocols only; no physical or research runs recorded |
 | Pages diagram | `.github/workflows/deploy-workflow-page.yml`, `docs/site/workflow/` | Builds and publishes a static workflow diagram with an explicit file allowlist | Workflow defined; deployment after the latest source change was not run in this audit |
 
 ## Streamlit scenario flow
@@ -71,6 +77,27 @@ sequenceDiagram
 ```
 
 The dashboard's **Hardened** option is a comparison profile in `services/simulator.py`. It changes modeled policy flags and event outcomes; it does not install or exercise a real defense. `MQTT without TLS`, replay, authentication, rate, OTA, and debug scenarios likewise update only this session state.
+
+## Chaos Lab flow
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant UI as Chaos Lab fragment
+  participant State as Versioned Chaos session state
+  participant Model as services/chaos_simulator.py
+  participant Catalog as data/chaos_scenarios.py
+  User->>UI: Select fault, profile, and bounded parameters
+  User->>UI: Start experiment
+  UI->>Model: start_experiment(..., monotonic start)
+  UI->>Model: advance_experiment(elapsed simulated seconds)
+  Model->>Catalog: Read deterministic profile milestones
+  Model->>State: Update status, timeline, and metrics
+  UI-->>User: Board path, availability trace, comparison, and events
+  Note over UI,Model: st.fragment(run_every=1) advances without sleep or external effects
+```
+
+The Chaos engine is separate from `services/simulator.py`. Each catalog entry provides a fixed ten-second lifecycle for Vulnerable and Hardened profiles. The browser-session fragment passes elapsed seconds into the transition service; tests pass logical elapsed time directly. The board receives logical path identifiers for highlighting, while GPIO and pin metadata remain unchanged. The model never stops a process, changes a radio/network, contacts a broker, opens serial, writes firmware, or drives a pin.
 
 ## Standalone software node
 
@@ -112,6 +139,8 @@ The ESP-IDF reference firmware is a separate implementation path. It joins a con
 - The browser-to-dashboard path changes the Streamlit session model. It does not send attack traffic.
 - Host USB discovery is distinct from browser Web Serial. It runs on the Python host and chip identification requires an explicit action.
 - The dashboard's profile flags are not measurements, and its chart is not a hardware sensor plot.
+- Chaos Lab's service status, availability, operation counts, retries, recovery times, and resilience score are deterministic model outputs. They are not ESP32 or network measurements.
+- Chaos state is independent of the security-event state machine. A fault experiment cannot mutate console node counters or send commands to the virtual node.
 - The current application does not establish a trust relationship between Streamlit and the standalone node. Adding one requires an explicit protocol and authentication design.
 
 ## Related design records
@@ -123,3 +152,6 @@ The ESP-IDF reference firmware is a separate implementation path. It joins a con
 - [ADR-001: Keep the software behavior model separate from firmware](decisions/ADR-001-software-model-boundary.md)
 - [ADR-002: Keep dashboard security scenarios session-local](decisions/ADR-002-session-local-scenarios.md)
 - [ADR-003: Identify chips through an explicit host-side esptool probe](decisions/ADR-003-host-chip-identification.md)
+- [ADR-004: Keep Chaos Lab a deterministic behavioral simulation](decisions/ADR-004-chaos-lab-simulation-boundary.md)
+- [Chaos Lab model and metrics](CHAOS_LAB.md)
+- [EXP-02: Chaos resilience behavioral protocol](../experiments/EXP-02-chaos-resilience/README.md)

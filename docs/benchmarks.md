@@ -1,6 +1,6 @@
 # Benchmarks and Measurement Plan
 
-**Current result:** no performance benchmark or security experiment has been run. The values shown in the Streamlit UI are sample counters or deterministic in-memory outcomes; they are not measurements.
+**Current result:** no performance benchmark or physical security experiment has been run. Chaos Lab now produces deterministic in-memory behavioral outcomes; those outcomes are model checks, not measurements.
 
 ## Available evidence today
 
@@ -10,6 +10,7 @@
 | Dashboard session chart | Displays bounded accepted/blocked session counters | Sensor telemetry, real-time device telemetry, network rate, or device performance |
 | HTTP route tests | Exercise the standalone node over a local loopback test server | MQTT integration or firmware parity |
 | Paper reference values | Clearly marked in research notes | SPECTRA-32 results or guaranteed reproduction targets |
+| EXP-02 Chaos Lab | Deterministic scenarios and score formulas exercised by unit/UI tests | Physical-device resilience, measured latency, firmware recovery, or evidence that a hardening policy works |
 
 ## Metrics for EXP-01 replay
 
@@ -22,6 +23,22 @@
 | Host process resource use | CPU and memory of the Python process | Host monitor; label host-only | Planned |
 | Device heap/stack/flash | ESP32-specific resource costs | ESP-IDF and firmware instrumentation | Not measurable in current software model |
 | Device power | Current/energy under stated workload | Calibrated meter and recorded sampling method | Not measurable; no meter setup in repo |
+
+## Metrics for EXP-02 Chaos resilience
+
+EXP-02's current implementation returns model outputs only. The model has a fixed 10-second horizon and calculates:
+
+| Metric | Model definition | Status and limit |
+|---|---|---|
+| Modeled service availability | Seconds where the scenario's primary modeled service is available ÷ elapsed modeled seconds × 100; the initial baseline second is included | Deterministic simulation output, not measured uptime |
+| Operation success | Unique modeled operations that succeed ÷ unique operations in the fixed workload × 100 | Deterministic simulation output; packet-loss retries do not increase the unique-operation denominator |
+| Detection delay | First modeled detection time minus modeled fault-injection time | `Pending` if the profile does not detect the fault before completion |
+| Recovery duration | First modeled recovered time minus modeled fault-injection time | `Pending` if the profile does not recover within the scenario window |
+| Degraded duration | Elapsed seconds marked degraded or unavailable in the profile plan | Behavioral-model value, not device downtime |
+| Retry / restart counts | Bounded retry or restart events defined in the profile plan | Model counts only; no retry packet or reset occurs |
+| Resilience score | `0.45 × availability% + 0.35 × operation-success% + 0.20 × recovery-outcome%`, rounded to an integer; recovery outcome is 100 when recovered within the horizon and 0 otherwise | SPECTRA-32 educational comparison metric; not a standard or certification |
+
+The profile plans and formula are in [`docs/CHAOS_LAB.md`](CHAOS_LAB.md). Do not include the model score in a results table as an ESP32 measurement. Physical validation requires an independent experiment with a board, documented fault mechanism, synchronized observation, and a separate run record.
 
 ## Benchmark protocol requirements
 

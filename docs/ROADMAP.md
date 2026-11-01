@@ -33,7 +33,18 @@ The dashboard's physical-board feature performs host-side serial discovery and a
 
 Host process CPU and memory are properties of this computer-run simulator and must not be presented as ESP32 costs. Device RAM, flash, radio/network timing, GPIO timing, and power measurements belong to the hardware milestone and require suitable instrumentation.
 
-## v0.3 — ESP32 hardware port
+## v0.3 — Chaos Lab behavioral resilience model
+
+- [x] Add a separate deterministic Chaos subsystem and an eight-scenario catalog.
+- [x] Model the experiment lifecycle over simulated time without blocking Streamlit.
+- [x] Compare Vulnerable and Hardened behavior, including dependency recovery and bounded retries.
+- [x] Add logical board-path highlighting, an availability chart, timeline, metrics, and score definition.
+- [x] Document the simulation boundary, EXP-02 protocol, limitations, and regression tests.
+- [ ] Validate the assumptions against a physical ESP32 and measured network conditions in a separate authorized experiment.
+
+**Exit:** code, documentation, and automated tests agree on the session-only model. This exit does not count as physical validation or evidence that the modeled defenses work on hardware.
+
+## v0.4 — ESP32 hardware validation
 
 - [x] Build the vulnerable ESP-IDF baseline for classic `esp32` with the pinned ESP-IDF 6.1 CI workflow.
 - [ ] Flash and verify the build on the selected classic ESP32 board.
@@ -44,27 +55,27 @@ Host process CPU and memory are properties of this computer-run simulator and mu
 
 No relay, motor, mains circuit, or hazardous actuator belongs in this milestone.
 
-## v0.4 — MQTT and REST/API security
+## v0.5 — MQTT and REST/API security
 
 - Compare plain and authenticated/encrypted communication. Document broker/client identity, key provisioning, and failure behavior. Keep replay protection separate from transport encryption.
 
-## v0.5 — BLE security
+## v0.6 — BLE security
 
 - Add one BLE experiment only after selecting hardware, pairing behavior, authorized scope, and a measurable baseline.
 
-## v0.6 — Firmware and OTA security
+## v0.7 — Firmware and OTA security
 
 - Add signed-update verification and controlled cases for unsigned, altered, and stale packages.
 
-## v0.7 — Monitoring and attack detection
+## v0.8 — Monitoring and attack detection
 
 - Record device, broker, and host events with synchronized timestamps and a run manifest. Evaluate detection only after defining a dataset split and error metrics.
 
-## v0.8 — Cyber-physical extension
+## v0.9 — Cyber-physical extension
 
 - Add a sensor and safe actuator only when the experiment requires them. Record electrical limits, reset behavior, and recovery. The earlier LED baseline remains the first output.
 
-## v0.9 — TinyML, if supported by evidence
+## v0.10 — TinyML, if supported by evidence
 
 - Consider anomaly detection only after the project has enough labeled, repeatable traces to justify it. Compare against simple rules and report resource costs and detection errors.
 

@@ -8,6 +8,7 @@ import math
 from datetime import datetime
 from pathlib import Path
 import sys
+import time
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -41,6 +42,19 @@ scenario_module, scenario_module_refreshed = _current_module(
     "data.scenarios",
     ("SCENARIO_GUIDANCE", "SCENARIOS", "normalize_scenario"),
 )
+chaos_state_module, _ = _current_module(
+    "data.chaos_state",
+    ("CHAOS_STATE_SCHEMA_VERSION", "ChaosState", "create_initial_chaos_state"),
+)
+chaos_scenario_module, chaos_scenario_module_refreshed = _current_module(
+    "data.chaos_scenarios",
+    ("CHAOS_SCENARIOS", "CHAOS_SCENARIO_IDS", "normalize_chaos_scenario"),
+)
+if (
+    getattr(device_state_module, "STATE_SCHEMA_VERSION", 0) < 2
+    or "chaos" not in getattr(device_state_module.DeviceState, "__annotations__", {})
+):
+    device_state_module = importlib.reload(device_state_module)
 simulator_module, simulator_module_refreshed = _current_module(
     "services.simulator",
     ("SCENARIOS", "log_profile_change", "set_security_mode", "set_simulation_mode", "simulate_event"),
@@ -48,10 +62,17 @@ simulator_module, simulator_module_refreshed = _current_module(
 if (
     state_module_refreshed
     or scenario_module_refreshed
+    or chaos_scenario_module_refreshed
     or simulator_module_refreshed
     or simulator_module.SCENARIOS != scenario_module.SCENARIOS
 ):
     simulator_module = importlib.reload(simulator_module)
+chaos_service_module, chaos_service_refreshed = _current_module(
+    "services.chaos_simulator",
+    ("PROFILE_SELECTIONS", "advance_experiment", "reset_experiment", "service_availability_series", "start_experiment"),
+)
+if chaos_scenario_module_refreshed or chaos_service_refreshed:
+    chaos_service_module = importlib.reload(chaos_service_module)
 hardware_module, _ = _current_module(
     "services.hardware",
     ("identify_esp_chip", "list_serial_ports"),
@@ -64,9 +85,19 @@ VIRTUAL_COMPONENTS = board_definition_module.VIRTUAL_COMPONENTS
 STATE_SCHEMA_VERSION = device_state_module.STATE_SCHEMA_VERSION
 DeviceState = device_state_module.DeviceState
 create_initial_state = device_state_module.create_initial_state
+CHAOS_STATE_SCHEMA_VERSION = chaos_state_module.CHAOS_STATE_SCHEMA_VERSION
+create_initial_chaos_state = chaos_state_module.create_initial_chaos_state
 SCENARIO_GUIDANCE = scenario_module.SCENARIO_GUIDANCE
 SCENARIOS = scenario_module.SCENARIOS
 normalize_scenario = scenario_module.normalize_scenario
+CHAOS_SCENARIOS = chaos_scenario_module.CHAOS_SCENARIOS
+CHAOS_SCENARIO_IDS = chaos_scenario_module.CHAOS_SCENARIO_IDS
+normalize_chaos_scenario = chaos_scenario_module.normalize_chaos_scenario
+PROFILE_SELECTIONS = chaos_service_module.PROFILE_SELECTIONS
+advance_experiment = chaos_service_module.advance_experiment
+reset_experiment = chaos_service_module.reset_experiment
+service_availability_series = chaos_service_module.service_availability_series
+start_experiment = chaos_service_module.start_experiment
 log_profile_change = simulator_module.log_profile_change
 set_security_mode = simulator_module.set_security_mode
 set_simulation_mode = simulator_module.set_simulation_mode
@@ -87,6 +118,8 @@ if (
     "device_state" not in st.session_state
     or not isinstance(st.session_state.device_state, dict)
     or st.session_state.device_state.get("schema_version") != STATE_SCHEMA_VERSION
+    or not isinstance(st.session_state.device_state.get("chaos"), dict)
+    or st.session_state.device_state["chaos"].get("schema_version") != CHAOS_STATE_SCHEMA_VERSION
 ):
     # The session contains sample data only; reset it when a deployment changes
     # the state shape instead of letting old nested keys crash the new UI.
@@ -94,6 +127,8 @@ if (
 if "active_view" not in st.session_state:
     st.session_state.active_view = "Console"
 state: DeviceState = st.session_state.device_state
+if "chaos" not in state:
+    state["chaos"] = create_initial_chaos_state()
 if "component_picker" in st.session_state:
     state["selected_component"] = st.session_state.component_picker
 
@@ -130,10 +165,10 @@ def render_topbar() -> None:
             unsafe_allow_html=True,
         )
     with nav:
-        normalize_widget_choice("active_view", ("Console", "Events", "Hardware"), "Console")
+        normalize_widget_choice("active_view", ("Console", "Events", "Hardware", "Chaos Lab"), "Console")
         st.radio(
             "Primary view",
-            ("Console", "Events", "Hardware"),
+            ("Console", "Events", "Hardware", "Chaos Lab"),
             horizontal=True,
             label_visibility="collapsed",
             key="active_view",
@@ -169,6 +204,11 @@ def render_title(view: str) -> None:
             "ESP32 DevKit board",
             "Inspect the board map, detect a locally attached chip, and review simulated posture.",
             "ESP32 · local USB scan",
+        ),
+        "Chaos Lab": (
+            "SPECTRA-32 Chaos Lab",
+            "Inject a bounded modeled fault, observe service impact, and compare recovery policies over simulated time.",
+            "BEHAVIORAL MODEL · SESSION ONLY",
         ),
     }
     title, description, scope = titles[view]
@@ -768,15 +808,390 @@ def render_hardware_connection() -> None:
         )
 
 
+def chaos_status_class(value: str) -> str:
+    normalized = value.lower()
+    if any(term in normalized for term in ("offline", "failed", "critical", "invalid", "stalled", "restart loop")):
+        return "bad"
+    if any(term in normalized for term in ("degraded", "connecting", "delayed", "stale", "booting", "detect", "retry", "manual", "pressure", "unavailable")):
+        return "warn"
+    return "good"
+
+
+def chaos_duration(value: object) -> str:
+    if value is None:
+        return "Pending"
+    return f"{int(value)} simulated s"
+
+
+def render_chaos_status_card(profile: str, profile_state: dict[str, Any], elapsed: int) -> None:
+    statuses = profile_state.get("statuses", {})
+    service_labels = (
+        ("Device", "device"),
+        ("Wi-Fi", "wifi"),
+        ("MQTT", "mqtt"),
+        ("HTTP", "http"),
+        ("Sensor model", "sensor"),
+        ("Recovery", "recovery"),
+    )
+    cells = "".join(
+        f'<div class="chaos-state-cell"><span>{label}</span><strong class="{chaos_status_class(str(statuses.get(key, "UNKNOWN")))}">{esc(statuses.get(key, "UNKNOWN"))}</strong></div>'
+        for label, key in service_labels
+    )
+    stage = str(profile_state.get("stage", "BASELINE"))
+    st.markdown(
+        f"""
+        <section class="chaos-profile-card">
+          <div class="chaos-profile-head"><strong>{esc(profile)}</strong><span class="chaos-stage-chip {chaos_status_class(stage)}">{esc(stage.replace("_", " "))}</span></div>
+          <div class="chaos-status-grid">{cells}</div>
+          <div class="chaos-elapsed"><span>Experiment time</span><strong>T+00:{elapsed:02d} simulated s</strong></div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_chaos_metric_strip(profile: str, metrics: dict[str, Any], *, result_ready: bool) -> None:
+    score = metrics.get("resilience_score")
+    cells = (
+        ("Modeled availability", f"{metrics.get('modeled_availability_pct', 100):.1f}%"),
+        ("Operation success", f"{metrics.get('operation_success_pct', 100):.1f}%"),
+        ("Operations failed", str(metrics.get("operations_failed", 0))),
+        ("Retry attempts", str(metrics.get("retry_count", 0))),
+        ("Unexpected restarts", str(metrics.get("restart_count", 0))),
+        ("Resilience score", str(score) if result_ready and score is not None else "Pending"),
+    )
+    rendered = "".join(
+        f'<div class="chaos-metric"><span>{esc(label)}</span><strong>{esc(value)}</strong></div>'
+        for label, value in cells
+    )
+    st.markdown(
+        f'<div class="chaos-metric-head"><h3>{esc(profile)} · modeled metrics</h3><span>SESSION MODEL</span></div><div class="chaos-metric-grid">{rendered}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_chaos_comparison(scenario: Any, profiles: dict[str, Any], result_ready: bool) -> None:
+    if set(profiles) != {"Vulnerable", "Hardened"}:
+        return
+    metric_rows = (
+        ("Modeled service availability", "modeled_availability_pct", "%"),
+        ("Operation success", "operation_success_pct", "%"),
+        ("Operations attempted", "operations_attempted", ""),
+        ("Operations succeeded", "operations_succeeded", ""),
+        ("Operations failed", "operations_failed", ""),
+        ("Retry attempts", "retry_count", ""),
+        ("Unexpected restarts", "restart_count", ""),
+        ("Detection delay", "detection_delay_seconds", " simulated s"),
+        ("Recovery duration", "recovery_duration_seconds", " simulated s"),
+        ("Recovery outcome", "recovery_status", ""),
+        ("Resilience score", "resilience_score", " / 100"),
+    )
+    rows = []
+    for label, key, suffix in metric_rows:
+        values = []
+        for profile in ("Vulnerable", "Hardened"):
+            profile_data = profiles[profile]
+            metrics = profile_data.get("result") if result_ready else profile_data.get("metrics", {})
+            value = metrics.get(key) if isinstance(metrics, dict) else None
+            if value is None:
+                formatted = "Pending" if not result_ready and key in {"recovery_duration_seconds", "resilience_score"} else "—"
+            elif key in {"modeled_availability_pct", "operation_success_pct"}:
+                formatted = f"{float(value):.1f}{suffix}"
+            else:
+                formatted = f"{value}{suffix}"
+            values.append(f"<td>{esc(formatted)}</td>")
+        rows.append(f"<tr><th scope=\"row\">{esc(label)}</th>{''.join(values)}</tr>")
+    st.markdown(
+        f"""
+        <div class="chaos-comparison-wrap"><table class="chaos-comparison">
+          <thead><tr><th scope="col">Metric · simulated</th><th scope="col">Vulnerable</th><th scope="col">Hardened</th></tr></thead>
+          <tbody>{''.join(rows)}</tbody>
+        </table></div>
+        <div class="chaos-profile-explanations">
+          <p><strong>Vulnerable.</strong> {esc(scenario.vulnerable_behavior)}</p>
+          <p><strong>Hardened.</strong> {esc(scenario.hardened_behavior)}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_chaos_timeline(events: list[dict[str, Any]]) -> None:
+    if not events:
+        st.markdown('<div class="empty-state">Start an experiment to reveal its simulated event timeline.</div>', unsafe_allow_html=True)
+        return
+    rows = []
+    for event in events:
+        severity = str(event.get("severity", "INFO")).lower()
+        rows.append(
+            f'<div class="chaos-timeline-row">'
+            f'<time>{esc(event.get("simulated_time", ""))}</time>'
+            f'<span class="chaos-profile-label">{esc(event.get("profile", ""))}</span>'
+            f'<span class="severity {esc(severity)}">{esc(event.get("stage", ""))}</span>'
+            f'<div class="chaos-timeline-main"><strong>{esc(event.get("event_type", ""))}</strong>'
+            f'<small>{esc(event.get("component", ""))} · {esc(event.get("decision", ""))}</small>'
+            f'<p>{esc(event.get("explanation", ""))}</p></div>'
+            f'<div class="chaos-timeline-action"><span>Recovery action</span><strong>{esc(event.get("recovery_action", "—"))}</strong></div>'
+            f'</div>'
+        )
+    st.markdown(f'<div class="chaos-timeline" role="list">{"".join(rows)}</div>', unsafe_allow_html=True)
+
+
+def render_chaos_availability_chart(chaos: dict[str, Any]) -> None:
+    rows = service_availability_series(chaos)
+    if not rows or chaos.get("elapsed_seconds", 0) < 1:
+        st.markdown('<div class="empty-state">The modeled availability trace will appear after the fault is injected.</div>', unsafe_allow_html=True)
+        return
+    chart_data = pd.DataFrame(rows)
+    elapsed = max(1, int(chaos["elapsed_seconds"]))
+    profiles = list(chaos["profiles"])
+    colors = ["#e8bd85" if profile == "Vulnerable" else "#74dfc3" for profile in profiles]
+    chart_spec = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+        "layer": [
+            {"mark": {"type": "line", "strokeWidth": 2, "clip": True}},
+            {
+                "transform": [{"filter": {"field": "Elapsed", "equal": elapsed}}],
+                "mark": {"type": "point", "filled": True, "size": 42},
+            },
+        ],
+        "encoding": {
+            "x": {
+                "field": "Elapsed",
+                "type": "quantitative",
+                "scale": {"domain": [0, max(10, elapsed)], "nice": False},
+                "axis": {"title": "Elapsed · simulated seconds", "values": list(range(0, max(10, elapsed) + 1, 2)), "grid": False},
+            },
+            "y": {
+                "field": "Availability",
+                "type": "quantitative",
+                "scale": {"domain": [0, 100], "nice": False},
+                "axis": {"title": "Modeled availability (%)", "values": [0, 25, 50, 75, 100], "format": ".0f", "grid": True},
+            },
+            "color": {
+                "field": "Profile",
+                "type": "nominal",
+                "scale": {"domain": profiles, "range": colors},
+                "legend": {"title": None, "orient": "top", "direction": "horizontal"} if len(profiles) > 1 else False,
+            },
+            "tooltip": [
+                {"field": "Elapsed", "type": "quantitative", "title": "Elapsed · simulated seconds", "format": ".0f"},
+                {"field": "Profile", "type": "nominal", "title": "Profile"},
+                {"field": "Availability", "type": "quantitative", "title": "Modeled availability", "format": ".1f"},
+            ],
+        },
+        "config": {
+            "background": "transparent",
+            "view": {"stroke": None},
+            "axis": {"labelColor": "#a9bcb3", "titleColor": "#a9bcb3", "labelFontSize": 11, "titleFontSize": 11, "gridColor": "#263631", "gridOpacity": 0.8},
+            "legend": {"labelColor": "#a9bcb3", "labelFontSize": 11},
+        },
+        "padding": {"left": 0, "right": 8, "top": 2, "bottom": 0},
+    }
+    st.vega_lite_chart(
+        chart_data,
+        chart_spec,
+        width="stretch",
+        height=220,
+        theme=None,
+        key="chaos_availability_chart",
+        alt="Modeled service availability over simulated experiment time for each selected profile.",
+    )
+
+
+@st.fragment(run_every=1)
+def render_chaos_lab() -> None:
+    """Render controls and the non-blocking, session-local Chaos Lab run."""
+    chaos = st.session_state.device_state["chaos"]
+    active = bool(chaos.get("active"))
+
+    with st.container(border=True, key="chaos_boundary_panel"):
+        st.markdown(
+            '<div class="chaos-boundary"><strong>Behavioral simulation · session only</strong>'
+            '<span>Failures advance on a 1 second UI timer. No broker, network, process, firmware, serial port, or GPIO is touched.</span></div>',
+            unsafe_allow_html=True,
+        )
+
+    normalize_widget_choice("chaos_scenario", CHAOS_SCENARIO_IDS, CHAOS_SCENARIO_IDS[0])
+    scenario_id = normalize_chaos_scenario(st.session_state.get("chaos_scenario"))
+    st.session_state["chaos_scenario"] = scenario_id
+    scenario = CHAOS_SCENARIOS[scenario_id]
+    normalize_widget_choice("chaos_profile", PROFILE_SELECTIONS, chaos.get("profile_selection", "Vulnerable"))
+    profile_selection = st.session_state.get("chaos_profile", "Vulnerable")
+
+    with st.container(border=True, key="chaos_config_panel"):
+        st.markdown('<div class="panel-title"><h2>Experiment configuration</h2><span>10 simulated seconds · 1× playback</span></div>', unsafe_allow_html=True)
+        scenario_col, profile_col, parameter_col, actions_col = st.columns([1.3, 1.2, 1.0, 0.85], vertical_alignment="bottom")
+        with scenario_col:
+            scenario_id = st.selectbox(
+                "Fault scenario",
+                CHAOS_SCENARIO_IDS,
+                format_func=lambda item: CHAOS_SCENARIOS[item].name,
+                key="chaos_scenario",
+                disabled=active,
+            )
+        scenario = CHAOS_SCENARIOS[scenario_id]
+        with profile_col:
+            profile_selection = st.radio(
+                "Security profile",
+                PROFILE_SELECTIONS,
+                horizontal=True,
+                key="chaos_profile",
+                disabled=active,
+                help="Run one profile or both against the same deterministic scenario.",
+            )
+        with parameter_col:
+            if scenario.parameter_kind == "packet_loss_pct":
+                if not isinstance(st.session_state.get("chaos_packet_loss"), int):
+                    st.session_state["chaos_packet_loss"] = scenario.default_packet_loss_pct
+                packet_loss_pct = st.slider(
+                    "Modeled packet loss",
+                    min_value=0,
+                    max_value=50,
+                    step=1,
+                    key="chaos_packet_loss",
+                    disabled=active,
+                    format="%d%%",
+                )
+            else:
+                packet_loss_pct = 30
+                st.markdown('<div class="chaos-parameter-note"><span>Fault scope</span><strong>Fixed scenario model</strong></div>', unsafe_allow_html=True)
+        with actions_col:
+            if st.button("Run experiment", key="chaos_start", type="primary", use_container_width=True, disabled=active):
+                start_experiment(
+                    chaos,
+                    scenario_id,
+                    profile_selection,
+                    now_monotonic=time.monotonic(),
+                    packet_loss_pct=packet_loss_pct,
+                )
+            if st.button("Reset", key="chaos_reset", use_container_width=True):
+                reset_experiment(chaos)
+
+        st.markdown(
+            f'<p class="chaos-scenario-summary"><strong>{esc(scenario.category)}</strong> · {esc(scenario.summary)}</p>',
+            unsafe_allow_html=True,
+        )
+
+    if chaos.get("active"):
+        started_at = chaos.get("started_at_monotonic")
+        if not isinstance(started_at, (float, int)):
+            started_at = time.monotonic()
+            chaos["started_at_monotonic"] = float(started_at)
+        advance_experiment(chaos, int(max(0, time.monotonic() - started_at)))
+
+    stage_order = ("BASELINE", "FAULT_INJECTED", "DEGRADED", "RECOVERING", "RECOVERED", "COMPLETE")
+    stage_alias = {"FAILED_TO_RECOVER": "RECOVERED"}
+    selected_stage = stage_alias.get(str(chaos.get("stage", "IDLE")), str(chaos.get("stage", "IDLE")))
+    current_index = stage_order.index(selected_stage) if selected_stage in stage_order else -1
+    step_markup = []
+    for index, stage in enumerate(stage_order):
+        css = "current" if index == current_index else "past" if index < current_index else ""
+        if chaos.get("stage") == "FAILED_TO_RECOVER" and stage == "RECOVERED":
+            css = "failed"
+        step_markup.append(f'<span class="chaos-step {css}">{esc(stage.replace("_", " "))}</span>')
+    st.markdown(f'<div class="chaos-lifecycle">{"".join(step_markup)}</div>', unsafe_allow_html=True)
+
+    if chaos.get("scenario_id"):
+        active_scenario = CHAOS_SCENARIOS.get(chaos["scenario_id"], scenario)
+        profiles = chaos.get("profiles", {})
+        selected_profiles = list(profiles)
+        left_col, right_col = st.columns([1.1, 1], gap="medium", vertical_alignment="top")
+        with left_col:
+            with st.container(border=True, key="chaos_board_panel"):
+                st.markdown('<div class="panel-title"><h2>Logical impact path</h2><span>ESP32 board illustration</span></div>', unsafe_allow_html=True)
+                clicked = render_board(
+                    selected=state["selected_component"],
+                    active_path=chaos.get("board_path", []) if chaos.get("experiment_id") else [],
+                    pin_states=state["gpio"],
+                    height=424,
+                )
+                component_options = set(PIN_DEFINITIONS) | set(BOARD_COMPONENTS)
+                if clicked in component_options:
+                    state["selected_component"] = clicked
+                    st.session_state["component_picker"] = clicked
+                st.markdown(
+                    f'<p class="chaos-board-note">Affected logical components: {esc(" → ".join(active_scenario.board_path))}. This highlights a representative board path; it does not alter pin metadata or show electrical measurements.</p>',
+                    unsafe_allow_html=True,
+                )
+        with right_col:
+            with st.container(border=True, key="chaos_live_panel"):
+                st.markdown(
+                    f'<div class="panel-title"><h2>Live node state</h2><span>{esc(chaos.get("stage", "IDLE").replace("_", " "))} · SESSION MODEL</span></div>',
+                    unsafe_allow_html=True,
+                )
+                if not selected_profiles:
+                    idle = {"stage": "BASELINE", "statuses": chaos.get("baseline_snapshot", {}), "metrics": {}}
+                    render_chaos_status_card("Baseline", idle, int(chaos.get("elapsed_seconds", 0)))
+                else:
+                    for profile in selected_profiles:
+                        render_chaos_status_card(profile, profiles[profile], int(chaos.get("elapsed_seconds", 0)))
+                st.markdown(
+                    f'<p class="chaos-explanation">{esc(active_scenario.educational_explanation)}</p>'
+                    f'<p class="chaos-policy"><strong>Recovery policy.</strong> {esc(active_scenario.recovery_policy)}</p>',
+                    unsafe_allow_html=True,
+                )
+
+        chart_col, detail_col = st.columns([1.3, 1], gap="medium", vertical_alignment="top")
+        with chart_col:
+            with st.container(border=True, key="chaos_chart_panel"):
+                st.markdown('<div class="panel-title"><h2>Service availability</h2><span>MODELED · BY SIMULATED SECOND</span></div>', unsafe_allow_html=True)
+                render_chaos_availability_chart(chaos)
+                st.markdown('<p class="chaos-footnote">Availability is integrated over the experiment timeline. The initial baseline second is included.</p>', unsafe_allow_html=True)
+        with detail_col:
+            with st.container(border=True, key="chaos_metrics_panel"):
+                st.markdown('<div class="panel-title"><h2>Resilience metrics</h2><span>MODEL OUTPUT</span></div>', unsafe_allow_html=True)
+                if selected_profiles:
+                    for profile in selected_profiles:
+                        profile_state = profiles[profile]
+                        metric_values = profile_state.get("result") or profile_state.get("metrics", {})
+                        render_chaos_metric_strip(profile, metric_values, result_ready=bool(chaos.get("result")))
+                else:
+                    st.markdown('<div class="empty-state">Metrics begin when an experiment runs.</div>', unsafe_allow_html=True)
+
+        with st.container(border=True, key="chaos_comparison_panel"):
+            heading = "Vulnerable vs Hardened" if len(profiles) == 2 else "Profile outcome"
+            st.markdown(f'<div class="panel-title"><h2>{heading}</h2><span>{"FINAL MODEL COMPARISON" if chaos.get("result") else "LIVE MODEL COMPARISON"}</span></div>', unsafe_allow_html=True)
+            if len(profiles) == 2:
+                render_chaos_comparison(active_scenario, profiles, bool(chaos.get("result")))
+            elif selected_profiles:
+                profile = selected_profiles[0]
+                behavior = active_scenario.vulnerable_behavior if profile == "Vulnerable" else active_scenario.hardened_behavior
+                st.markdown(f'<p class="chaos-profile-explanation"><strong>{esc(profile)} profile behavior.</strong> {esc(behavior)}</p>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="empty-state">Run both profiles to compare their recovery behavior.</div>', unsafe_allow_html=True)
+
+        with st.container(border=True, key="chaos_timeline_panel"):
+            timeline = chaos.get("timeline", [])
+            st.markdown(
+                f'<div class="panel-title"><h2>Experiment timeline · {len(timeline)} events</h2><span>OLDEST FIRST · SIMULATED TIME</span></div>',
+                unsafe_allow_html=True,
+            )
+            render_chaos_timeline(timeline)
+
+        st.markdown(
+            '<p class="chaos-score-note">The model-specific score is 45% modeled service availability + 35% operation success + 20% recovery outcome (100 if recovered within the run, otherwise 0). It is an educational comparison metric, not a certification or measured device result.</p>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f'<div class="chaos-ready"><div><strong>Fault catalog · {len(CHAOS_SCENARIOS)} scenarios</strong><span>{esc(scenario.educational_explanation)}</span></div>'
+            f'<div><strong>Target · ESP32 IoT node behavioral model</strong><span>Vulnerable and Hardened are separate model policies. No physical execution mode is available in this release.</span></div></div>',
+            unsafe_allow_html=True,
+        )
+
+
 render_topbar()
 view = st.session_state.active_view
 render_title(view)
-render_controls()
 
 if view == "Console":
+    render_controls()
     render_overview()
 elif view == "Events":
     render_metrics()
     render_events_page()
-else:
+elif view == "Hardware":
     render_hardware_page()
+else:
+    render_chaos_lab()

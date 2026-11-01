@@ -2,7 +2,7 @@
 
 **Audit dates:** 2026-10-29 to 2026-11-01
 **Baseline revision:** `c2e0aaa` (`Add MIT license`)
-**Current classification:** prototype / v0.2.1 software behavior model
+**Classification at audit date:** prototype / v0.2.1 software behavior model
 **Scope:** source, tests, documentation, firmware source, dependencies, workflows, license files, releases, and repository governance. The locked Streamlit app returned HTTP 200; Python CI passed on 3.12, 3.13, and 3.14; the ESP-IDF 6.1 classic ESP32 build passed in CI; and v0.2.1 attaches both a version-matched runtime SBOM and the exact ESP-IDF Component Manager lock from its tagged build. No Pages deployment, firmware flash, or hardware experiment was performed.
 
 ## Repository Overview
@@ -259,3 +259,32 @@ The updated score of **84/100**, from an initial 55/100, reflects better enginee
 4. Select and freeze EXP-01's command envelope and freshness behavior, then collect authorized lab runs with commit/configuration provenance and raw evidence.
 5. Generate a complete firmware SBOM when the ESP-IDF build tooling can account for built-in components and compiler/toolchain binaries; the current release asset is only the Component Manager lock.
 6. Add Python type checking and firmware static analysis, then reassess the remaining code-quality gap.
+
+## v0.3.0 Follow-up Review — 2026-11-02
+
+This follow-up covers the Chaos Lab addition. It preserves the v0.2.1 audit above as a dated snapshot and does not replace its historical release evidence.
+
+- Added a separate, typed Chaos state and deterministic service with eight declarative failure scenarios, profile-specific transitions, a bounded ten-second timeline, dependency outcomes, metrics, and reset behavior.
+- Added the Chaos Lab Streamlit view, board-path highlighting, availability chart, profile comparison, timeline, safety boundary, EXP-02 protocol, ADR-004, and requirements-to-test traceability.
+- Added exhaustive lifecycle coverage that runs every catalog scenario against Vulnerable and Hardened model profiles.
+- Updated the tablet control layout after live browser review found that the experiment button label was truncated. The Chaos Lab was reviewed at 1440, 768, and 390 CSS pixels; the active screen had no horizontal overflow. The behavior was exercised through a completed MQTT broker-outage comparison.
+- Local verification on Python 3.14: 31 unittest cases, 30 passed and the Mosquitto integration test skipped because the broker is not installed; correctness-focused Ruff checks, compileall, and Markdown link checking passed. A local `pip-audit` run found no known vulnerabilities; a later repeat timed out querying PyPI, so release-tag CI must recheck dependencies. Release-tag CI remains the authority for the supported Python matrix and firmware build.
+- No physical fault injection, board flash, network traffic, firmware control, empirical measurement, or paper reproduction was performed. The Chaos Lab is a software behavior model.
+
+### Follow-up maturity assessment
+
+Using the same project rubric as the v0.2.1 score, the v0.3.0 engineering maturity estimate is **87/100**. The three-point increase reflects the separate model architecture, explicit protocol/traceability, and deterministic scenario coverage; it does not indicate better real-device security or experimental validation. Scores remain a project assessment, not an external standard.
+
+| Dimension | Score | Evidence in v0.3.0 | Remaining gap |
+|---|---:|---|---|
+| Architecture & Modularity | 13/15 | Separate Chaos catalog, typed session state, pure transition service, and UI fragment | No hardware/model parity or package-level boundary |
+| Documentation | 14/15 | Scenario definitions, explicit limits, ADR, EXP-02, metrics, and traceability | No physical-run evidence or calibrated model |
+| Code Quality | 11/15 | Locked dependencies, correctness-focused lint, bounded state, and deterministic transitions | No type checker or firmware static analysis |
+| Testing | 14/15 | Every scenario exercised for both profiles; AppTest and existing HTTP/MQTT/release tests retained | Hardware-in-loop validation remains absent |
+| Security | 9/10 | Clear session-only boundary; no Chaos path to process, network, serial, firmware, or GPIO | Deliberately vulnerable firmware and no physical validation |
+| Reproducibility | 9/10 | Fixed logical time, parameter bounds, explicit formulas, tests, and pinned lock | No calibrated physical baseline or measured run record |
+| Open Source Governance | 9/10 | Release provenance and existing contribution/security/citation records retained | Main branch protection remains absent under the direct-push workflow |
+| Research Rigor & Traceability | 8/10 | EXP-02 defines research questions, model hypotheses, controls, outcomes, and limits | No empirical experiment or faithful peer-reviewed paper reproduction |
+| **Total** | **87/100** |  |  |
+
+The next substantial maturity gains require physical ESP32 bring-up, independent measurements, and comparison of model predictions against observed results. Those activities need a separate isolated-lab protocol; this release does not claim them.

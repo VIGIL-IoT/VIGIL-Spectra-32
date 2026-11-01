@@ -27,6 +27,20 @@ For the standalone node, HTTP form input is parsed and validated before the `Vir
 
 The console is a deterministic state illustration. For each scenario, the code selects a fixed stimulus from `data/scenarios.py` and applies one model transition in `services/simulator.py`. The current model does not build an actual packet, credential-guessing loop, OTA image, or nonce-bearing command. Report its output only as **simulated**.
 
+## Chaos Lab behavioral method
+
+The Chaos Lab applies the same experimental discipline to a deliberately bounded embedded-system behavior model. Its conceptual framing follows the controlled fault exposure and observation loop described by [Netflix Chaos Monkey](https://github.com/Netflix/chaosmonkey) and the [Principles of Chaos Engineering](https://principlesofchaos.org/); those projects supply concepts only. SPECTRA-32 does not reuse their source, architecture, production infrastructure, or fault-execution mechanisms.
+
+For each EXP-02 run:
+
+1. Record the modeled steady-state baseline in the session.
+2. Select one catalogued fault and either Vulnerable, Hardened, or both profiles.
+3. Advance the profile's declarative milestones against logical elapsed seconds. Vulnerable/Hardened plans have explicit status, operation, detection, and recovery outcomes.
+4. Compare service availability, operation success, detection delay, recovery duration, degradation, retries, restarts, and the model-specific score where defined.
+5. Interpret the timeline and the defense named by the scenario plan. Do not generalize model outputs to physical ESP32 behavior.
+
+Tests pass logical elapsed seconds directly, so no timer or waiting is needed for deterministic verification. The Streamlit view uses `st.fragment(run_every=1)` as a non-blocking display clock; it never sleeps. The browser timer does not control an external system. EXP-02 is a behavioral simulation protocol; there are no measured run records.
+
 ## Experiment method before physical validation
 
 For EXP-01 MQTT command replay:

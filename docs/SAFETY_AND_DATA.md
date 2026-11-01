@@ -8,7 +8,8 @@ SPECTRA-32 is an embedded-security research platform. All testing is limited to 
 2. The broker has anonymous access and no TLS by design. Do not change it to listen on a LAN interface for the software-only milestone.
 3. The model changes only a virtual LED state. It does not send traffic to other hosts or control a physical output.
 4. The Streamlit security-event controls update only the current dashboard session's in-memory model. Replay, authentication, high request-rate, OTA, and debug scenarios do not call the node API, publish MQTT messages, or send network traffic. The dashboard is not connected to the standalone node process. No scanning, flooding, brute force, OTA write, physical GPIO control, or interaction with unrelated devices is part of this software milestone.
-5. USB serial discovery runs on the machine hosting the Streamlit Python process. Port listing does not open the port. The user-triggered esptool chip-ID probe may reset a board but does not write or erase flash.
+5. Chaos Lab runs a separate deterministic behavioral model in the current Streamlit session. It does not kill or pause processes, change Wi-Fi, manipulate routes or packets, stop a broker, open a serial port, restart firmware, flash hardware, or drive GPIO.
+6. USB serial discovery runs on the machine hosting the Streamlit Python process. Port listing does not open the port. The user-triggered esptool chip-ID probe may reset a board but does not write or erase flash.
 
 ## Later hardware runs
 

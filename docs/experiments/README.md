@@ -1,6 +1,6 @@
 # Experiment records
 
-Experiment designs live under the repository-root `experiments/` directory; completed run records and sanitized outputs should be added here only after a run exists. The current replay and T800 protocols are plans. There are no SPECTRA-32 experiment results in this repository.
+Experiment designs live under the repository-root `experiments/` directory; completed physical run records and sanitized outputs should be added here only after a run exists. Current protocols are [EXP-01 replay](../../experiments/EXP-01-replay/README.md), [EXP-02 Chaos resilience](../../experiments/EXP-02-chaos-resilience/README.md), and the separate T800 reproduction plan. EXP-02 executes only a behavioral model. There are no physical SPECTRA-32 experiment results in this repository.
 
 Before collecting data, follow [`EXPERIMENT_PROTOCOL.md`](../EXPERIMENT_PROTOCOL.md), the relevant experiment-specific protocol, and [`SAFETY_AND_DATA.md`](../SAFETY_AND_DATA.md). Keep raw traffic captures and identifying serial logs local unless they have been reviewed and approved for release.
 

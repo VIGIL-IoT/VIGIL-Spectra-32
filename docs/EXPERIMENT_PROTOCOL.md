@@ -1,6 +1,10 @@
 # Experiment Protocol
 
-Every SPECTRA-32 experiment follows **Build → Attack → Observe → Defend → Measure** inside an owned or explicitly authorized lab. The planned replay experiment is described in EXP-01-replay. No security experiment has been run yet.
+Every SPECTRA-32 experiment follows **Build → Attack → Observe → Defend → Measure**. Physical tests are limited to project-owned or explicitly authorized isolated labs. Behavioral simulations are labeled as model outputs and do not substitute for measurement. EXP-01 is a replay protocol; EXP-02 is a behavioral resilience simulation protocol. No physical security experiment has been run.
+
+## Behavioral simulation runs
+
+For the session-local Chaos Lab, record the source commit, scenario ID, profile selection, bounded parameter values, and generated timeline/result when preserving an educational run. Treat the timeline and metrics as deterministic model outputs. Do not label them device observations, physical experiment results, or measured resilience. See [EXP-02](../experiments/EXP-02-chaos-resilience/README.md) for the current scenario and interpretation rules.
 
 ## Before a run
 

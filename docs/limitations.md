@@ -8,6 +8,11 @@
 - USB discovery runs on the host that runs Python. Streamlit Cloud cannot enumerate USB hardware attached to a user's computer. Chip identification needs an explicit click, may reset the board, and has only mocked-output unit tests in this repo.
 - The session's Hardened profile changes modeled flags and outcomes. It is not a real implementation of authentication, TLS, ACLs, replay protection, secure boot, flash encryption, OTA signature checks, rate limiting, or UART lockdown.
 - Sample initial counters and events are illustrative. They are not generated from a real run.
+- Chaos Lab contains eight fixed 10-second behavioral scenarios. A Streamlit fragment refreshes the session view once per second; no execution timing guarantee applies to a physical device.
+- Chaos service availability, operation success, detection/recovery duration, retry/restart counts, and resilience score are scenario-plan outputs. They are not measured ESP32 performance, network statistics, or evidence that a real defense is effective.
+- The Chaos score is a SPECTRA-32 educational metric with a documented formula, not an industry standard, certification, or security rating. Its assumptions and scenario workload are model-specific.
+- Packet-loss behavior is a fixed deterministic formula. Memory pressure, sensor failure, latency, reboot, and watchdog behavior use qualitative model state and generic assumptions, not measured hardware ranges.
+- Chaos sessions are not persisted or shared. The timer advances only while the Streamlit session is active, and there is no hardware-in-loop execution backend.
 
 ## Standalone Python model
 

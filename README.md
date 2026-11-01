@@ -14,13 +14,14 @@ SPECTRA-32 is VIGIL-IoT's experimental attack-and-defense testbed for studying I
 
 | Area | Status |
 |---|---|
-| Streamlit console | Implemented session-local behavior model with board illustration, deterministic scenarios, counters, and event log |
+| Streamlit console | Session-local security behavior model with board illustration, deterministic scenarios, counters, and event log |
+| Chaos Lab | Deterministic 10-second failure and recovery simulations, with Vulnerable/Hardened comparison and modeled metrics |
 | Python virtual node | HTTP/virtual LED routes covered by loopback tests; MQTT command/status flow verified with a loopback Mosquitto broker in CI |
 | USB chip discovery | Host-side serial discovery and explicit esptool chip-ID probe; physical probe not recorded |
 | ESP-IDF firmware | Vulnerable classic ESP32 reference builds in ESP-IDF 6.1 CI; physical board validation not recorded |
-| Security experiments | Replay and T800 protocols are planned; no experiment runs or measured results exist |
+| Research experiments | EXP-01 replay and T800 protocols remain plans; EXP-02 is a tested behavioral simulation protocol; no physical runs or measured results exist |
 
-Current maturity is **prototype / v0.2 software behavior model**. The console's Hardened profile and plotted counters are illustrative. They are not hardware measurements or evidence that a real defense works.
+Current maturity is **prototype / v0.3.0 software behavior model**. Console and Chaos Lab outcomes are illustrative behavioral models. They are not hardware measurements or evidence that a real defense works.
 
 ## What runs today
 
@@ -30,6 +31,8 @@ The optional Python node is a separate process with its own volatile virtual LED
 
 The Hardware view enumerates USB serial ports on the machine running the Python app. **Identify chip** is an explicit local action that may reset the board but does not erase or write flash. Streamlit Community Cloud cannot access USB devices attached to your computer. Current attack scenarios remain session-only and do not control the physical board.
 
+The **Chaos Lab** adds a separate, time-based resilience model for MQTT broker outage, Wi-Fi loss, device/firmware crash, sensor failure, network latency, packet loss, memory pressure, and watchdog/task stall. Choose Vulnerable, Hardened, or Compare both; the experiment timeline advances in the browser session and the board view highlights the affected logical path. It performs no network, process, serial, firmware, or GPIO action. Its values and resilience score are model outputs only; see [Chaos Lab scope and metric definitions](docs/CHAOS_LAB.md).
+
 ## Architecture
 
 ```mermaid
@@ -38,6 +41,9 @@ flowchart LR
   Streamlit --> Session[Per-session state]
   Session --> Scenarios[Deterministic scenario model]
   Scenarios --> Session
+  Streamlit --> Chaos[Separate Chaos lifecycle model]
+  Chaos --> ChaosSession[Per-session Chaos state]
+  ChaosSession --> Streamlit
   Streamlit --> Board[Interactive board illustration]
   Streamlit --> Serial[Host USB discovery]
 
@@ -54,7 +60,7 @@ flowchart LR
   end
 ```
 
-See [the detailed architecture](docs/architecture.md), [requirements and scope](docs/requirements.md), [methodology](docs/methodology.md), and [known limitations](docs/limitations.md).
+See [the detailed architecture](docs/architecture.md), [Chaos Lab model](docs/CHAOS_LAB.md), [requirements and scope](docs/requirements.md), [methodology](docs/methodology.md), and [known limitations](docs/limitations.md).
 
 ## Quick start: Streamlit console
 
@@ -105,6 +111,7 @@ The HTTP model has route tests; a separate MQTT integration test exercises the P
 ## Research and validation
 
 - [Experiment 01: MQTT command replay](experiments/EXP-01-replay/README.md) — protocol design only; no run ledger entries.
+- [Experiment 02: Chaos resilience](experiments/EXP-02-chaos-resilience/README.md) — deterministic behavioral protocol and tests; no physical run or empirical result.
 - [Research analysis and paper selection](docs/research/RESEARCH_ANALYSIS.md)
 - [Streamlit scenario catalog](docs/research/STREAMLIT_SCENARIO_CATALOG.md)
 - [T800 reproduction plan](docs/research/T800_REPRODUCTION_PLAN.md) and [protocol](docs/research/T800_EXPERIMENT_PROTOCOL.md) — separate TCP port-scan paper track.
@@ -119,8 +126,8 @@ Never treat paper-reported results or session-model values as SPECTRA-32 measure
 
 ```text
 components/       Streamlit custom board component
-data/             Sample node state, scenarios, and board metadata
-services/         Session transitions and host-side chip identification
+data/             Sample node state, security/chaos scenario catalogs, and board metadata
+services/         Separate security and chaos transitions, plus host-side chip identification
 simulator/
   dashboard/      Streamlit app
   vulnerable/     Separate Python behavior model
@@ -128,7 +135,7 @@ simulator/
 firmware/
   vulnerable/     CI-built classic ESP32 ESP-IDF reference; not hardware-verified
   hardened/       Reserved for separate future firmware defenses
-experiments/      Experiment definitions; no results yet
+experiments/      EXP-01 replay and EXP-02 chaos resilience protocols; no measured results yet
 lab/              Loopback and future isolated-lab broker configurations
 docs/             Architecture, requirements, protocols, limits, and research
 tests/            Python unit, HTTP-route, and Streamlit UI tests
