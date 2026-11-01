@@ -44,7 +44,7 @@ The objectives do not imply measured effectiveness. O-6 is a future validation g
 
 ### Partly implemented or not yet verified
 
-- The standalone Python node's MQTT code exists, but a broker-backed integration run is not verified.
+- The standalone Python node's MQTT command/status path is verified against a loopback Mosquitto broker in CI; no physical firmware or hosted broker behavior is implied.
 - The ESP-IDF source builds for classic `esp32` in CI, but no flash, board test, or parity run is recorded.
 - Physical chip classification is unit-tested with mocked esptool output; no physical probe is recorded in the repository.
 - The current Python app and tests were run on Python 3.14.7. The declared support range is Python 3.12 through 3.14; CI covers all three minor versions.

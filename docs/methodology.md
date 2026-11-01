@@ -43,7 +43,7 @@ For T800, follow the separate pinned-artifact plan. Do not mix its TCP port-scan
 
 - **Static inspection:** source/configuration reviewed; does not prove runtime behavior.
 - **Unit/smoke test:** deterministic functions and local loopback HTTP routes checked; does not prove physical-device behavior.
-- **Integration test:** multiple real local processes (for example, node plus Mosquitto) run together; not yet recorded for MQTT.
+- **Integration test:** multiple local processes run together. The standalone Python node's MQTT command/status path is verified against Mosquitto on loopback in [Python quality CI run 41105134754](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41105134754); this does not verify physical firmware behavior.
 - **Hardware validation:** firmware build/flash and device observation on a documented board; not yet available.
 - **Experiment:** frozen procedure with run records, repetitions, outputs, hashes, and analysis; no SPECTRA-32 security experiment has been run.
 

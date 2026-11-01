@@ -5,6 +5,7 @@
 SPECTRA-32 is VIGIL-IoT's experimental attack-and-defense testbed for studying IoT vulnerabilities, secure communication, and cyber-physical resilience. Its research loop is **Build → Attack → Observe → Defend → Measure**. Experiments are limited to project-owned systems or explicitly authorized lab environments.
 
 [![Experiment workflow](https://img.shields.io/github/actions/workflow/status/VIGIL-IoT/VIGIL-Spectra-32/deploy-workflow-page.yml?branch=main&label=Experiment%20workflow&logo=githubpages)](https://vigil-iot.github.io/VIGIL-Spectra-32/)
+[![Latest release](https://img.shields.io/github/v/release/VIGIL-IoT/VIGIL-Spectra-32?display_name=tag)](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [Open the interactive research workflow →](https://vigil-iot.github.io/VIGIL-Spectra-32/) · [Third-party notices](THIRD_PARTY_NOTICES.md)
@@ -14,12 +15,12 @@ SPECTRA-32 is VIGIL-IoT's experimental attack-and-defense testbed for studying I
 | Area | Status |
 |---|---|
 | Streamlit console | Implemented session-local behavior model with board illustration, deterministic scenarios, counters, and event log |
-| Python virtual node | HTTP/virtual LED routes implemented and covered by loopback tests; real broker integration not yet verified |
+| Python virtual node | HTTP/virtual LED routes covered by loopback tests; MQTT command/status flow verified with a loopback Mosquitto broker in CI |
 | USB chip discovery | Host-side serial discovery and explicit esptool chip-ID probe; physical probe not recorded |
 | ESP-IDF firmware | Vulnerable classic ESP32 reference builds in ESP-IDF 6.1 CI; physical board validation not recorded |
 | Security experiments | Replay and T800 protocols are planned; no experiment runs or measured results exist |
 
-Current maturity is **prototype / v0.1 software behavior model**. The console's Hardened profile and plotted counters are illustrative. They are not hardware measurements or evidence that a real defense works.
+Current maturity is **prototype / v0.2 software behavior model**. The console's Hardened profile and plotted counters are illustrative. They are not hardware measurements or evidence that a real defense works.
 
 ## What runs today
 
@@ -74,7 +75,7 @@ uv run --locked --group dev python -m compileall -q data services components sim
 uv run --locked --group dev python tools/check_docs.py
 ```
 
-The test suite uses a local loopback test server and Streamlit `AppTest`; it does not require a physical board or MQTT broker.
+The main test suite uses a local loopback HTTP server and Streamlit `AppTest`; the dedicated MQTT integration test skips when Mosquitto is absent locally and runs with a broker in CI. No test requires a physical board.
 
 To run the same focused lint and dependency checks as CI:
 
@@ -99,7 +100,7 @@ python simulator/vulnerable/basic_node.py
 
 The page and REST API are available at `http://127.0.0.1:8080`. The API exposes `GET /api/state` and `POST /api/led` with exactly one `state=on` or `state=off` form value. MQTT command/status topics are `spectra/device01/cmd` and `spectra/device01/status`.
 
-The HTTP model has route tests. The MQTT path has not had a broker-backed integration run in this repository. Do not change the sample broker to listen on a LAN interface for desktop simulation.
+The HTTP model has route tests; a separate MQTT integration test exercises the Python node with a loopback Mosquitto broker in CI. The dashboard still does not connect to that node or broker. Do not change the sample broker to listen on a LAN interface for desktop simulation.
 
 ## Research and validation
 
@@ -141,7 +142,7 @@ The software model does not emulate ESP32 radio, lwIP, GPIO timing, CPU, RAM, fl
 
 ## Contributing and citation
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change. Report security issues using the process in [SECURITY.md](SECURITY.md). Cite the project using [CITATION.cff](CITATION.cff).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change. Report security issues using the process in [SECURITY.md](SECURITY.md). Cite the project using [CITATION.cff](CITATION.cff). Browse [published releases](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases) or read the [release process](docs/RELEASING.md).
 
 ## License
 

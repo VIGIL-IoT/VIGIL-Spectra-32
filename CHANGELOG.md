@@ -1,26 +1,40 @@
 # Changelog
 
-This project has no published version tags or release notes in the current repository history. Until the first tagged release, changes are grouped under **Unreleased**. This file records repository capabilities and project changes; it is not a run-results log.
+This file records versioned project changes and verification scope. It is not a research-results log. Released source snapshots and assets are available from [GitHub Releases](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/releases).
 
-## Unreleased
+## [0.2.0] - 2026-11-01
 
 ### Added
 
-- Streamlit session model with selectable ESP32 DevKit-style board, scenario controls, counters, event log, and bounded session chart.
-- Host-side USB serial discovery with explicit classic ESP32 chip identification.
-- Separate Python virtual node with loopback HTTP and optional MQTT behavior.
-- ESP-IDF classic ESP32 vulnerable reference implementation; its ESP-IDF 6.1 CI build passes, but it has not been flashed or verified on hardware.
-- Replay and T800 research plans, safety boundaries, and an interactive Archify workflow page.
-- MIT project license, third-party notices, tests, CI, contribution guidance, and repository traceability documentation.
-- Cross-platform Python dependency lock, pinned ESP-IDF component lock, and a validated CycloneDX runtime SBOM artifact from Python 3.14 CI (30-day retention).
+- Loopback Mosquitto integration coverage for the standalone Python node's MQTT command and status flow, including rejection of invalid commands.
+- A release process that pairs each release tag with a verified runtime SBOM, checksum, and source manifest.
 
 ### Improved
 
-- Made the session counter chart readable from a zero baseline, added latest-sample markers, and kept time labels distinct at short intervals.
-- Aligned Streamlit and board colors with the documented VIGIL-IoT palette; bundled licensed DM Sans, Manrope, and DM Mono fonts for consistent local rendering.
-- Added a broker-backed loopback CI check for MQTT command handling and status publication.
+- Readable zero-based session-counter chart with visible latest samples and distinct time labels.
+- VIGIL-IoT dashboard colors and locally bundled, licensed typefaces.
+
+### Verification
+
+- The exact release tag is checked with Python quality and MQTT integration CI; the release manifest records the tag, source commit, and workflow run.
 
 ### Limitations
 
-- No security experiment, MQTT integration run, or physical-board validation is recorded. The CI SBOM artifact is retained for 30 days; no release-specific SBOM archive is configured.
-- Dashboard scenario outcomes remain in-memory illustrations and are not device telemetry.
+- No physical-board validation, hardware-in-loop test, or security experiment is included. The Streamlit scenarios remain a session-local software model.
+
+## [0.1.0] - 2026-11-01
+
+### Added
+
+- Initial VIGIL-IoT / SPECTRA-32 research prototype: Streamlit behavior model, representative ESP32 DevKit board, scenario controls, host-side chip identification, separate loopback HTTP/MQTT node, and classic ESP32 reference firmware.
+- Research protocols, safety and limitations guidance, architecture and traceability documentation, and CI for Python quality and ESP-IDF builds.
+- CycloneDX 1.5 runtime SBOM artifact generation and validation in Python 3.14 CI.
+
+### Verification
+
+- Python quality run [41097715101](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41097715101) passed on the tagged source snapshot and produced its runtime SBOM.
+- The exact tag will also be checked with the ESP-IDF firmware workflow before publication.
+
+### Limitations
+
+- The dashboard does not drive the separate node or physical firmware. No physical-board test, attack/defense experiment, or measured result is included.

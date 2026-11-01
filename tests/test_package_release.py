@@ -1,0 +1,120 @@
+"""Tests for version-bound release asset packaging."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from tools.package_release import package_release
+
+
+class PackageReleaseTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp_dir.cleanup)
+        self.root = Path(self.temp_dir.name)
+        self.sbom_path = self.root / "runtime.cdx.json"
+        self.output_dir = self.root / "release-assets"
+        self._write_sbom()
+
+    def test_packages_version_matched_assets_and_provenance(self) -> None:
+        with patch(
+            "tools.package_release._git",
+            side_effect=[
+                "tag",
+                "abcdef0123456789",
+                '[project]\nname = "vigil-spectra-32"\nversion = "0.2.0"\n',
+            ],
+        ):
+            sbom_asset, checksum_asset, manifest_asset = package_release(
+                tag="v0.2.0",
+                workflow_run=12345,
+                firmware_run=67890,
+                sbom_path=self.sbom_path,
+                output_dir=self.output_dir,
+                uv_version="0.13.6",
+            )
+
+        expected_sbom_name = "spectra32-v0.2.0-runtime.cdx.json"
+        self.assertEqual(sbom_asset.name, expected_sbom_name)
+        self.assertEqual(sbom_asset.read_bytes(), self.sbom_path.read_bytes())
+
+        manifest = json.loads(manifest_asset.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["tag"], "v0.2.0")
+        self.assertEqual(manifest["source_commit"], "abcdef0123456789")
+        self.assertEqual(manifest["python_quality_run_id"], 12345)
+        self.assertEqual(manifest["firmware_build_run_id"], 67890)
+        self.assertEqual(manifest["runtime_sbom"]["component_count"], 1)
+
+        checksum_lines = checksum_asset.read_text(encoding="utf-8").splitlines()
+        self.assertEqual(
+            checksum_lines[0],
+            f"{hashlib.sha256(sbom_asset.read_bytes()).hexdigest()}  {expected_sbom_name}",
+        )
+        self.assertEqual(
+            checksum_lines[1],
+            f"{hashlib.sha256(manifest_asset.read_bytes()).hexdigest()}  release-manifest.json",
+        )
+
+    def test_rejects_project_version_that_does_not_match_tag(self) -> None:
+        with patch(
+            "tools.package_release._git",
+            side_effect=[
+                "tag",
+                "abcdef0123456789",
+                '[project]\nname = "vigil-spectra-32"\nversion = "0.1.0"\n',
+            ],
+        ):
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                package_release(
+                    tag="v0.2.0",
+                    workflow_run=12345,
+                    firmware_run=67890,
+                    sbom_path=self.sbom_path,
+                    output_dir=self.output_dir,
+                    uv_version="0.13.6",
+                )
+
+        self.assertFalse(self.output_dir.exists())
+
+    def test_rejects_development_dependency_in_runtime_sbom(self) -> None:
+        self._write_sbom(component_names=["pandas", "ruff"])
+        with patch(
+            "tools.package_release._git",
+            side_effect=[
+                "tag",
+                "abcdef0123456789",
+                '[project]\nname = "vigil-spectra-32"\nversion = "0.2.0"\n',
+            ],
+        ):
+            with self.assertRaisesRegex(ValueError, "development tools"):
+                package_release(
+                    tag="v0.2.0",
+                    workflow_run=12345,
+                    firmware_run=67890,
+                    sbom_path=self.sbom_path,
+                    output_dir=self.output_dir,
+                    uv_version="0.13.6",
+                )
+
+        self.assertFalse(self.output_dir.exists())
+
+    def _write_sbom(self, component_names: list[str] | None = None) -> None:
+        names = component_names or ["pandas"]
+        sbom = {
+            "bomFormat": "CycloneDX",
+            "specVersion": "1.5",
+            "metadata": {
+                "component": {"name": "vigil-spectra-32", "version": "0.2.0"}
+            },
+            "components": [{"name": name} for name in names],
+        }
+        self.sbom_path.write_text(json.dumps(sbom), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    unittest.main()
