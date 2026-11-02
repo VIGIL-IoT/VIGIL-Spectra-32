@@ -34,7 +34,7 @@ board_definition_module, _ = _current_module(
     "data.board_definition",
     ("BOARD_DEFINITION_VERSION", "BOARD_COMPONENTS", "PIN_DEFINITIONS", "VIRTUAL_COMPONENTS"),
 )
-if getattr(board_definition_module, "BOARD_DEFINITION_VERSION", 0) < 2:
+if getattr(board_definition_module, "BOARD_DEFINITION_VERSION", 0) < 3:
     board_definition_module = importlib.reload(board_definition_module)
 device_state_module, state_module_refreshed = _current_module(
     "data.device_state",
@@ -53,7 +53,7 @@ chaos_scenario_module, chaos_scenario_module_refreshed = _current_module(
     ("CHAOS_SCENARIOS", "CHAOS_SCENARIO_IDS", "normalize_chaos_scenario"),
 )
 if (
-    getattr(device_state_module, "STATE_SCHEMA_VERSION", 0) < 3
+    getattr(device_state_module, "STATE_SCHEMA_VERSION", 0) < 4
     or "chaos" not in getattr(device_state_module.DeviceState, "__annotations__", {})
 ):
     device_state_module = importlib.reload(device_state_module)

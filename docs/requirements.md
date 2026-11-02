@@ -120,11 +120,14 @@ There is no database, application persistence layer, ML framework, sensor, or ph
 
 ## Assumptions and constraints
 
-- The vulnerable node and Mosquitto example are for owned software and an authorized lab only.
-- The classic ESP32 pin diagram represents one common DevKit-style layout; board revisions differ.
-- The local Python model and Streamlit UI have separate state and execution paths.
-- No device credentials, public broker, or Internet-connected hardware target is assumed.
-- The current board detection feature is host-side; web hosting cannot see a developer's USB devices.
+| ID | Assumption or constraint | Evidence and review trigger |
+|---|---|---|
+| A-01 | Vulnerable node and Mosquitto examples run only on owned software or an explicitly authorized isolated lab. | [Safety and data handling](SAFETY_AND_DATA.md); revisit before any network-facing test. |
+| A-02 | The drawing represents a generic classic ESP32-WROOM-32 style board. Exact board and revision are unknown, so it is not a wiring pinout. | [Hardware reference](hardware-references.md); replace this assumption after recording the board model and verifying its official pinout. |
+| A-03 | The local Python node, security dashboard, Chaos Lab, and firmware are separate execution paths. | [Architecture](architecture.md), source module boundaries, and session-only scenario tests. Revisit before connecting these paths. |
+| A-04 | No device credentials, public broker, or Internet-connected hardware target is assumed. | [Safety and data handling](SAFETY_AND_DATA.md); review before deploying any broker or firmware outside loopback. |
+| A-05 | USB discovery and chip identification run on the host executing Python. A hosted browser application cannot inspect USB devices attached to the user's computer. | `services/hardware.py` and [architecture](architecture.md); revisit if a local agent or browser serial workflow is added. |
+| A-06 | Simulation outputs are educational behavior-model values, not physical measurements or security-effectiveness evidence. | [Methodology](methodology.md), [benchmark plan](benchmarks.md), and the experiment protocols; revisit only after calibrated, reproducible lab runs. |
 
 ## Maturity
 

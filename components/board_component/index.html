@@ -136,11 +136,11 @@
         const leftMarkup = left.map((pin, i) => pinMarkup(pin, i, left.length, "left", selected, path, pinStates)).join("");
         const rightMarkup = right.map((pin, i) => pinMarkup(pin, i, right.length, "right", selected, path, pinStates)).join("");
         const module = componentMarkup("ESP32_MODULE", `
-          <rect class="module" x="305" y="92" width="190" height="116" rx="5" />
-          <rect class="module-shield" x="320" y="112" width="160" height="82" rx="3" />
-          <text class="component-label" x="400" y="142">ESP32-WROOM-32</text>
-          <text class="component-note" x="400" y="159">Wi-Fi · Bluetooth · MCU</text>
-          <text class="component-note" x="400" y="179">MODULE / RF SHIELD</text>
+          <rect class="module" x="305" y="92" width="190" height="168" rx="5" />
+          <rect class="module-shield" x="320" y="112" width="160" height="138" rx="3" />
+          <text class="component-label" x="400" y="134">ESP32-WROOM-32</text>
+          <text class="component-note" x="400" y="151">Wi-Fi · Bluetooth · MCU</text>
+          <text class="component-note" x="400" y="171">MODULE / RF SHIELD</text>
           <path class="antenna-line" d="M340 101h120m-112 5h104m-96 5h88" />
           <line class="chip-pin" x1="313" y1="119" x2="320" y2="119" /><line class="chip-pin" x1="313" y1="133" x2="320" y2="133" />
           <line class="chip-pin" x1="313" y1="147" x2="320" y2="147" /><line class="chip-pin" x1="313" y1="161" x2="320" y2="161" />
@@ -148,13 +148,17 @@
           <line class="chip-pin" x1="480" y1="133" x2="487" y2="133" /><line class="chip-pin" x1="480" y1="147" x2="487" y2="147" />
           <line class="chip-pin" x1="480" y1="161" x2="487" y2="161" /><line class="chip-pin" x1="480" y1="175" x2="487" y2="175" />`, selected, path);
         const flash = componentMarkup("FLASH", `
-          <rect class="chip" x="344" y="227" width="112" height="37" rx="3" />
-          <text class="component-label" x="400" y="243">SPI FLASH</text>
-          <text class="component-note" x="400" y="255">FIRMWARE STORAGE</text>
-          <line class="chip-pin" x1="352" y1="223" x2="352" y2="227" /><line class="chip-pin" x1="366" y1="223" x2="366" y2="227" />
-          <line class="chip-pin" x1="380" y1="223" x2="380" y2="227" /><line class="chip-pin" x1="394" y1="223" x2="394" y2="227" />
-          <line class="chip-pin" x1="408" y1="223" x2="408" y2="227" /><line class="chip-pin" x1="422" y1="223" x2="422" y2="227" />
-          <line class="chip-pin" x1="436" y1="223" x2="436" y2="227" /><line class="chip-pin" x1="450" y1="223" x2="450" y2="227" />`, selected, path);
+          <rect class="chip" x="350" y="198" width="100" height="39" rx="3" />
+          <text class="component-label" x="400" y="215">SPI FLASH</text>
+          <text class="component-note" x="400" y="228">ON MODULE</text>
+          <line class="chip-pin" x1="358" y1="194" x2="358" y2="198" /><line class="chip-pin" x1="370" y1="194" x2="370" y2="198" />
+          <line class="chip-pin" x1="382" y1="194" x2="382" y2="198" /><line class="chip-pin" x1="394" y1="194" x2="394" y2="198" />
+          <line class="chip-pin" x1="406" y1="194" x2="406" y2="198" /><line class="chip-pin" x1="418" y1="194" x2="418" y2="198" />
+          <line class="chip-pin" x1="430" y1="194" x2="430" y2="198" /><line class="chip-pin" x1="442" y1="194" x2="442" y2="198" />
+          <line class="chip-pin" x1="358" y1="237" x2="358" y2="241" /><line class="chip-pin" x1="370" y1="237" x2="370" y2="241" />
+          <line class="chip-pin" x1="382" y1="237" x2="382" y2="241" /><line class="chip-pin" x1="394" y1="237" x2="394" y2="241" />
+          <line class="chip-pin" x1="406" y1="237" x2="406" y2="241" /><line class="chip-pin" x1="418" y1="237" x2="418" y2="241" />
+          <line class="chip-pin" x1="430" y1="237" x2="430" y2="241" /><line class="chip-pin" x1="442" y1="237" x2="442" y2="241" />`, selected, path);
         const en = componentMarkup("EN", `
           <rect class="button-pad" x="322" y="286" width="44" height="32" rx="4" />
           <rect class="button-inner" x="331" y="292" width="26" height="19" rx="3" />
@@ -170,17 +174,17 @@
         const usb = componentMarkup("USB", `
           <path class="usb-frame" d="M365 351h70a7 7 0 0 1 7 7v15h-84v-15a7 7 0 0 1 7-7Z" />
           <rect class="usb-hole" x="378" y="357" width="44" height="10" rx="4" />
-          <text class="component-label" x="400" y="386">USB-C / UART</text>`, selected, path);
+          <text class="component-label" x="400" y="386">USB / UART</text>`, selected, path);
 
         document.getElementById("stage").innerHTML = `
-          <svg viewBox="110 0 590 410" role="group" aria-label="Interactive ESP32 DevKit-style board with selectable pins and components">
+          <svg viewBox="110 0 590 410" role="group" aria-label="Interactive ESP32 DevKit-style reference illustration. Pin labels and connector details vary by board revision.">
             <text class="board-mark" x="400" y="14" text-anchor="middle">SPECTRA-32 · ESP32 DEVKIT BOARD MAP</text>
             <path class="board-shell" d="M279 24h242a10 10 0 0 1 10 10v350a10 10 0 0 1-10 10H279a10 10 0 0 1-10-10V34a10 10 0 0 1 10-10Z" />
             <path class="board-inset" d="M286 31h228v336H286z" />
             <circle class="via" cx="286" cy="39" r="3" /><circle class="via" cx="514" cy="39" r="3" />
             <circle class="via" cx="286" cy="381" r="3" /><circle class="via" cx="514" cy="381" r="3" />
             <path class="trace" d="M291 55h13v25h17m-30 253h26v-29h14m153-196h19v52h-16m17 143h-18v-35h-17" />
-            <text class="board-code" x="400" y="49" text-anchor="middle">ESP32 DEVKIT · GPIO / NETWORK / FLASH</text>
+            <text class="board-code" x="400" y="49" text-anchor="middle">ESP32 DEVKIT-STYLE · GPIO REFERENCE</text>
             ${leftMarkup}${rightMarkup}
             ${module}${flash}${en}${boot}${led}${usb}
           </svg>`;

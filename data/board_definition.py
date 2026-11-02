@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-BOARD_DEFINITION_VERSION = 2
+BOARD_DEFINITION_VERSION = 3
 
 
 class PinDefinition(TypedDict):
@@ -33,29 +33,29 @@ _LEFT_PINS = [
     ("GPIO26", "GPIO26", "Digital I/O", "OUTPUT", "LOW", "DAC channel", "Normal", "Digital I/O and DAC-capable pin."),
     ("GPIO27", "GPIO27", "Digital I/O", "INPUT", "LOW", "Spare input", "Normal", "Digital I/O and touch-capable pin."),
     ("GPIO14", "GPIO14", "Digital I/O", "OUTPUT", "LOW", "SPI clock", "Normal", "Common SPI clock pin."),
-    ("GPIO12", "GPIO12", "Digital I/O", "INPUT", "LOW", "Strap pin", "Review", "Boot-strapping pin; check external pull state."),
+    ("GPIO12", "GPIO12", "Digital I/O", "INPUT", "LOW", "Strap pin", "Review", "Strapping pin MTDI. Its reset level affects flash supply selection; verify the exact module and board before wiring."),
     ("GND_L", "GND", "Ground", "GROUND", "0 V", "Common ground", "Normal", "Ground reference."),
     ("GPIO13", "GPIO13", "Digital I/O", "OUTPUT", "LOW", "SPI MOSI", "Normal", "Common SPI data pin."),
-    ("GPIO9", "GPIO9 / SD2", "Flash bus", "RESERVED", "N/A", "On-module flash", "Reserved", "Used by module flash; avoid as a general GPIO."),
+    ("GPIO9", "GPIO9 / SD2", "Flash bus", "RESERVED", "N/A", "On-module SPI flash", "Reserved", "GPIO9 is normally connected to SPI0/1 flash on the module; do not treat it as a general output."),
 ]
 
 _RIGHT_PINS = [
     ("VIN", "VIN / 5V", "Power", "POWER", "5 V", "USB power rail", "Normal", "Board input rail; observe the board's supply limits."),
     ("GND_R", "GND", "Ground", "GROUND", "0 V", "Common ground", "Normal", "Ground reference."),
-    ("GPIO23", "GPIO23", "Digital I/O", "OUTPUT", "HIGH", "Relay", "Normal", "Relay control output in the sample device model."),
-    ("GPIO22", "GPIO22", "Digital I/O", "INPUT", "LOW", "Sensor", "Normal", "Sensor input in the sample device model."),
+    ("GPIO23", "GPIO23", "Digital I/O", "OUTPUT", "HIGH", "Sample relay path (model only)", "Normal", "Relay-control path in the session model only. No physical relay is attached or driven."),
+    ("GPIO22", "GPIO22", "Digital I/O", "INPUT", "LOW", "Sample sensor path (model only)", "Normal", "Sensor path in the session model only. No physical sensor is attached or read."),
     ("TX", "TX0 / GPIO1", "UART", "UART TX", "115200 baud", "UART monitor", "Exposed", "UART0 transmit line; debug output can disclose device state."),
     ("RX", "RX0 / GPIO3", "UART", "UART RX", "115200 baud", "UART monitor", "Exposed", "UART0 receive line; development interface is enabled in vulnerable mode."),
     ("GPIO21", "GPIO21", "I²C", "I²C SDA", "N/A", "I²C sensor bus", "Normal", "Common I²C data pin."),
     ("GPIO19", "GPIO19", "Digital I/O", "OUTPUT", "LOW", "SPI MISO", "Normal", "Common SPI data pin."),
     ("GPIO18", "GPIO18", "Digital I/O", "OUTPUT", "LOW", "SPI clock", "Normal", "Common SPI clock pin."),
-    ("GPIO5", "GPIO5", "Digital I/O", "OUTPUT", "LOW", "SPI chip select", "Normal", "Common SPI chip-select pin."),
+    ("GPIO5", "GPIO5", "Digital I/O", "OUTPUT", "LOW", "SPI chip select", "Review", "Strapping pin. The reset-level requirement takes precedence over a peripheral role; verify the exact board before wiring."),
     ("GPIO17", "GPIO17", "Digital I/O", "OUTPUT", "LOW", "UART2 TX", "Normal", "Secondary UART transmit pin."),
     ("GPIO16", "GPIO16", "Digital I/O", "INPUT", "LOW", "UART2 RX", "Normal", "Secondary UART receive pin."),
     ("GPIO4", "GPIO4", "Digital I/O", "INPUT", "LOW", "Spare input", "Normal", "Digital I/O and touch-capable pin."),
-    ("BOOT", "GPIO0 / BOOT", "Boot control", "INPUT", "HIGH", "Boot selector", "Normal", "Hold low during reset to enter download mode."),
-    ("GPIO2", "GPIO2", "Digital I/O", "OUTPUT", "LOW", "Onboard LED", "Normal", "Onboard indicator output in the sample device model."),
-    ("GPIO15", "GPIO15", "Digital I/O", "OUTPUT", "LOW", "SPI chip select", "Review", "Boot-strapping pin; check external pull state."),
+    ("BOOT", "GPIO0 / BOOT", "Boot control", "INPUT", "HIGH", "Boot selector", "Review", "Strapping pin. Holding GPIO0 low while resetting selects serial download boot mode."),
+    ("GPIO2", "GPIO2", "Digital I/O", "OUTPUT", "LOW", "Example output (model)", "Review", "Strapping pin and simulated output. A physical LED may be absent or connected to another GPIO; the dashboard does not drive it."),
+    ("GPIO15", "GPIO15", "Digital I/O", "OUTPUT", "LOW", "SPI chip select", "Review", "Strapping pin MTDO. Verify the required reset level for the exact target and board before wiring."),
 ]
 
 
@@ -86,19 +86,19 @@ BOARD_COMPONENTS = {
         "id": "ESP32_MODULE",
         "label": "ESP32-WROOM-32",
         "kind": "Microcontroller module",
-        "description": "Wi-Fi and Bluetooth module. Firmware security settings are shown in the node posture panel.",
+        "description": "Classic ESP32 module with Wi-Fi, Bluetooth, and on-module SPI flash. The selected firmware posture is simulated.",
     },
     "USB": {
         "id": "USB",
-        "label": "USB-C",
+        "label": "USB / UART",
         "kind": "Power and serial interface",
-        "description": "USB power and USB-to-UART bridge. This visual does not enumerate a connected host.",
+        "description": "Representative USB power and serial interface. Connector and bridge details vary by board revision; this visual does not enumerate a connected host.",
     },
     "FLASH": {
         "id": "FLASH",
-        "label": "SPI flash",
-        "kind": "Non-volatile storage",
-        "description": "External flash component. Encryption follows the selected simulated security profile.",
+        "label": "SPI flash (on module)",
+        "kind": "Module storage",
+        "description": "WROOM module flash storage. Capacity varies by module variant; encryption and OTA status follow the selected session profile only.",
     },
     "BOOT": {
         "id": "BOOT",
@@ -114,9 +114,9 @@ BOARD_COMPONENTS = {
     },
     "LED": {
         "id": "LED",
-        "label": "Onboard LED",
-        "kind": "Status indicator",
-        "description": "Sample output indicator driven by GPIO2 in this simulated node model.",
+        "label": "GPIO2 example output",
+        "kind": "Illustrative output",
+        "description": "GPIO2 is an example output in the session model. The physical board may not have an LED on this pin, and the dashboard never drives it.",
     },
 }
 

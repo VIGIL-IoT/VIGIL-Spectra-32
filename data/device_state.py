@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 from data.board_definition import PIN_DEFINITIONS
 from data.chaos_state import ChaosState, create_initial_chaos_state
 
-STATE_SCHEMA_VERSION = 3
+STATE_SCHEMA_VERSION = 4
 
 
 class PinState(TypedDict):

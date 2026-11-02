@@ -60,7 +60,7 @@ flowchart LR
   end
 ```
 
-See [the detailed architecture](docs/architecture.md), [Chaos Lab model](docs/CHAOS_LAB.md), [requirements and scope](docs/requirements.md), [methodology](docs/methodology.md), and [known limitations](docs/limitations.md).
+See [the detailed architecture](docs/architecture.md), [ESP32 board reference](docs/hardware-references.md), [Chaos Lab model](docs/CHAOS_LAB.md), [requirements and scope](docs/requirements.md), [methodology](docs/methodology.md), and [known limitations](docs/limitations.md).
 
 ## Quick start: Streamlit console
 
