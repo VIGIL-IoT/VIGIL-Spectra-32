@@ -117,6 +117,9 @@ The HTTP model has route tests; a separate MQTT integration test exercises the P
 - [T800 reproduction plan](docs/research/T800_REPRODUCTION_PLAN.md) and [protocol](docs/research/T800_EXPERIMENT_PROTOCOL.md): separate TCP port-scan paper track.
 - [Benchmarks](docs/benchmarks.md): no measurements reported; proposed metrics and method only.
 - [Traceability matrix](docs/traceability.md): connects requirements to evidence and verification status.
+- [Compatibility matrix](docs/compatibility.md): records verified Python, CI, browser, and firmware targets and their limits.
+- [Research sources](docs/research-sources.md) and [hardware references](docs/hardware-references.md): primary sources supporting board warnings and workflow action pins.
+- [AI skills registry](docs/AI_SKILLS_REFERENCE.md) and [AI change audit](docs/AI_CHANGE_AUDIT.md): records tool availability, actual use, and review evidence.
 - [Repository engineering audit](docs/REPOSITORY_AUDIT.md): baseline findings, changes, checks, maturity scores, and remaining limits.
 - [SDG alignment](docs/sdg-alignment.md): potential SDG 9.5 relationship only; no impact measured.
 

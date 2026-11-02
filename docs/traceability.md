@@ -26,3 +26,12 @@ Status is limited to the evidence named in the row. A unit test verifies a code 
 | NFR-10 | Chaos timeline and custom parameter ranges are bounded | O-7 | Cap at 60 events and constrain packet-loss slider to 0–50% | `services/chaos_simulator.py`, `simulator/dashboard/app.py` | Timeline/catalog checks and invalid-range rejection | `tests/test_chaos_simulator.py` | Verified (model constraints) |
 
 No row is marked as hardware-verified. Chaos Lab verification covers only deterministic behavioral-model and UI paths. MQTT integration, physical chip identification, model/firmware parity, measured resilience, and experimental results remain open.
+
+## Maintenance audit evidence: 2026-11-02
+
+| Claim | Repository evidence | Change and verification | Confidence and limit |
+|---|---|---|---|
+| Board warnings reflect classic ESP32 behavior without claiming an exact development board | `data/board_definition.py`, `components/board_component/index.html`, [hardware reference](hardware-references.md) | Metadata regression tests, docs link checks, and local dashboard visual inspection | High for the cited classic ESP32 behavior; exact board and revision remain unknown |
+| The loopback HTTP model rejects ambiguous framing and malformed bodies before state changes | `simulator/vulnerable/basic_node.py`, `tests/test_node_http.py` | Raw socket tests cover repeated Content-Length, Transfer-Encoding, short body, non-decimal length, wrong content type, and valid forms | High for these tested route cases; endpoint remains an intentionally vulnerable teaching model |
+| Repository verification can be reproduced through one pinned environment command | `tools/verify.py`, `pyproject.toml`, `uv.lock`, `.github/workflows/python-quality.yml` | Full local verification and CI run after the changes are complete | Local confidence depends on installed tools; CI covers Python 3.12-3.14 |
+| Documentation avoids personal machine paths and em dash glyphs and entities | `tools/check_docs.py`, `tests/test_check_docs.py` | Scanner unit tests plus a full repository text scan | High for scanned text extensions in the checked-out repository; binary assets are excluded |

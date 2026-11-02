@@ -288,3 +288,66 @@ Using the same project rubric as the v0.2.1 score, the v0.3.0 engineering maturi
 | **Total** | **87/100** |  |  |
 
 The next substantial maturity gains require physical ESP32 bring-up, independent measurements, and comparison of model predictions against observed results. Those activities need a separate isolated-lab protocol; this release does not claim them.
+
+## Research-Grade Maintenance Audit: 2026-11-02
+
+This section records focused maintenance after the v0.3.0 review. The historical **87/100** assessment above remains the v0.3.0 score. The present repository assessment is **89/100** on the same internal rubric. The score is a maintainer estimate, not a standards certification, and it does not describe device security.
+
+### Repository intelligence and findings
+
+- SPECTRA-32 remains a hybrid embedded-security research project: a Streamlit session behavior model, a separate loopback Python HTTP/MQTT model, a classic ESP32 ESP-IDF reference, and host-side serial-chip identification.
+- The Streamlit attack and Chaos controls still do not contact the Python node, MQTT broker, firmware, Wi-Fi, GPIO, or connected hardware.
+- No physical board model or revision is recorded. The previous board graphic placed flash outside the WROOM module boundary, implied USB-C, labeled GPIO2 as an onboard LED, and described model-only paths like physical wiring.
+- The separate loopback HTTP model parsed a bounded body but did not explicitly reject ambiguous transfer framing, a wrong content type, a short read, or extra form fields before parsing.
+- Documentation checks covered relative inline links but omitted image targets, reference definitions, and a repository-wide path and dash policy. CI did not have one canonical local verification command, and several GitHub Actions references were movable tags.
+- Existing architecture, experiments, safety boundaries, research notes, CI, release packaging, SBOM generation, and Git history were retained. No broad rewrite was needed.
+
+### Changes implemented
+
+- Corrected the board illustration: SPI flash is drawn within the module boundary, connector labeling is generic, and the drawing is explicitly identified as a reference. Strap pins and GPIO9 flash use are warned in metadata. GPIO2 and the sensor/relay route are labeled model-only.
+- Added [hardware references](hardware-references.md) with Espressif and esptool sources and a clear prohibition on treating the drawing as a wiring pinout.
+- Tightened loopback HTTP parsing: require one decimal Content-Length, reject Transfer-Encoding, require a form content type, enforce exact body length and one field, and preserve rejection before virtual state changes.
+- Added raw request tests for duplicate and conflicting framing, short bodies, non-decimal lengths, wrong content types, invalid form values, and normal state changes.
+- Added a canonical `tools/verify.py` command for Ruff, Python compilation, documentation and text-policy checks, the full unit/AppTest suite, and `pip-audit`. CI calls the same script after a locked dependency sync.
+- Extended documentation validation to check inline images and reference definitions, and to reject em dash characters/entities and common user-home paths across scanned repository text files.
+- Pinned GitHub Actions used by the Python, firmware, and Pages workflows to reviewed commit SHAs. Source references are recorded in [research sources](research-sources.md).
+- Added the [compatibility matrix](compatibility.md), [AI skills registry](AI_SKILLS_REFERENCE.md), [AI change audit](AI_CHANGE_AUDIT.md), and a qualitative failure-mode screen in [safety and data handling](SAFETY_AND_DATA.md). Existing assumptions are now numbered and linked to evidence in [requirements](requirements.md).
+- Used the Taste Skill for the local dashboard visual review and Crawl4AI for primary-source research. Diagram Design was evaluated and skipped because Mermaid and the existing Archify figure already cover current architectural relationships. Anatomy was evaluated and skipped because the exact board and apparatus are unknown and an isometric rendering could imply unsupported physical geometry. ManimGX was skipped because this audit added no time-dependent concept that needs animation.
+
+### Verification performed
+
+| Check | Result |
+|---|---|
+| `python -m uv lock --check` and locked environment sync | Passed before the audit changes; the final verification command ran through the locked uv environment. |
+| Canonical local command: `python tools/verify.py` via `uv run --locked --group dev` | Passed after the final changes. |
+| Ruff correctness checks | Passed. |
+| Python module compilation | Passed. |
+| Unit and Streamlit AppTest suite | 43 tests run: 42 passed, 1 skipped. The skip is the Mosquitto integration test because Mosquitto is not installed locally. |
+| Markdown links and repository text scan | 47 Markdown files and 104 text files checked; no broken relative link, em dash form, or common personal home path was found. |
+| `pip-audit` | Completed with no known vulnerabilities in the locked environment. |
+| Board source checks | Verified module flash labeling, GPIO9 reserved status, strap warnings, model-only sample paths, and the board's reference-only title. |
+| Browser review | Loaded local Streamlit at desktop width; Taste review covered 768 and 390 CSS pixels. No horizontal overflow was observed. Keyboard Tab reached the skip link and a heading with visible focus; board controls and chart data expose accessible names or text. This is not a WCAG conformance audit. |
+| GitHub Actions configuration | Action references are pinned by SHA and Python CI calls the same local verification script. Remote runs are checked against their exact commit; the manual Pages workflow was not dispatched in this audit. |
+
+### Updated maturity assessment
+
+| Dimension | Score | Evidence in this maintenance audit | Remaining gap |
+|---|---:|---|---|
+| Architecture & Modularity | 13/15 | Existing model boundaries retained and clarified | No physical/model parity or package boundary |
+| Documentation | 15/15 | Source ledger, hardware references, compatibility, assumptions, failure modes, skills, and AI changes are traceable | No physical-run report or calibrated model |
+| Code Quality | 12/15 | Bounded request parsing, regression tests, common verification command | No static type checker or firmware static analysis |
+| Testing | 14/15 | 43 test cases including raw HTTP framing, board metadata, AppTest, Chaos, packaging, and scenarios | Physical hardware tests remain absent |
+| Security | 9/10 | Loopback boundaries, malformed-input rejection, dependency audit, and explicit scope | Vulnerable firmware remains intentionally insecure; no physical validation |
+| Reproducibility | 9/10 | Locked Python environment, common local/CI verification, pinned action SHAs, firmware build workflow | No physical baseline or measured run artifact |
+| Open Source Governance | 9/10 | License, notices, contribution records, releases, and source provenance retained | Main branch protection remains absent under direct-to-main workflow |
+| Research Rigor & Traceability | 8/10 | Primary-source ledger and experiment/requirements evidence retained | No empirical experiment or faithful paper reproduction |
+| **Total** | **89/100** | Internal project rubric only | Physical evidence and empirical research are the main remaining limits |
+
+### Not verified and next actions
+
+- No ESP32 was flashed or probed, and no board-specific pinout was asserted.
+- The Streamlit hosted deployment and its logs were not inspected during this local repository audit. Cloud-hosted UI cannot enumerate USB devices attached to a user's computer.
+- Mosquitto integration remains covered by its dedicated CI job; the local suite skipped it because the broker is absent.
+- The firmware remains compile-verified in its existing CI workflow only. No model parity or security effectiveness is claimed.
+- No attack-defense experiment, empirical benchmark, paper reproduction, or performance profile was run.
+- Next useful evidence step: record the exact ESP32 board/revision, then run a separately reviewed, low-voltage bench protocol and preserve board, firmware commit, tool versions, and raw sanitized results.

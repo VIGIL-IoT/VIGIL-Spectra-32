@@ -25,6 +25,19 @@ SPECTRA-32 is an embedded-security research platform. All testing is limited to 
 - Keep USB power disconnect and reset available. Verify the exact board pinout before wiring.
 - Add sensors or actuators only for a named experiment with electrical limits, reset behavior, and safety measures documented.
 
+## Qualitative failure-mode screen
+
+This is a qualitative design screen for the current prototype, not a numerical risk assessment. Severity and likelihood are not assigned scores because the board, lab conditions, and physical tests are not yet characterized.
+
+| Failure mode | Possible effect | Current controls | Detection or evidence | Remaining action |
+|---|---|---|---|---|
+| Board revision or pin map is assumed incorrectly | Miswiring, unexpected boot behavior, or board damage | Illustration is labeled as a generic reference; strap and flash pins carry warnings; no wiring is claimed | `tests/test_board_definition.py`, [hardware reference](hardware-references.md) | Record exact board model and revision before physical wiring |
+| External circuitry changes a strap pin during reset | Board selects a different boot or supply configuration | GPIO0, GPIO2, GPIO5, GPIO12, and GPIO15 are flagged for review | Source-backed pin metadata and the Espressif references | Reassess strap levels against the exact board and circuit |
+| Chip-ID probe interrupts a connected board | Device resets or an in-progress interaction is interrupted | Probe is a user-triggered action with a bounded timeout and no flash write or erase | `services/hardware.py` and mocked command tests | Warn before probing and test the selected physical board before lab use |
+| Anonymous example broker is exposed beyond loopback | Unauthorized clients can issue commands to the vulnerable model | Desktop defaults bind to loopback; lab guidance requires an isolated segment | Configuration review and loopback tests | Keep the broker off public, shared, and general LANs |
+| Session model output is mistaken for device telemetry | Incorrect conclusions about hardware or security effectiveness | UI, architecture, protocols, and results label output as simulated | Scenario and dashboard tests; docs review | Validate against measured data before making effectiveness claims |
+| Malformed HTTP body is parsed ambiguously or incompletely | Unintended virtual state transition or request-handler error | Duplicate framing, transfer encoding, content type, body size, field count, and exact length are validated | `tests/test_node_http.py` includes malformed raw requests | Keep the endpoint loopback-only and rerun verification after parser changes |
+
 ## Data handling
 
 - sdkconfig, local credentials, and local .env files are gitignored. Do not commit them.
