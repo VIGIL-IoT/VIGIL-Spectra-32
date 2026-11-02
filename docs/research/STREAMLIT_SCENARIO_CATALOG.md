@@ -52,7 +52,7 @@ For a later hardware experiment, freeze the board revision, firmware commit, bro
 - [OWASP Internet of Things project](https://owasp.org/projects/internet-of-things)
 - [OWASP IoT Top 10 2018 (PDF)](https://owasp.org/images/1/1c/OWASP-IoT-Top-10-2018-final.pdf)
 - [OWASP IoT Security Testing Guide project](https://owasp.org/www-project-iot-security-testing-guide/)
-- [NISTIR 8259A — IoT Device Cybersecurity Capability Core Baseline (PDF)](https://nvlpubs.nist.gov/nistpubs/ir/2020/NIST.IR.8259A.pdf)
+- [NISTIR 8259A: IoT Device Cybersecurity Capability Core Baseline (PDF)](https://nvlpubs.nist.gov/nistpubs/ir/2020/NIST.IR.8259A.pdf)
 - [NIST IoT Cybersecurity Capabilities Catalog](https://pages.nist.gov/IoT-Device-Cybersecurity-Requirement-Catalogs/)
 - [NIST Logical Access to Interfaces](https://pages.nist.gov/IoT-Device-Cybersecurity-Requirement-Catalogs/technical/logical/)
 - [NIST Software Update](https://pages.nist.gov/IoT-Device-Cybersecurity-Requirement-Catalogs/technical/update/)

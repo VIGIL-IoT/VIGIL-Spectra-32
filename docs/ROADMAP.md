@@ -2,13 +2,13 @@
 
 SPECTRA-32 grows through small, measurable modules. The first node is simulated on a computer so the command and state model can be exercised before a physical board is required. A roadmap item is complete only when its code, setup, and evidence are present; planned work is not a result.
 
-## v0.0 — Repository foundation
+## v0.0: Repository foundation
 
 - [x] Establish VIGIL-IoT and SPECTRA-32 naming and purpose.
 - [x] Document architecture, safety boundaries, brand direction, and research tracks.
 - [x] Create separate paths for the virtual model, vulnerable firmware, and future hardened variants.
 
-## v0.1 — Computer-run basic node
+## v0.1: Computer-run basic node
 
 - [ ] Run the local Python model with the loopback-only Mosquitto broker.
 - [x] Smoke-test the Streamlit dashboard and its session-local scenario paths.
@@ -20,7 +20,7 @@ SPECTRA-32 grows through small, measurable modules. The first node is simulated 
 
 The dashboard's physical-board feature performs host-side serial discovery and an explicit chip-ID probe only. It does not send commands to the board or stream firmware logs. The dashboard and standalone node can run independently and do not share state.
 
-## v0.2 — Replay attack lab
+## v0.2: Replay attack lab
 
 - [ ] Freeze the threat model and application-level command replay procedure.
 - [ ] Re-submit a previously valid MQTT command to the software model and record its state effect.
@@ -33,7 +33,7 @@ The dashboard's physical-board feature performs host-side serial discovery and a
 
 Host process CPU and memory are properties of this computer-run simulator and must not be presented as ESP32 costs. Device RAM, flash, radio/network timing, GPIO timing, and power measurements belong to the hardware milestone and require suitable instrumentation.
 
-## v0.3 — Chaos Lab behavioral resilience model
+## v0.3: Chaos Lab behavioral resilience model
 
 - [x] Add a separate deterministic Chaos subsystem and an eight-scenario catalog.
 - [x] Model the experiment lifecycle over simulated time without blocking Streamlit.
@@ -44,7 +44,7 @@ Host process CPU and memory are properties of this computer-run simulator and mu
 
 **Exit:** code, documentation, and automated tests agree on the session-only model. This exit does not count as physical validation or evidence that the modeled defenses work on hardware.
 
-## v0.4 — ESP32 hardware validation
+## v0.4: ESP32 hardware validation
 
 - [x] Build the vulnerable ESP-IDF baseline for classic `esp32` with the pinned ESP-IDF 6.1 CI workflow.
 - [ ] Flash and verify the build on the selected classic ESP32 board.
@@ -55,31 +55,31 @@ Host process CPU and memory are properties of this computer-run simulator and mu
 
 No relay, motor, mains circuit, or hazardous actuator belongs in this milestone.
 
-## v0.5 — MQTT and REST/API security
+## v0.5: MQTT and REST/API security
 
 - Compare plain and authenticated/encrypted communication. Document broker/client identity, key provisioning, and failure behavior. Keep replay protection separate from transport encryption.
 
-## v0.6 — BLE security
+## v0.6: BLE security
 
 - Add one BLE experiment only after selecting hardware, pairing behavior, authorized scope, and a measurable baseline.
 
-## v0.7 — Firmware and OTA security
+## v0.7: Firmware and OTA security
 
 - Add signed-update verification and controlled cases for unsigned, altered, and stale packages.
 
-## v0.8 — Monitoring and attack detection
+## v0.8: Monitoring and attack detection
 
 - Record device, broker, and host events with synchronized timestamps and a run manifest. Evaluate detection only after defining a dataset split and error metrics.
 
-## v0.9 — Cyber-physical extension
+## v0.9: Cyber-physical extension
 
 - Add a sensor and safe actuator only when the experiment requires them. Record electrical limits, reset behavior, and recovery. The earlier LED baseline remains the first output.
 
-## v0.10 — TinyML, if supported by evidence
+## v0.10: TinyML, if supported by evidence
 
 - Consider anomaly detection only after the project has enough labeled, repeatable traces to justify it. Compare against simple rules and report resource costs and detection errors.
 
-## v1.0 — Research platform
+## v1.0: Research platform
 
 - Package stable vulnerable/hardened experiments, simulator and hardware setup, run manifests, reproducible analysis, sanitized data, license provenance, and paper-ready evidence.
 

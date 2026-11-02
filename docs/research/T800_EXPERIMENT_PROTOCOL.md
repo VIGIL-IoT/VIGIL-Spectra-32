@@ -71,4 +71,3 @@ Copy one row per run into the eventual run ledger; use one row per run rather th
 
 | Run ID | Timestamp | SPECTRA commit | T800 commit | ESP-IDF commit | Board | Filter/model | Mbps | Scan | Duration | Seed | Output hash | Status/deviation |
 |---|---|---|---|---|---|---|---:|---|---:|---|---|---|
-| — | — | — | — | — | — | — | — | — | — | — | — | No runs yet |

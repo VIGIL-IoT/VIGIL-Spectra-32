@@ -30,7 +30,7 @@ flowchart LR
     Mqtt <--> State
   end
 
-  subgraph Future hardware path — board behavior unverified
+  subgraph Future hardware path: board behavior unverified
     Firmware[ESP-IDF vulnerable reference firmware] -->|Wi-Fi| LabAP[Isolated lab AP]
     LabAP --> LabBroker[Lab MQTT broker]
     LabAP --> DeviceHTTP[Device HTTP server]

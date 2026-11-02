@@ -4,7 +4,7 @@
 
 ## Identity and problem statement
 
-**SPECTRA-32 — Security Platform for Embedded Cyber Threat Research & Analysis** is the experimental attack-and-defense testbed of VIGIL-IoT. It is a hybrid embedded-security research project: a Python software behavior model and Streamlit console exist today; the ESP-IDF reference compiles in CI, while physical hardware experiments remain unverified.
+**SPECTRA-32: Security Platform for Embedded Cyber Threat Research & Analysis** is the experimental attack-and-defense testbed of VIGIL-IoT. It is a hybrid embedded-security research project: a Python software behavior model and Streamlit console exist today; the ESP-IDF reference compiles in CI, while physical hardware experiments remain unverified.
 
 The engineering problem is to make selected IoT security behaviors inspectable and repeatable on a low-cost development path without confusing a host-side model with physical-device evidence. The current software model makes command/state behavior available before a board is required. The repository does not claim that a browser simulator replaces hardware testing, or that its profile labels implement actual security controls.
 

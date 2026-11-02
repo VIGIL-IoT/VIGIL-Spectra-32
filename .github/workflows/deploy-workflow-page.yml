@@ -46,6 +46,7 @@ jobs:
           diagram=".archify/workflow-spectra32-security-research-20261026-200334/spectra-32-research-workflow.html"
           node .tools/archify/archify/bin/archify.mjs validate workflow "$candidate" --quality showcase --json
           node .tools/archify/archify/bin/archify.mjs render workflow "$candidate" "$diagram" --quality showcase
+          node -e 'const fs=require("node:fs"); const file=process.argv[1]; fs.writeFileSync(file,fs.readFileSync(file,"utf8").replaceAll(String.fromCodePoint(0x2014),"-"));' "$diagram"
           sed -i 's/[[:blank:]]*$//' "$diagram"
           git diff --exit-code -- "$diagram"
 

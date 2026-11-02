@@ -32,7 +32,7 @@ If an early stage fails, record it as a partial/failed reproduction with logs. D
 
 If the exact ESP32 variant or power meter is unavailable, document that as a deviation. Do not silently transfer classic ESP32 timing or memory values to ESP32-S3 or another chip.
 
-## Stage 0 — artifact and environment audit
+## Stage 0: artifact and environment audit
 
 Before running upstream code:
 
@@ -44,7 +44,7 @@ Before running upstream code:
 
 **Gate to proceed:** a clean, dedicated toolchain exists; install changes are understood; target IP and lab subnet are fixed; and the source tree has no credentials or private data.
 
-## Stage 1 — artifact-level reproduction
+## Stage 1: artifact-level reproduction
 
 Re-run the authors' stored-data analysis before long hardware campaigns. Trace the notebook/scripts and identify:
 
@@ -56,7 +56,7 @@ Re-run the authors' stored-data analysis before long hardware campaigns. Trace t
 
 Save a SPECTRA-32 analysis script and environment manifest separately from upstream. Compare regenerated values with the paper, listing any mismatch and its likely cause. Do not modify test data or tune to match a published number.
 
-## Stage 2 — firmware smoke check
+## Stage 2: firmware smoke check
 
 1. Build the unfiltered baseline in the isolated environment and confirm ordinary TCP communication with the ESP32.
 2. Build the T800 variant and confirm the lwIP hook is invoked; record serial output and a small, sanitized CSV.
@@ -65,7 +65,7 @@ Save a SPECTRA-32 analysis script and environment manifest separately from upstr
 
 These are engineering smoke checks, not evidence that the paper's accuracy or performance claims have been reproduced.
 
-## Stage 3 — faithful workload matrix
+## Stage 3: faithful workload matrix
 
 The paper describes four workload cells and five filter settings. Recreate this matrix only after the smoke check:
 

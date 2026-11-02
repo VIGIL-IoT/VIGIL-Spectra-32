@@ -1,4 +1,4 @@
-# EXP-01 — MQTT Command Replay
+# EXP-01: MQTT Command Replay
 
 **Status:** design only. The v0.1 software model has not been run and no attack experiment has been performed.
 
@@ -68,4 +68,3 @@ No runs yet.
 
 | Run ID | Variant | Source commit | Trial | Fresh command accepted | Stale replay changed state | Latency | Status/deviation |
 |---|---|---|---:|---|---|---:|---|
-| — | — | — | — | — | — | — | No experiments run |

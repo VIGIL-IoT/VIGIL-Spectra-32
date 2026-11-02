@@ -22,7 +22,7 @@ class ChaosMilestone:
     degraded: bool
     detected: bool = False
     recovered: bool = False
-    recovery_action: str = "—"
+    recovery_action: str = "None"
 
 
 @dataclass(frozen=True)
@@ -61,7 +61,7 @@ def _m(
     degraded: bool = False,
     detected: bool = False,
     recovered: bool = False,
-    action: str = "—",
+    action: str = "None",
     severity: str = "INFO",
     decision: str = "Observed",
 ) -> ChaosMilestone:

@@ -894,7 +894,7 @@ def render_chaos_comparison(scenario: Any, profiles: dict[str, Any], result_read
             metrics = profile_data.get("result") if result_ready else profile_data.get("metrics", {})
             value = metrics.get(key) if isinstance(metrics, dict) else None
             if value is None:
-                formatted = "Pending" if not result_ready and key in {"recovery_duration_seconds", "resilience_score"} else "—"
+                formatted = "Pending" if not result_ready and key in {"recovery_duration_seconds", "resilience_score"} else "N/A"
             elif key in {"modeled_availability_pct", "operation_success_pct"}:
                 formatted = f"{float(value):.1f}{suffix}"
             else:
@@ -931,7 +931,7 @@ def render_chaos_timeline(events: list[dict[str, Any]]) -> None:
             f'<div class="chaos-timeline-main"><strong>{esc(event.get("event_type", ""))}</strong>'
             f'<small>{esc(event.get("component", ""))} · {esc(event.get("decision", ""))}</small>'
             f'<p>{esc(event.get("explanation", ""))}</p></div>'
-            f'<div class="chaos-timeline-action"><span>Recovery action</span><strong>{esc(event.get("recovery_action", "—"))}</strong></div>'
+            f'<div class="chaos-timeline-action"><span>Recovery action</span><strong>{esc(event.get("recovery_action", "None"))}</strong></div>'
             f'</div>'
         )
     st.markdown(f'<div class="chaos-timeline" role="list">{"".join(rows)}</div>', unsafe_allow_html=True)

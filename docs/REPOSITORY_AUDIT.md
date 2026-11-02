@@ -102,7 +102,7 @@ The revised [architecture](architecture.md) documents these boundaries, componen
 
 ## Files Modified
 
-- `.github/workflows/python-quality.yml` — configured CycloneDX runtime SBOM export, validation, and artifact upload
+- `.github/workflows/python-quality.yml`: configured CycloneDX runtime SBOM export, validation, and artifact upload
 - `CHANGELOG.md`
 - `docs/REPOSITORY_AUDIT.md`
 - `docs/requirements.md`
@@ -260,7 +260,7 @@ The updated score of **84/100**, from an initial 55/100, reflects better enginee
 5. Generate a complete firmware SBOM when the ESP-IDF build tooling can account for built-in components and compiler/toolchain binaries; the current release asset is only the Component Manager lock.
 6. Add Python type checking and firmware static analysis, then reassess the remaining code-quality gap.
 
-## v0.3.0 Follow-up Review — 2026-11-02
+## v0.3.0 Follow-up Review: 2026-11-02
 
 This follow-up covers the Chaos Lab addition. It preserves the v0.2.1 audit above as a dated snapshot and does not replace its historical release evidence.
 

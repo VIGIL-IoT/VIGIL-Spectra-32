@@ -110,15 +110,15 @@ The HTTP model has route tests; a separate MQTT integration test exercises the P
 
 ## Research and validation
 
-- [Experiment 01: MQTT command replay](experiments/EXP-01-replay/README.md) — protocol design only; no run ledger entries.
-- [Experiment 02: Chaos resilience](experiments/EXP-02-chaos-resilience/README.md) — deterministic behavioral protocol and tests; no physical run or empirical result.
+- [Experiment 01: MQTT command replay](experiments/EXP-01-replay/README.md): protocol design only; no run ledger entries.
+- [Experiment 02: Chaos resilience](experiments/EXP-02-chaos-resilience/README.md): deterministic behavioral protocol and tests; no physical run or empirical result.
 - [Research analysis and paper selection](docs/research/RESEARCH_ANALYSIS.md)
 - [Streamlit scenario catalog](docs/research/STREAMLIT_SCENARIO_CATALOG.md)
-- [T800 reproduction plan](docs/research/T800_REPRODUCTION_PLAN.md) and [protocol](docs/research/T800_EXPERIMENT_PROTOCOL.md) — separate TCP port-scan paper track.
-- [Benchmarks](docs/benchmarks.md) — no measurements reported; proposed metrics and method only.
-- [Traceability matrix](docs/traceability.md) — connects requirements to evidence and verification status.
-- [Repository engineering audit](docs/REPOSITORY_AUDIT.md) — baseline findings, changes, checks, maturity scores, and remaining limits.
-- [SDG alignment](docs/sdg-alignment.md) — potential SDG 9.5 relationship only; no impact measured.
+- [T800 reproduction plan](docs/research/T800_REPRODUCTION_PLAN.md) and [protocol](docs/research/T800_EXPERIMENT_PROTOCOL.md): separate TCP port-scan paper track.
+- [Benchmarks](docs/benchmarks.md): no measurements reported; proposed metrics and method only.
+- [Traceability matrix](docs/traceability.md): connects requirements to evidence and verification status.
+- [Repository engineering audit](docs/REPOSITORY_AUDIT.md): baseline findings, changes, checks, maturity scores, and remaining limits.
+- [SDG alignment](docs/sdg-alignment.md): potential SDG 9.5 relationship only; no impact measured.
 
 Never treat paper-reported results or session-model values as SPECTRA-32 measurements.
 

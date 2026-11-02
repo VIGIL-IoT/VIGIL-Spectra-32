@@ -2,8 +2,8 @@
 
 ## Project identity
 
-- **Umbrella:** VIGIL-IoT — Vulnerability Intelligence & Guarding for IoT Layers
-- **Project:** SPECTRA-32 — Security Platform for Embedded Cyber Threat Research & Analysis
+- **Umbrella:** VIGIL-IoT: Vulnerability Intelligence & Guarding for IoT Layers
+- **Project:** SPECTRA-32: Security Platform for Embedded Cyber Threat Research & Analysis
 - **Relationship:** SPECTRA-32 is the experimental attack-and-defense testbed of VIGIL-IoT.
 - **Required project marker:** “A VIGIL-IoT Project”.
 - **Research loop:** Build → Attack → Observe → Defend → Measure.
@@ -34,3 +34,5 @@ The Streamlit dashboard self-hosts these font files from the repository so local
 ## Voice
 
 Be calm, direct, and research-oriented. Distinguish planned work, source code, hardware-verified behavior, and measured findings. Label the vulnerable baseline and lab-only setup plainly without turning the interface into an attack console.
+
+Avoid em dash punctuation in all interface copy, release notes, web pages, and documentation. Prefer commas, colons, semicolons, parentheses, or ordinary hyphens.

@@ -21,17 +21,17 @@ Create one record per independent run. Keep failed and interrupted runs; mark th
 
 | Field | Value |
 |---|---|
-| Run ID and UTC timestamp | — |
-| Experiment and hypothesis | — |
-| SPECTRA-32 commit | — |
-| Vulnerable/hardened variant and firmware hash | — |
-| Board/chip revision and GPIO | — |
-| ESP-IDF, component, broker, host OS versions | — |
-| Network topology and sanitized configuration ID | — |
-| Test command, duration, repetitions, seed | — |
-| Metrics and measurement method | — |
-| Output paths and hashes | — |
-| Status, deviations, failures, exclusions | — |
+| Run ID and UTC timestamp | Not recorded |
+| Experiment and hypothesis | Not recorded |
+| SPECTRA-32 commit | Not recorded |
+| Vulnerable/hardened variant and firmware hash | Not recorded |
+| Board/chip revision and GPIO | Not recorded |
+| ESP-IDF, component, broker, host OS versions | Not recorded |
+| Network topology and sanitized configuration ID | Not recorded |
+| Test command, duration, repetitions, seed | Not recorded |
+| Metrics and measurement method | Not recorded |
+| Output paths and hashes | Not recorded |
+| Status, deviations, failures, exclusions | Not recorded |
 
 ## Measurement and analysis
 

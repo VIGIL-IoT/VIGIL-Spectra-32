@@ -21,8 +21,8 @@ class PinDefinition(TypedDict):
 _LEFT_PINS = [
     ("3V3", "3V3", "Power", "POWER", "3.3 V", "Sensor rail", "Normal", "3.3 V regulated output."),
     ("EN", "EN", "Control", "INPUT", "HIGH", "Reset line", "Normal", "Chip enable and reset input."),
-    ("GPIO36", "GPIO36 / VP", "Analog input", "INPUT", "—", "ADC1 sensor", "Normal", "Input-only ADC1 pin."),
-    ("GPIO39", "GPIO39 / VN", "Analog input", "INPUT", "—", "ADC1 sensor", "Normal", "Input-only ADC1 pin."),
+    ("GPIO36", "GPIO36 / VP", "Analog input", "INPUT", "N/A", "ADC1 sensor", "Normal", "Input-only ADC1 pin."),
+    ("GPIO39", "GPIO39 / VN", "Analog input", "INPUT", "N/A", "ADC1 sensor", "Normal", "Input-only ADC1 pin."),
     ("GPIO34", "GPIO34", "Digital input", "INPUT", "LOW", "Spare input", "Normal", "Input-only digital pin."),
     ("GPIO35", "GPIO35", "Digital input", "INPUT", "LOW", "Spare input", "Normal", "Input-only digital pin."),
     ("GPIO32", "GPIO32", "Digital I/O", "INPUT", "LOW", "Spare input", "Normal", "Digital I/O and touch-capable pin."),
@@ -34,7 +34,7 @@ _LEFT_PINS = [
     ("GPIO12", "GPIO12", "Digital I/O", "INPUT", "LOW", "Strap pin", "Review", "Boot-strapping pin; check external pull state."),
     ("GND_L", "GND", "Ground", "GROUND", "0 V", "Common ground", "Normal", "Ground reference."),
     ("GPIO13", "GPIO13", "Digital I/O", "OUTPUT", "LOW", "SPI MOSI", "Normal", "Common SPI data pin."),
-    ("GPIO9", "GPIO9 / SD2", "Flash bus", "RESERVED", "—", "On-module flash", "Reserved", "Used by module flash; avoid as a general GPIO."),
+    ("GPIO9", "GPIO9 / SD2", "Flash bus", "RESERVED", "N/A", "On-module flash", "Reserved", "Used by module flash; avoid as a general GPIO."),
 ]
 
 _RIGHT_PINS = [
@@ -44,7 +44,7 @@ _RIGHT_PINS = [
     ("GPIO22", "GPIO22", "Digital I/O", "INPUT", "LOW", "Sensor", "Normal", "Sensor input in the sample device model."),
     ("TX", "TX0 / GPIO1", "UART", "UART TX", "115200 baud", "UART monitor", "Exposed", "UART0 transmit line; debug output can disclose device state."),
     ("RX", "RX0 / GPIO3", "UART", "UART RX", "115200 baud", "UART monitor", "Exposed", "UART0 receive line; development interface is enabled in vulnerable mode."),
-    ("GPIO21", "GPIO21", "I²C", "I²C SDA", "—", "I²C sensor bus", "Normal", "Common I²C data pin."),
+    ("GPIO21", "GPIO21", "I²C", "I²C SDA", "N/A", "I²C sensor bus", "Normal", "Common I²C data pin."),
     ("GPIO19", "GPIO19", "Digital I/O", "OUTPUT", "LOW", "SPI MISO", "Normal", "Common SPI data pin."),
     ("GPIO18", "GPIO18", "Digital I/O", "OUTPUT", "LOW", "SPI clock", "Normal", "Common SPI clock pin."),
     ("GPIO5", "GPIO5", "Digital I/O", "OUTPUT", "LOW", "SPI chip select", "Normal", "Common SPI chip-select pin."),

@@ -22,7 +22,7 @@ These are code-level hypotheses. Test results can confirm that the implementatio
 
 ## Failure model and scope
 
-The target is `ESP32 IoT node — Behavioral Model` in Streamlit session state. The only variable is a selected catalogued fault, plus an optional integer packet-loss parameter from 0 to 50%. The experiment horizon is 10 simulated seconds, including the one-second baseline. Fault windows, dependency state, and recovery timing are encoded in `data/chaos_scenarios.py`.
+The target is `ESP32 IoT node: Behavioral Model` in Streamlit session state. The only variable is a selected catalogued fault, plus an optional integer packet-loss parameter from 0 to 50%. The experiment horizon is 10 simulated seconds, including the one-second baseline. Fault windows, dependency state, and recovery timing are encoded in `data/chaos_scenarios.py`.
 
 Vulnerable and Hardened are policy profiles for this model. They are not separate verified firmware binaries. In-scope scenarios:
 
@@ -105,6 +105,6 @@ H1–H3 are falsifiable against the code model: a counterexample in a determinis
 
 ## Conceptual references
 
-- Netflix, [Chaos Monkey](https://github.com/Netflix/chaosmonkey) — conceptual failure-exposure inspiration only; no code reused.
-- [Principles of Chaos Engineering](https://principlesofchaos.org/) — steady-state/hypothesis/variable/observation framing.
+- Netflix, [Chaos Monkey](https://github.com/Netflix/chaosmonkey): conceptual failure-exposure inspiration only; no code reused.
+- [Principles of Chaos Engineering](https://principlesofchaos.org/): steady-state/hypothesis/variable/observation framing.
 - [SPECTRA-32 Chaos Lab definition and limitations](../../docs/CHAOS_LAB.md).
