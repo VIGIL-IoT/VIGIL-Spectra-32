@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 from data.board_definition import BOARD_COMPONENTS, PIN_DEFINITIONS
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class BoardDefinitionTests(unittest.TestCase):
@@ -29,6 +32,12 @@ class BoardDefinitionTests(unittest.TestCase):
         self.assertIn("model only", PIN_DEFINITIONS["GPIO22"]["connected_to"])
         self.assertIn("model only", PIN_DEFINITIONS["GPIO23"]["connected_to"])
         self.assertIn("never drives it", BOARD_COMPONENTS["LED"]["description"])
+
+    def test_board_svg_labels_the_map_and_gpio2_as_references(self) -> None:
+        source = (ROOT / "components" / "board_component" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("ESP32 DEVKIT-STYLE REFERENCE", source)
+        self.assertIn("GPIO2 MODEL", source)
+        self.assertNotIn("GPIO2 LED", source)
 
 
 if __name__ == "__main__":
