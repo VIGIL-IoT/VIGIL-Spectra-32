@@ -19,6 +19,20 @@ This registry distinguishes tools named by the repository engineering prompt fro
 | Circuit Skills | [punkfab/circuit-skills](https://github.com/punkfab/circuit-skills) | Circuit-oriented design and review skills. | Not applicable: no circuit schematic or PCB is present. | No circuit artifact. |
 | Matplotlib, Plotly, R and ggplot2 | Tools named in the master prompt, without a single repository URL | Quantitative plots when the repository has validated data. | Not used. The current charts display bounded simulated session values, and this audit produced no research dataset. | No publication chart or benchmark figure created. |
 
+## Token-efficient agent stack
+
+The following projects were named in the companion token-efficient stack prompt. Their URLs are preserved from that prompt. Availability was checked in the current tool catalog, local skills, and command environment. None of these integrations was configured or installed.
+
+| Project | Official repository | Purpose | Availability and use in this task | Fallback or validation |
+|---|---|---|---|---|
+| Ponytail | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) | Minimize implementation and avoid duplicate or unnecessary abstractions. | No tool, skill, or CLI exposed. Its anti-overengineering principles were applied manually. | Existing components were reused; no new runtime dependency or subsystem was added. |
+| Lean Coding Agent | [JeremyFaubert/lean-coding-agent-skill](https://github.com/JeremyFaubert/lean-coding-agent-skill) | Retrieve repository context just in time and verify based on risk. | No tool or skill exposed. Its task-scoping principles were applied manually. | Bounded file reads and diffs were used. The final full verification ran because this was a repository-wide audit. |
+| Serena | [oraios/serena](https://github.com/oraios/serena) | Semantic symbol and reference navigation. | No Serena MCP tool, skill, or CLI exposed. | Native `rg` and direct file reads were used for the small set of changed files. |
+| skill-search | [sowhan/skill-search](https://github.com/sowhan/skill-search) | Retrieve relevant skills from a large skill library. | No skill-search tool or CLI exposed. | The native skill catalog was used; only Taste, Anatomy, Diagram Design, and Crawl4AI were relevant to the prior audit. |
+| Token Optimizer MCP | [ooples/token-optimizer-mcp](https://github.com/ooples/token-optimizer-mcp) | Compress or externalize large tool results. | No Token Optimizer MCP tool exposed. | Output was bounded at the source and summarized; the full audit results were retained where needed. |
+
+No upstream code or skill instructions were copied into SPECTRA-32. Recheck availability only when a future environment exposes these integrations or when one can materially improve a task.
+
 ## Activation rule
 
 Use a specialized tool only when it can produce a source-grounded improvement. Record the exact repository, invocation, generated files, and validation when one is used. Do not add an empty PCB project, animation, or duplicate diagram to satisfy a checklist.
