@@ -1,0 +1,17 @@
+# Research Sources Ledger
+
+External sources that materially informed implementation or repository controls. Sources were accessed on 2026-11-02 using Crawl4AI 0.9.5 where noted. This ledger records the claim used, not copied source text.
+
+| Source | URL | Type and authority | Version / date | Decision or claim supported | Limits |
+|---|---|---|---|---|---|
+| Espressif ESP-IDF GPIO API reference | https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/gpio.html | Official vendor documentation | Stable classic ESP32 docs, accessed 2026-11-02 | Board metadata identifies classic ESP32 strapping pins, reserves GPIO6-GPIO11 for the module flash interface, and describes GPIO34-GPIO39 as input-only. | Target is classic ESP32. This is not a board-specific schematic or wiring validation. |
+| Espressif ESP32-DevKitC V4 user guide | https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32/esp32-devkitc/user_guide.html | Official board guide | V4 guide, accessed 2026-11-02 | Supports keeping the UI connector and header layout generic because exact board revision is not known. | Applies to DevKitC V4 only. The project board has not been identified as that model. |
+| Espressif esptool boot mode selection | https://docs.espressif.com/projects/esptool/en/latest/esp32/advanced-topics/boot-mode-selection.html | Official tool documentation | Current page, accessed 2026-11-02 | Supports the GPIO0 download-mode note and warns that strap levels are sampled during reset. | Reset behavior can vary by chip family and board circuitry. |
+| ESP32-WROOM-32E / ESP32-WROOM-32UE datasheet | https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf | Official module datasheet | Module variants, accessed 2026-11-02 | Supports representing SPI flash within the module boundary and noting variant-dependent capacity. | The illustration is conceptual and does not identify exact flash capacity or component placement. |
+| GitHub Actions official repositories | https://github.com/actions/checkout/tree/3d3c42e5aac5ba805825da76410c181273ba90b1 ; https://github.com/actions/setup-python/tree/6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 ; https://github.com/actions/setup-node/tree/949feb2413d6458794dcd2491c4babbbce0c15c1 ; https://github.com/actions/configure-pages/tree/45bfe0192ca1faeb007ade9deae92b16b8254a0d ; https://github.com/actions/upload-pages-artifact/tree/fc324d3547104276b827a68afc52ff2a11cc49c9 ; https://github.com/actions/deploy-pages/tree/368f82528645a54fb793d4d04e342629a3f51346 | Official action source repositories | Refs checked 2026-11-02 | Pins workflow actions to reviewed commit SHAs while retaining release tags in comments. | A pin fixes action source identity; it does not guarantee the workflow itself is safe or correctly configured. |
+
+## Method and research limits
+
+Crawl4AI retrieved the vendor documentation pages and official action references for inspection. The board illustration updates use these sources for pin warnings and component boundaries. No peer-reviewed security paper was selected or reproduced as part of this maintenance audit. No paper result, hardware measurement, performance benchmark, or novel security claim is asserted.
+
+See [hardware references](hardware-references.md) for the pin-specific application of the Espressif sources, and [traceability](traceability.md) for project claims mapped to code and verification evidence.
