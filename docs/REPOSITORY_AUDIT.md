@@ -327,7 +327,7 @@ This section records focused maintenance after the v0.3.0 review. The historical
 | `pip-audit` | Completed with no known vulnerabilities in the locked environment. |
 | Board source checks | Verified module flash labeling, GPIO9 reserved status, strap warnings, model-only sample paths, and the board's reference-only title. |
 | Browser review | Loaded local Streamlit at desktop width; Taste review covered 768 and 390 CSS pixels. No horizontal overflow was observed. Keyboard Tab reached the skip link and a heading with visible focus; board controls and chart data expose accessible names or text. This is not a WCAG conformance audit. |
-| GitHub Actions configuration | Action references are pinned by SHA and Python CI calls the same local verification script. Remote runs are checked against their exact commit; the manual Pages workflow was not dispatched in this audit. |
+| GitHub Actions | Python quality [run 41472056101](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41472056101) passed on commit `2783475`; the ESP-IDF build [run 41471926407](https://github.com/VIGIL-IoT/VIGIL-Spectra-32/actions/runs/41471926407) passed on commit `7cf3e55`. The Python run used the canonical verification script and the pinned action references. The manual Pages workflow was not dispatched in this audit. |
 
 ### Updated maturity assessment
 
