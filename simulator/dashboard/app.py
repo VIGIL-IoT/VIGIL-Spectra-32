@@ -121,8 +121,8 @@ if (
     or not isinstance(st.session_state.device_state.get("chaos"), dict)
     or st.session_state.device_state["chaos"].get("schema_version") != CHAOS_STATE_SCHEMA_VERSION
 ):
-    # The session contains sample data only; reset it when a deployment changes
-    # the state shape instead of letting old nested keys crash the new UI.
+    # The session contains sample data only. Refresh it when the schema or
+    # sample baseline changes so stale values do not survive a deployment.
     st.session_state.device_state = create_initial_state()
 if "active_view" not in st.session_state:
     st.session_state.active_view = "Console"
