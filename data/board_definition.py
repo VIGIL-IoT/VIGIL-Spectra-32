@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+BOARD_DEFINITION_VERSION = 2
+
 
 class PinDefinition(TypedDict):
     id: str
