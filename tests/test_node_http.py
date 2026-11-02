@@ -5,6 +5,7 @@ from __future__ import annotations
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 import json
+import socket
 import threading
 import unittest
 
@@ -51,6 +52,14 @@ class NodeHttpTests(unittest.TestCase):
         finally:
             connection.close()
 
+    def raw_status(self, request: bytes) -> int:
+        with socket.create_connection(("127.0.0.1", self.port), timeout=2) as connection:
+            connection.sendall(request)
+            connection.shutdown(socket.SHUT_WR)
+            response = connection.recv(256)
+        status_line = response.split(b"\r\n", 1)[0]
+        return int(status_line.split()[1])
+
     def test_state_route_reports_initial_virtual_state(self) -> None:
         status, body = self.request("GET", "/api/state")
         self.assertEqual(status, 200)
@@ -71,6 +80,34 @@ class NodeHttpTests(unittest.TestCase):
                 self.assertEqual(status, 400)
                 self.assertIn("error", body)
         self.assertEqual(self.node.snapshot()["led"], "OFF")
+        self.assertEqual(self.node.snapshot()["commands_applied"], 0)
+
+    def test_ambiguous_or_incomplete_http_framing_is_rejected(self) -> None:
+        requests = (
+            b"POST /api/led HTTP/1.1\r\nHost: localhost\r\n"
+            b"Content-Type: application/x-www-form-urlencoded\r\n"
+            b"Content-Length: 8\r\nContent-Length: 8\r\n\r\nstate=on",
+            b"POST /api/led HTTP/1.1\r\nHost: localhost\r\n"
+            b"Content-Type: application/x-www-form-urlencoded\r\n"
+            b"Content-Length: 8\r\nTransfer-Encoding: chunked\r\n\r\nstate=on",
+            b"POST /api/led HTTP/1.1\r\nHost: localhost\r\n"
+            b"Content-Type: application/x-www-form-urlencoded\r\n"
+            b"Content-Length: 9\r\n\r\nstate=on",
+            b"POST /api/led HTTP/1.1\r\nHost: localhost\r\n"
+            b"Content-Type: application/x-www-form-urlencoded\r\n"
+            b"Content-Length: +8\r\n\r\nstate=on",
+        )
+        for request in requests:
+            with self.subTest(request=request.split(b"\r\n", 2)[1]):
+                self.assertEqual(self.raw_status(request), 400)
+        self.assertEqual(self.node.snapshot()["commands_applied"], 0)
+
+    def test_wrong_content_type_is_rejected(self) -> None:
+        request = (
+            b"POST /api/led HTTP/1.1\r\nHost: localhost\r\n"
+            b"Content-Type: application/json\r\nContent-Length: 8\r\n\r\nstate=on"
+        )
+        self.assertEqual(self.raw_status(request), 400)
         self.assertEqual(self.node.snapshot()["commands_applied"], 0)
 
     def test_unknown_route_is_not_found(self) -> None:

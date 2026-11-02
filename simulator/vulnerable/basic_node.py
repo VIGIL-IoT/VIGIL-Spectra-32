@@ -218,20 +218,38 @@ def make_http_handler(node: VirtualNode, mqtt_link: MqttLink) -> type[BaseHTTPRe
                 self._send_json(404, {"error": "not found"})
                 return
 
-            try:
-                content_length = int(self.headers.get("Content-Length", "0"))
-            except ValueError:
+            content_lengths = self.headers.get_all("Content-Length", [])
+            if len(content_lengths) != 1 or self.headers.get_all("Transfer-Encoding"):
+                self._send_json(400, {"error": "invalid request framing"})
+                return
+
+            raw_content_length = content_lengths[0].strip()
+            if not raw_content_length.isascii() or not raw_content_length.isdecimal():
                 self._send_json(400, {"error": "invalid content length"})
                 return
+            content_length = int(raw_content_length)
             if content_length < 1 or content_length > 64:
                 self._send_json(400, {"error": "invalid request body"})
                 return
 
+            content_types = self.headers.get_all("Content-Type", [])
+            if len(content_types) != 1 or content_types[0].split(";", 1)[0].strip().lower() != (
+                "application/x-www-form-urlencoded"
+            ):
+                self._send_json(400, {"error": "unsupported content type"})
+                return
+
+            body = self.rfile.read(content_length)
+            if len(body) != content_length:
+                self._send_json(400, {"error": "incomplete request body"})
+                return
+
             try:
                 form = parse_qs(
-                    self.rfile.read(content_length).decode("ascii"),
+                    body.decode("ascii"),
                     keep_blank_values=True,
                     strict_parsing=True,
+                    max_num_fields=1,
                 )
             except (UnicodeDecodeError, ValueError):
                 self._send_json(400, {"error": "invalid form body"})
